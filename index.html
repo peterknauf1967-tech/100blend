@@ -253,9 +253,172 @@
     <span data-vi="Một dự án của Luxfox Limited (Hong Kong)" data-en="A project by Luxfox Limited (Hong Kong)">Một dự án của Luxfox Limited (Hong Kong)</span>
   </p>
   <p class="concept-tag" data-vi="⚠️ BẢN THẢO Ý TƯỞNG — sản phẩm, giá &amp; thông tin là đề xuất để hoàn thiện." data-en="⚠️ DRAFT CONCEPT — products, prices &amp; info are proposals to be refined.">⚠️ BẢN THẢO Ý TƯỞNG — sản phẩm, giá &amp; thông tin là đề xuất để hoàn thiện.</p>
+  <button onclick="openPw100()" style="background:none;border:1px solid rgba(194,161,77,.15);color:rgba(194,161,77,.3);padding:.25rem .45rem;border-radius:3px;font-size:.7rem;cursor:pointer;margin-top:.5rem;transition:all .3s" onmouseover="this.style.color='#C2A14D';this.style.borderColor='#C2A14D'" onmouseout="this.style.color='rgba(194,161,77,.3)';this.style.borderColor='rgba(194,161,77,.15)'">🔒</button>
 </footer>
 
 <a href="#franchise" class="float-fr">🥤 <span class="lng" data-vi="Nhượng quyền" data-en="Franchise">Nhượng quyền</span></a>
+
+<style>
+.pw100{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;align-items:center;justify-content:center}
+.pw100.open{display:flex}
+.pw100-box{background:#0C1610;border:1px solid rgba(194,161,77,.25);border-radius:12px;padding:2.2rem;width:300px;text-align:center}
+.pw100-box h3{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#C2A14D;margin-bottom:1.2rem}
+.pw100-input{width:100%;background:#060F08;border:1px solid rgba(194,161,77,.2);border-radius:6px;padding:.65rem 1rem;color:#EEF0EC;font-size:.95rem;text-align:center;letter-spacing:.1em;outline:none;margin-bottom:.7rem;font-family:inherit}
+.pw100-input:focus{border-color:#C2A14D}
+.pw100-err{font-size:.75rem;color:#ff6b6b;min-height:1.1rem;margin-bottom:.6rem}
+.pw100-btns{display:flex;gap:.6rem}
+.pw100-ok{flex:1;background:#C2A14D;color:#000;border:none;border-radius:6px;padding:.6rem;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit}
+.pw100-cancel{background:none;border:1px solid rgba(194,161,77,.2);color:#7A9080;border-radius:6px;padding:.6rem .8rem;font-size:.78rem;cursor:pointer;font-family:inherit}
+.adm100{display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:400;overflow-y:auto}
+.adm100.open{display:block}
+.adm100-inner{max-width:1000px;margin:0 auto;padding:2.5rem 1.5rem 5rem}
+.adm100-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid rgba(194,161,77,.15)}
+.adm100-hdr h2{font-size:1rem;font-weight:700;color:#C2A14D;letter-spacing:.12em;text-transform:uppercase}
+.adm100-close{background:none;border:1px solid rgba(194,161,77,.2);color:#7A9080;padding:.35rem .75rem;border-radius:4px;cursor:pointer;font-size:.75rem}
+.adm100-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+@media(max-width:700px){.adm100-grid{grid-template-columns:1fr}}
+.a100-card{background:#0C1610;border:1px solid rgba(194,161,77,.15);border-radius:10px;padding:1.3rem}
+.a100-card h3{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#C2A14D;margin-bottom:.9rem}
+.a100-wide{grid-column:1/-1}
+.a100-row{display:flex;gap:.6rem;margin-bottom:.5rem;font-size:.8rem;line-height:1.45}
+.a100-k{color:#7A9080;min-width:110px;flex-shrink:0;font-size:.72rem}
+.a100-v{color:#EEF0EC}
+.a100-v a{color:#C2A14D;text-decoration:none}
+.a100-v a:hover{text-decoration:underline}
+.a100-sep{height:1px;background:rgba(194,161,77,.08);margin:.7rem 0}
+.a100-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.a100-table th{color:#C2A14D;text-align:left;padding:.3rem .4rem;border-bottom:1px solid rgba(194,161,77,.15);font-weight:600;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase}
+.a100-table td{color:#EEF0EC;padding:.3rem .4rem;border-bottom:1px solid rgba(194,161,77,.06)}
+.a100-table tr:last-child td{border-bottom:none}
+.a100-badge{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.62rem;font-weight:700;text-transform:uppercase}
+.ok{background:rgba(34,193,102,.15);color:#1FC76A}
+.wait{background:rgba(201,164,80,.15);color:#C2A14D}
+.open2{background:rgba(255,80,80,.1);color:#ff6b6b}
+.a100-todo{list-style:none;display:flex;flex-direction:column;gap:.4rem}
+.a100-todo li{display:flex;gap:.5rem;font-size:.78rem;color:#7A9080;line-height:1.4}
+.a100-todo li::before{content:'→';color:#C2A14D;flex-shrink:0;font-weight:700}
+.a100-todo li.done{color:rgba(34,193,102,.5);text-decoration:line-through}
+.a100-todo li.done::before{content:'✓';color:rgba(34,193,102,.5)}
+</style>
+
+<!-- PW MODAL 100blend -->
+<div class="pw100" id="pw100" onclick="if(event.target===this)closePw100()">
+  <div class="pw100-box">
+    <h3>🔒 100blend Admin</h3>
+    <input class="pw100-input" type="password" id="pw100-input" placeholder="Passwort" onkeydown="if(event.key==='Enter')checkPw100()">
+    <div class="pw100-err" id="pw100-err"></div>
+    <div class="pw100-btns">
+      <button class="pw100-cancel" onclick="closePw100()">Abbrechen</button>
+      <button class="pw100-ok" onclick="checkPw100()">Öffnen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL 100blend -->
+<div class="adm100" id="adm100">
+  <div class="adm100-inner">
+    <div class="adm100-hdr">
+      <h2>🥤 100blend — Admin · <span id="adm100-date"></span></h2>
+      <button class="adm100-close" onclick="closeAdm100()">✕ Schließen</button>
+    </div>
+    <div class="adm100-grid">
+
+      <!-- HOSTING -->
+      <div class="a100-card">
+        <h3>🌐 Website &amp; Hosting</h3>
+        <div class="a100-row"><span class="a100-k">Domain</span><span class="a100-v"><a href="https://100blend.com" target="_blank">100blend.com</a> <span class="a100-badge ok">Live</span></span></div>
+        <div class="a100-row"><span class="a100-k">Hosting</span><span class="a100-v">GitHub Pages (kostenlos)</span></div>
+        <div class="a100-row"><span class="a100-k">GitHub Repo</span><span class="a100-v"><a href="https://github.com/peterknauf1967-tech/100blend" target="_blank">peterknauf1967-tech/100blend</a></span></div>
+        <div class="a100-row"><span class="a100-k">DNS</span><span class="a100-v">Squarespace (A-Records + CNAME gesetzt)</span></div>
+        <div class="a100-sep"></div>
+        <div class="a100-row"><span class="a100-k">Deploy-Ordner</span><span class="a100-v">100blend-web\</span></div>
+        <div class="a100-row"><span class="a100-k">Quelldateien</span><span class="a100-v">100blend\ (Konzept, Rezeptur etc.)</span></div>
+        <div class="a100-row"><span class="a100-k">Update</span><span class="a100-v">Änderung → git push → live in 30 Sek</span></div>
+      </div>
+
+      <!-- IQF LIEFERANTEN -->
+      <div class="a100-card">
+        <h3>🌿 IQF Lieferanten</h3>
+        <div class="a100-row"><span class="a100-k">Nafoods</span><span class="a100-v"><a href="mailto:sales@nafoods.com">sales@nafoods.com</a> <span class="a100-badge wait">Gesendet</span></span></div>
+        <div class="a100-row"><span class="a100-k">Lavifood</span><span class="a100-v"><a href="mailto:info@lavifood.com">info@lavifood.com</a> <span class="a100-badge wait">Gesendet</span></span></div>
+        <div class="a100-row"><span class="a100-k">Antesco</span><span class="a100-v"><a href="mailto:antesco@antesco.com">antesco@antesco.com</a> <span class="a100-badge wait">Gesendet</span></span></div>
+        <div class="a100-sep"></div>
+        <div class="a100-row"><span class="a100-k">Anfrage-Text</span><span class="a100-v">Anfrage_Schockfrost-VN.md</span></div>
+        <div class="a100-row"><span class="a100-k">Antworten</span><span class="a100-v"><span class="a100-badge open2">Ausstehend</span> → dann COGS verfeinern</span></div>
+      </div>
+
+      <!-- FRANCHISE PAKETE - BREIT -->
+      <div class="a100-card a100-wide">
+        <h3>📦 Franchise-Pakete Kalkulation — NICHT öffentlich</h3>
+        <table class="a100-table">
+          <tr><th>Paket</th><th>Format</th><th>Endpreis Unit</th><th>Peters Einmal</th><th>Peters lfd./Monat</th><th>Break-Even</th><th>Amortisation</th></tr>
+          <tr><td>Starter</td><td>Popup-Cart</td><td>~122 triệu</td><td>518 €</td><td>402 €</td><td><strong>14 Becher/Tag</strong></td><td>~1 Monat</td></tr>
+          <tr><td>Standard</td><td>Container 20ft</td><td>~576 triệu</td><td>1.000 €</td><td>735 €</td><td><strong>25 Becher/Tag</strong></td><td>~2,3 Monate</td></tr>
+          <tr><td>Premium</td><td>Flagship Store</td><td>~688 triệu</td><td>2.800 €</td><td>1.170 €</td><td><strong>25 Becher/Tag</strong></td><td>~1,8 Monate</td></tr>
+        </table>
+        <div class="a100-sep"></div>
+        <div class="a100-row"><span class="a100-k">COGS/Becher</span><span class="a100-v">Frucht 0,56 € · Erfrischung 0,48 € · Sport 1,44 € · Detox 0,62 €</span></div>
+        <div class="a100-row"><span class="a100-k">Mischpreis</span><span class="a100-v">3,89 € (≈ 105.000 VND) · Rohmarge ~83 %</span></div>
+        <div class="a100-row"><span class="a100-k">Master-Fee</span><span class="a100-v">40.000 € einmalig für exklusiv Vietnam</span></div>
+        <div class="a100-row"><span class="a100-k">Vollständige Datei</span><span class="a100-v">100blend\konzept-bausteine\pakete-kalkulation.md</span></div>
+      </div>
+
+      <!-- REZEPTUR -->
+      <div class="a100-card">
+        <h3>🧪 Rezeptur &amp; Basis</h3>
+        <div class="a100-row"><span class="a100-k">Frucht-Linie</span><span class="a100-v">210 g Frucht + 150 ml · Standard: Kuhmilch</span></div>
+        <div class="a100-row"><span class="a100-k">Erfrischung</span><span class="a100-v">160 g + 200 ml Kokoswasser (fix)</span></div>
+        <div class="a100-row"><span class="a100-k">Sport</span><span class="a100-v">220 g + 210 ml Hafermilch</span></div>
+        <div class="a100-row"><span class="a100-k">Detox</span><span class="a100-v">190 g + 160 ml Joghurt</span></div>
+        <div class="a100-row"><span class="a100-k">Aufpreis</span><span class="a100-v">Hafer/Mandel +10.000 VND · Joghurt/Kokos +5.000 VND</span></div>
+        <div class="a100-row"><span class="a100-k">Datei</span><span class="a100-v">100blend\konzept-bausteine\rezeptur-basis.md</span></div>
+      </div>
+
+      <!-- DOKUMENTE -->
+      <div class="a100-card">
+        <h3>📄 Dokumente &amp; Dateien</h3>
+        <div class="a100-row"><span class="a100-k">Franchise-Konzept</span><span class="a100-v">Franchise-Konzept.md (12 Kapitel)</span></div>
+        <div class="a100-row"><span class="a100-k">Menükarte</span><span class="a100-v">konzept-bausteine\menue.md (30 Smoothies)</span></div>
+        <div class="a100-row"><span class="a100-k">Finanzmodell</span><span class="a100-v">konzept-bausteine\finanzmodell.md</span></div>
+        <div class="a100-row"><span class="a100-k">Pakete-Kalkulation</span><span class="a100-v">konzept-bausteine\pakete-kalkulation.md</span></div>
+        <div class="a100-row"><span class="a100-k">Rezeptur</span><span class="a100-v">konzept-bausteine\rezeptur-basis.md</span></div>
+        <div class="a100-row"><span class="a100-k">Vertragsentwurf</span><span class="a100-v">konzept-bausteine\franchisevertrag-entwurf.md</span></div>
+        <div class="a100-row"><span class="a100-k">Projekt-Zusammenfassung</span><span class="a100-v">PROJEKT-ZUSAMMENFASSUNG.md</span></div>
+        <div class="a100-sep"></div>
+        <div class="a100-row"><span class="a100-k">Alle Dateien</span><span class="a100-v">C:\Users\peter\claude-Projekte\100blend\</span></div>
+      </div>
+
+      <!-- NÄCHSTE SCHRITTE -->
+      <div class="a100-card a100-wide">
+        <h3>✅ Status &amp; nächste Schritte</h3>
+        <ul class="a100-todo">
+          <li class="done">IQF-Anfragen gesendet (Nafoods, Lavifood, Antesco) — Juni 2026</li>
+          <li class="done">Rezeptur-% + Milchsorten finalisiert</li>
+          <li class="done">3 Franchise-Pakete vollständig kalkuliert</li>
+          <li class="done">CI final (Schwarz-Gold digital / Schiefergrau Container)</li>
+          <li class="done">100blend.com live auf GitHub Pages</li>
+          <li>IQF-Antworten abwarten → Fruchtpreise → COGS verfeinern</li>
+          <li>Master-Franchisenehmer Vietnam suchen (HCMC)</li>
+          <li>Franchisevertrag mit VN-Anwalt finalisieren (MoIT-Registrierung)</li>
+          <li>Markenschutz Vietnam beantragen</li>
+          <li>Becher-Branding + Größe final (400/500 ml)</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const _k100=atob('THV4Zm94MjAyNiE=');
+  function openPw100(){document.getElementById('pw100').classList.add('open');setTimeout(()=>document.getElementById('pw100-input').focus(),150)}
+  function closePw100(){document.getElementById('pw100').classList.remove('open');document.getElementById('pw100-input').value='';document.getElementById('pw100-err').textContent=''}
+  function checkPw100(){
+    if(document.getElementById('pw100-input').value===_k100){closePw100();document.getElementById('adm100-date').textContent=new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});document.getElementById('adm100').classList.add('open')}
+    else{document.getElementById('pw100-err').textContent='Falsches Passwort';document.getElementById('pw100-input').value='';document.getElementById('pw100-input').focus()}
+  }
+  function closeAdm100(){document.getElementById('adm100').classList.remove('open')}
+</script>
 
 <script>
   const LINES=[
