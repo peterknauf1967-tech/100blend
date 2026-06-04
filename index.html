@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100blend — Sinh tố trái cây cao cấp · 100% Trái cây. Không đá. Không đường.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,600;0,700;1,400&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --black:#0E0E0B;--espresso:#211B12;
+    --gold:#C2A14D;--gold-lt:#E8D08A;--gold-dk:#8E6F2C;
+    --foil:linear-gradient(135deg,#EFDCA0 0%,#C8A658 38%,#9A7B2E 62%,#E6CC82 100%);
+    --green:#2C5A3B;--green-dk:#15301F;--green-br:#6E9D6F;
+    --cream:#F4EEE2;--paper:#FBF7EE;--stone:#D8CFBE;
+    --serif:'Bodoni Moda',Georgia,serif;--sans:'Be Vietnam Pro',system-ui,sans-serif;
+  }
+  html{scroll-behavior:smooth}
+  body{background:var(--black);color:var(--cream);font-family:var(--sans);font-weight:300;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  h1{font-family:var(--serif);font-weight:700;line-height:1.1}
+  h2{font-family:var(--sans);font-weight:700;line-height:1.18;letter-spacing:-.01em}
+  .gold{background:var(--foil);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 1.6rem}
+  .leaf{width:1em;height:1.3em;vertical-align:-0.18em}
+
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1rem 1.6rem;background:linear-gradient(180deg,rgba(14,14,11,.96),rgba(14,14,11,.75) 70%,transparent);backdrop-filter:blur(6px)}
+  .brand{display:flex;align-items:center;gap:.5rem;font-family:var(--serif);font-size:1.5rem;font-weight:700;text-decoration:none}
+  .brand .b2{color:var(--cream);font-weight:400}
+  .navright{display:flex;align-items:center;gap:1.4rem}
+  .navlinks{display:flex;gap:1.6rem;list-style:none;align-items:center}
+  .navlinks a{color:var(--stone);text-decoration:none;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;transition:color .2s}
+  .navlinks a:hover{color:var(--gold-lt)}
+  .langtoggle{display:flex;border:1px solid var(--gold-dk);border-radius:30px;overflow:hidden}
+  .langtoggle button{background:transparent;border:none;color:var(--stone);padding:.35rem .7rem;font-family:var(--sans);font-size:.72rem;font-weight:600;letter-spacing:.06em;cursor:pointer}
+  .langtoggle button.active{background:var(--foil);color:var(--black)}
+  .cta{background:var(--foil);color:var(--black)!important;padding:.55rem 1.1rem;border-radius:2px;font-weight:600;text-decoration:none;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase}
+  .cta:hover{filter:brightness(1.08)}
+
+  #hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:7rem 1.6rem 4rem;position:relative;background:radial-gradient(circle at 50% 30%,rgba(110,157,111,.10),transparent 55%),radial-gradient(circle at 50% 80%,rgba(194,161,77,.08),transparent 50%)}
+  .hero-leaf{width:54px;height:70px;margin-bottom:1.5rem;opacity:.95}
+  #hero h1{font-size:clamp(3.2rem,11vw,7rem);margin-bottom:.3rem}
+  .hero-sub{font-weight:500;letter-spacing:.36em;text-transform:uppercase;font-size:clamp(.6rem,1.6vw,.78rem);color:var(--gold-lt);margin-bottom:2.2rem;padding-left:.36em}
+  .hero-claim{font-family:var(--sans);font-weight:500;font-size:clamp(1.5rem,4.5vw,2.5rem);color:var(--cream);max-width:820px;margin:0 auto 1rem}
+  .hero-claim b{font-weight:800;color:var(--gold-lt)}
+  .hero-micro{color:var(--green-br);letter-spacing:.14em;text-transform:uppercase;font-size:.7rem;margin-bottom:2.4rem}
+  .btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;align-items:center}
+  .btn{display:inline-block;padding:.9rem 2rem;border-radius:2px;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;font-weight:600;transition:all .2s;cursor:pointer;border:none;font-family:var(--sans)}
+  .btn-gold{background:var(--foil);color:var(--black)}
+  .btn-gold:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  .btn-ghost{border:1px solid rgba(216,207,190,.35);color:var(--cream)}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold-lt)}
+  .hero-frline{margin-top:1.4rem;font-size:.84rem;color:var(--stone);letter-spacing:.03em}
+  .hero-frline b{color:var(--gold-lt);font-weight:700}
+
+  section{padding:6rem 0}
+  .eyebrow{font-weight:600;letter-spacing:.28em;text-transform:uppercase;font-size:.7rem;color:var(--gold);margin-bottom:1rem;text-align:center}
+  .sec-title{font-size:clamp(2rem,5vw,3.2rem);text-align:center;margin-bottom:1rem}
+  .sec-intro{text-align:center;max-width:660px;margin:0 auto;color:var(--stone)}
+
+  #promise{background:var(--cream);color:var(--espresso)}
+  #promise .eyebrow{color:var(--green)}
+  #promise .sec-title{color:var(--green-dk)}
+  .promise-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.6rem;margin-top:3rem}
+  .pcard{background:var(--paper);border:1px solid rgba(46,90,59,.15);border-radius:6px;padding:2rem;text-align:center}
+  .pcard .num{font-family:var(--serif);font-size:2.6rem;font-weight:700;color:var(--green);line-height:1}
+  .pcard .num .gp{background:var(--foil);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .pcard h3{font-family:var(--sans);font-weight:600;font-size:1.15rem;color:var(--green-dk);margin:.6rem 0 .4rem}
+  .pcard p{font-size:.86rem;color:#5b5346}
+
+  #menu{background:var(--black)}
+  .lines{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:2.2rem 0 1rem}
+  .line-btn{background:transparent;border:1px solid rgba(216,207,190,.2);color:var(--stone);padding:.5rem 1.2rem;border-radius:30px;font-family:var(--sans);font-size:.78rem;letter-spacing:.03em;cursor:pointer;transition:all .2s}
+  .line-btn:hover{border-color:var(--gold-dk);color:var(--gold-lt)}
+  .line-btn.active{background:var(--foil);color:var(--black);border-color:transparent;font-weight:600}
+  .menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1.2rem;margin-top:1.5rem}
+  .m{border:1px solid rgba(194,161,77,.22);border-radius:6px;padding:1.5rem;background:linear-gradient(160deg,rgba(33,27,18,.6),rgba(14,14,11,.6));transition:border-color .25s,transform .25s}
+  .m:hover{border-color:var(--gold);transform:translateY(-3px)}
+  .m-tag{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--green-br)}
+  .m h3{font-family:var(--sans);font-weight:600;font-size:1.25rem;color:var(--cream);margin:.2rem 0}
+  .m .sub{font-family:var(--sans);font-weight:400;font-style:italic;font-size:.86rem;color:var(--gold-lt);margin-bottom:.5rem;min-height:1.2em}
+  .m .ing{font-size:.84rem;color:var(--stone);min-height:2.4em}
+  .m .price{margin-top:.9rem;padding-top:.8rem;border-top:1px solid rgba(194,161,77,.18);font-family:var(--serif);font-size:1.05rem;color:var(--gold-lt);font-weight:600}
+  .m .price small{font-family:var(--sans);font-weight:400;color:var(--stone);font-size:.66rem;letter-spacing:.06em}
+  .menu-note{text-align:center;color:var(--stone);font-size:.84rem;margin-top:2.5rem;max-width:700px;margin-left:auto;margin-right:auto}
+  .menu-note b{color:var(--gold-lt);font-weight:500}
+
+  #stand{background:var(--green-dk)}
+  .stand-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:3rem;align-items:center}
+  .stand-grid img{width:100%;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+  #stand .eyebrow{color:var(--gold-lt);text-align:left}
+  #stand h2{font-size:clamp(1.8rem,4vw,2.8rem);text-align:left;color:var(--cream);margin-bottom:1.2rem}
+  #stand p{color:#cdd8cf;margin-bottom:1rem}
+  .stand-feats{list-style:none;margin-top:1.2rem;display:flex;flex-direction:column;gap:.6rem}
+  .stand-feats li{padding-left:1.6rem;position:relative;color:var(--cream);font-size:.92rem}
+  .stand-feats li::before{content:'';position:absolute;left:0;top:.55em;width:8px;height:8px;background:var(--foil);border-radius:50%}
+
+  #franchise{background:linear-gradient(160deg,#1a1407,#0E0E0B);color:var(--cream);text-align:center;border-top:1px solid rgba(194,161,77,.25)}
+  #franchise .eyebrow{color:var(--gold)}
+  #franchise .sec-title{color:var(--cream)}
+  #franchise .sec-title em{font-style:italic}
+  .fr-vi{font-weight:600;color:var(--gold-lt);font-size:1.05rem;letter-spacing:.02em;margin-bottom:1.4rem}
+  .fr-price{margin:2.2rem auto 1rem;display:inline-block;padding:1.6rem 2.6rem;border:1px solid var(--gold-dk);border-radius:8px;background:rgba(194,161,77,.06)}
+  .fr-price .lbl{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stone);margin-bottom:.4rem}
+  .fr-price .v{font-family:var(--serif);font-weight:700;font-size:clamp(2.4rem,7vw,3.6rem);line-height:1}
+  .fr-price .vi{font-size:.9rem;color:var(--gold-lt);margin-top:.3rem;letter-spacing:.04em}
+  .fr-price .eur{font-size:.78rem;color:var(--stone);margin-top:.2rem}
+  .fr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1.2rem;margin:2.6rem 0}
+  .fr-stat{background:rgba(255,255,255,.03);border:1px solid rgba(194,161,77,.18);border-radius:6px;padding:1.6rem 1.2rem}
+  .fr-stat .v{font-family:var(--sans);font-size:1.7rem;font-weight:700;color:var(--gold-lt)}
+  .fr-stat .l{font-size:.76rem;color:var(--stone);letter-spacing:.03em;margin-top:.3rem}
+  .fr-note{font-size:.76rem;color:#8a8270;max-width:640px;margin:1.4rem auto 0}
+  .btn-xl{padding:1.1rem 2.8rem;font-size:.86rem}
+
+  .float-fr{position:fixed;right:1.2rem;bottom:1.2rem;z-index:200;display:flex;align-items:center;gap:.5rem;background:var(--foil);color:var(--black);padding:.85rem 1.4rem;border-radius:40px;text-decoration:none;font-family:var(--sans);font-weight:700;font-size:.85rem;letter-spacing:.03em;box-shadow:0 8px 28px rgba(0,0,0,.45);animation:pulse 2.6s infinite}
+  .float-fr:hover{filter:brightness(1.08);transform:translateY(-2px)}
+  @keyframes pulse{0%{box-shadow:0 8px 28px rgba(0,0,0,.45),0 0 0 0 rgba(194,161,77,.5)}70%{box-shadow:0 8px 28px rgba(0,0,0,.45),0 0 0 16px rgba(194,161,77,0)}100%{box-shadow:0 8px 28px rgba(0,0,0,.45),0 0 0 0 rgba(194,161,77,0)}}
+
+  footer{background:var(--black);text-align:center;padding:5rem 1.6rem 3rem;border-top:1px solid rgba(194,161,77,.2)}
+  footer .brand{justify-content:center;font-size:2rem;margin-bottom:1rem}
+  footer p{color:var(--stone);font-size:.85rem;max-width:520px;margin:0 auto .4rem}
+  footer a{color:var(--gold-lt);text-decoration:none}
+  .concept-tag{margin-top:2rem;font-size:.7rem;color:#5a5347;letter-spacing:.08em}
+
+  @media(max-width:820px){
+    .navlinks{display:none}section{padding:4.5rem 0}
+    .stand-grid{grid-template-columns:1fr}
+    .float-fr span.lng{display:none}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute"><defs><symbol id="leaf" viewBox="0 0 40 52">
+  <path d="M20 2.5 C32 13.5,32.5 37,20 49.5 C7.5 37,8 13.5,20 2.5 Z" fill="currentColor"/>
+  <g fill="none" stroke="rgba(14,14,11,.35)" stroke-width="1.6" stroke-linecap="round">
+    <path d="M20 6 C20 20,20 34,20 46"/><path d="M20 14.5 Q26.5 12 31 7.5"/><path d="M20 23 Q27.5 21 32.5 16"/>
+    <path d="M20 31 Q27 29.5 31.5 25"/><path d="M20 14.5 Q13.5 12 9 7.5"/><path d="M20 23 Q12.5 21 7.5 16"/><path d="M20 31 Q13 29.5 8.5 25"/>
+  </g></symbol></defs></svg>
+
+<nav>
+  <a class="brand" href="#hero"><svg class="leaf" style="color:var(--gold)"><use href="#leaf"/></svg><span><span class="gold">100</span><span class="b2">blend</span></span></a>
+  <div class="navright">
+    <ul class="navlinks">
+      <li><a href="#promise" data-vi="Thương hiệu" data-en="Brand">Thương hiệu</a></li>
+      <li><a href="#menu" data-vi="Thực đơn" data-en="Menu">Thực đơn</a></li>
+      <li><a href="#stand" data-vi="Gian hàng" data-en="The Stand">Gian hàng</a></li>
+    </ul>
+    <div class="langtoggle" id="langtoggle">
+      <button data-setlang="vi" class="active">VI</button>
+      <button data-setlang="en">EN</button>
+    </div>
+    <a href="#franchise" class="cta" data-vi="Nhượng quyền" data-en="Franchise">Nhượng quyền</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <svg class="hero-leaf" style="color:var(--gold)"><use href="#leaf"/></svg>
+  <h1><span class="gold">100</span>blend</h1>
+  <div class="hero-sub">Sinh tố trái cây cao cấp · Premium Fruit Smoothies</div>
+  <p class="hero-claim" data-vi="<b>100% Trái cây.</b> Không đá. Không đường." data-en="<b>100% Fruit.</b> No Ice. No Sugar."><b>100% Trái cây.</b> Không đá. Không đường.</p>
+  <p class="hero-micro" data-vi="100% cấp đông tươi = 100% vitamin = 100% hương vị" data-en="100% frozen fresh = 100% vitamins = 100% taste">100% cấp đông tươi = 100% vitamin = 100% hương vị</p>
+  <div class="btns">
+    <a href="#franchise" class="btn btn-gold" data-vi="Trở thành đối tác nhượng quyền" data-en="Become a Franchise Partner">Trở thành đối tác nhượng quyền</a>
+    <a href="#menu" class="btn btn-ghost" data-vi="Xem thực đơn" data-en="See the Menu">Xem thực đơn</a>
+  </div>
+  <p class="hero-frline" data-vi="🇻🇳 Nhượng quyền 100blend — khởi đầu <b>chỉ từ 120 triệu VND</b>" data-en="🇻🇳 100blend franchise — start <b>from just 120 million VND</b>">🇻🇳 Nhượng quyền 100blend — khởi đầu <b>chỉ từ 120 triệu VND</b></p>
+</section>
+
+<!-- VERSPRECHEN -->
+<section id="promise">
+  <div class="wrap">
+    <div class="eyebrow" data-vi="Cam kết của 100blend" data-en="The 100blend Promise">Cam kết của 100blend</div>
+    <h2 class="sec-title" data-vi="Sang trọng tinh tế. Thiên nhiên thuần khiết." data-en="Quiet Luxury. Pure Nature.">Sang trọng tinh tế. Thiên nhiên thuần khiết.</h2>
+    <p class="sec-intro" data-vi="Chỉ những trái cây chín hoàn hảo, được cấp đông nhanh mới vào máy xay siêu êm của chúng tôi. Không pha loãng bằng đá, không thêm đường — từng ml đều là sản phẩm thật." data-en="Only perfectly ripe, flash-frozen fruit goes into our ultra-quiet blender. No dilution with ice, no added sugar — every milliliter is real product.">Chỉ những trái cây chín hoàn hảo, được cấp đông nhanh mới vào máy xay siêu êm của chúng tôi. Không pha loãng bằng đá, không thêm đường — từng ml đều là sản phẩm thật.</p>
+    <div class="promise-grid">
+      <div class="pcard"><div class="num"><span class="gp">100%</span></div><h3 data-vi="Trái cây" data-en="Fruit">Trái cây</h3><p data-vi="Trái cây chín, cấp đông nhanh — không pha loãng." data-en="Ripe, flash-frozen fruit — nothing watered down.">Trái cây chín, cấp đông nhanh — không pha loãng.</p></div>
+      <div class="pcard"><div class="num">0</div><h3 data-vi="Đá. 0 Đường." data-en="Ice. 0 Sugar.">Đá. 0 Đường.</h3><p data-vi="Không pha loãng, không thêm đường. Thật sự nguyên chất." data-en="No dilution, no added sugar. Honestly pure.">Không pha loãng, không thêm đường. Thật sự nguyên chất.</p></div>
+      <div class="pcard"><div class="num"><span class="gp">4</span></div><h3 data-vi="Nền tùy chọn" data-en="Bases to choose">Nền tùy chọn</h3><p data-vi="Sữa yến mạch, hạnh nhân, sữa bò hoặc sữa chua — bạn chọn." data-en="Oat, almond, cow milk or yogurt — you decide.">Sữa yến mạch, hạnh nhân, sữa bò hoặc sữa chua — bạn chọn.</p></div>
+      <div class="pcard"><div class="num"><span class="gp">2027</span></div><h3 data-vi="Miễn thuế đường" data-en="Sugar-tax free">Miễn thuế đường</h3><p data-vi="Không thêm đường — được miễn thuế tiêu thụ đường của Việt Nam từ 2027." data-en="No added sugar — exempt from Vietnam's 2027 sugar tax.">Không thêm đường — được miễn thuế tiêu thụ đường của Việt Nam từ 2027.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- KARTE -->
+<section id="menu">
+  <div class="wrap">
+    <div class="eyebrow" data-vi="Thực đơn" data-en="The Menu">Thực đơn</div>
+    <h2 class="sec-title gold">30 Signature Smoothies</h2>
+    <p class="sec-intro" data-vi="Bốn dòng — Trái cây, Thể thao &amp; Thể hình, Giải khát và Thanh lọc. Signature 400 ml · Grande 500 ml." data-en="Four lines — Fruit, Sport &amp; Fitness, Refresh and Detox. Signature 400 ml · Grande 500 ml.">Bốn dòng — Trái cây, Thể thao &amp; Thể hình, Giải khát và Thanh lọc. Signature 400 ml · Grande 500 ml.</p>
+    <div class="lines" id="lines"></div>
+    <div class="menu-grid" id="grid"></div>
+    <p class="menu-note"><b id="menuNoteHook"></b> <span id="menuNoteText"></span></p>
+  </div>
+</section>
+
+<!-- STAND -->
+<section id="stand">
+  <div class="wrap">
+    <div class="stand-grid">
+      <img src="bilder/store_container-kiosk_100blend.png" alt="100blend container kiosk">
+      <div>
+        <div class="eyebrow" data-vi="Mô hình" data-en="The Format">Mô hình</div>
+        <h2 data-vi="Gian hàng container 100blend di động" data-en="The mobile 100blend kiosk">Gian hàng container 100blend di động</h2>
+        <p data-vi="Một gian hàng container sang trọng, đặt ở bất cứ đâu có khách — từ khu cao cấp đến chợ phiên. Cộng thêm giao hàng qua Grab." data-en="An elegant container stand, placed wherever the customers are — from premium districts to weekend markets. Plus delivery via Grab.">Một gian hàng container sang trọng, đặt ở bất cứ đâu có khách — từ khu cao cấp đến chợ phiên. Cộng thêm giao hàng qua Grab.</p>
+        <ul class="stand-feats">
+          <li data-vi="Gói nhượng quyền chìa khóa trao tay: container + máy xay chuyên nghiệp + cấp đông" data-en="Turnkey franchise package: container + pro blenders + freezing">Gói nhượng quyền chìa khóa trao tay: container + máy xay chuyên nghiệp + cấp đông</li>
+          <li data-vi="Trái cây cấp đông nhanh — chuỗi lạnh liên tục" data-en="Flash-frozen fruit — unbroken cold chain">Trái cây cấp đông nhanh — chuỗi lạnh liên tục</li>
+          <li data-vi="Tại chỗ &amp; qua Grab Delivery" data-en="On-site &amp; via Grab Delivery">Tại chỗ &amp; qua Grab Delivery</li>
+          <li data-vi="Lắp đặt không cần móng, di dời linh hoạt" data-en="No foundation needed, flexible to relocate">Lắp đặt không cần móng, di dời linh hoạt</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FRANCHISE -->
+<section id="franchise">
+  <div class="wrap">
+    <div class="eyebrow" data-vi="Nhượng quyền Việt Nam" data-en="Franchise Vietnam">Nhượng quyền Việt Nam</div>
+    <h2 class="sec-title" data-vi="100blend của riêng bạn" data-en="Your own 100blend">100blend của riêng bạn</h2>
+    <p class="fr-vi" data-vi="Nhượng quyền 100blend — Trở thành đối tác ngay hôm nay" data-en="Become a 100blend partner today">Nhượng quyền 100blend — Trở thành đối tác ngay hôm nay</p>
+    <p class="sec-intro" data-vi="Chìa khóa trao tay, tinh gọn và sinh lời nhanh. Bắt đầu với gian hàng 100blend của riêng bạn — đầu tư thấp, mô hình rõ ràng." data-en="Turnkey, lean and quickly profitable. Start your own 100blend kiosk — low entry, clear model.">Chìa khóa trao tay, tinh gọn và sinh lời nhanh. Bắt đầu với gian hàng 100blend của riêng bạn — đầu tư thấp, mô hình rõ ràng.</p>
+
+    <div class="fr-price">
+      <div class="lbl" data-vi="Khởi đầu chỉ từ" data-en="Starting from">Khởi đầu chỉ từ</div>
+      <div class="v gold">120<span style="font-size:.42em;font-family:var(--sans);font-weight:600"> triệu</span></div>
+      <div class="vi">120.000.000 VND</div>
+      <div class="eur" data-vi="≈ 4.400 € · Gói khởi đầu" data-en="≈ €4,400 · Starter package">≈ 4.400 € · Gói khởi đầu</div>
+    </div>
+
+    <div class="fr-stats">
+      <div class="fr-stat"><div class="v" data-vi="~25/ngày" data-en="~25/day">~25/ngày</div><div class="l" data-vi="Điểm hòa vốn (~21% công suất)" data-en="Break-even (~21% capacity)">Điểm hòa vốn (~21% công suất)</div></div>
+      <div class="fr-stat"><div class="v">1,8–5,7</div><div class="l" data-vi="Tháng hoàn vốn" data-en="Months payback">Tháng hoàn vốn</div></div>
+      <div class="fr-stat"><div class="v">100%</div><div class="l" data-vi="Trái cây — điểm khác biệt thật sự" data-en="Fruit — true differentiator">Trái cây — điểm khác biệt thật sự</div></div>
+      <div class="fr-stat"><div class="v">Grab</div><div class="l" data-vi="Tích hợp giao hàng" data-en="Delivery integrated">Tích hợp giao hàng</div></div>
+    </div>
+
+    <a href="#kontakt" class="btn btn-gold btn-xl" data-vi="Nhận hồ sơ nhượng quyền" data-en="Request franchise info">Nhận hồ sơ nhượng quyền</a>
+    <p class="fr-note" data-vi="Giá khởi đầu là mức &quot;từ&quot; (gói khởi đầu). Thông tin ý tưởng, tháng 6/2026 — để hoàn thiện, không phải cam kết lợi nhuận." data-en="Entry price is a 'from' value (starter package). Concept info, June 2026 — to be refined, not a binding return guarantee.">Giá khởi đầu là mức „từ" (gói khởi đầu). Thông tin ý tưởng, tháng 6/2026 — để hoàn thiện, không phải cam kết lợi nhuận.</p>
+  </div>
+</section>
+
+<!-- FOOTER / KONTAKT -->
+<footer id="kontakt">
+  <a class="brand" href="#hero"><svg class="leaf" style="color:var(--gold)"><use href="#leaf"/></svg><span><span class="gold">100</span>blend</span></a>
+  <p>Premium Fruit Smoothies · TP. Hồ Chí Minh, Việt Nam</p>
+  <p><span data-vi="Nhượng quyền &amp; Liên hệ:" data-en="Franchise &amp; Contact:">Nhượng quyền &amp; Liên hệ:</span> <a href="mailto:peter@luxfox.net">peter@luxfox.net</a> · WhatsApp <a href="https://wa.me/66962961811">+66 96 296 1811</a></p>
+  <p data-vi="Một dự án của Luxfox Limited (Hong Kong)" data-en="A project by Luxfox Limited (Hong Kong)">Một dự án của Luxfox Limited (Hong Kong)</p>
+  <p class="concept-tag" data-vi="⚠️ BẢN THẢO Ý TƯỞNG — sản phẩm, giá &amp; thông tin là đề xuất để hoàn thiện." data-en="⚠️ DRAFT CONCEPT — products, prices &amp; info are proposals to be refined.">⚠️ BẢN THẢO Ý TƯỞNG — sản phẩm, giá &amp; thông tin là đề xuất để hoàn thiện.</p>
+</footer>
+
+<a href="#franchise" class="float-fr">🥤 <span class="lng" data-vi="Nhượng quyền" data-en="Franchise">Nhượng quyền</span></a>
+
+<script>
+  const LINES=[
+    {k:"all",vi:"Tất cả",en:"All"},
+    {k:"Fruit",vi:"Trái cây",en:"Fruit"},
+    {k:"Sport",vi:"Thể thao",en:"Sport & Fitness"},
+    {k:"Refresh",vi:"Giải khát",en:"Refresh"},
+    {k:"Detox",vi:"Thanh lọc",en:"Detox"},
+  ];
+  const M=[
+    {l:"Fruit",vi:{n:"Xoài Vàng",s:"Giờ Vàng",i:"Xoài, chuối, cam"},en:{n:"Golden Mango",s:"Golden Hour",i:"Mango, banana, orange"},p:"65.000 / 85.000"},
+    {l:"Fruit",vi:{n:"Rồng Hồng",s:"Thanh Long Đỏ",i:"Thanh long đỏ, dâu, chuối, dừa"},en:{n:"Pink Dragon",s:"Pink Pitaya",i:"Pink dragon fruit, strawberry, banana, coconut"},p:"75.000 / 95.000"},
+    {l:"Fruit",vi:{n:"Sinh Tố Bơ",s:"Kem Bơ",i:"Bơ, chuối, nền tùy chọn"},en:{n:"Avocado Crème",s:"Sinh Tố Bơ",i:"Avocado, banana, your base"},p:"70.000 / 90.000"},
+    {l:"Fruit",vi:{n:"Mãng Cầu Sương",s:"Giấc Mơ",i:"Mãng cầu, sữa chua, chanh"},en:{n:"Soursop Dream",s:"Sương Mù",i:"Soursop, yogurt, lime"},p:"75.000 / 95.000"},
+    {l:"Fruit",vi:{n:"Bình Minh Chanh Dây",s:"",i:"Chanh dây, xoài, dứa"},en:{n:"Passion Sunrise",s:"",i:"Passion fruit, mango, pineapple"},p:"70.000 / 90.000"},
+    {l:"Fruit",vi:{n:"Vàng Rừng",s:"Mix Berry",i:"Dâu, việt quất, mâm xôi, chuối"},en:{n:"Forest Gold",s:"Mixed Berry",i:"Strawberry, blueberry, raspberry, banana"},p:"70.000 / 90.000"},
+    {l:"Fruit",vi:{n:"Kem Đảo",s:"Dứa Dừa",i:"Dứa, dừa, chuối"},en:{n:"Island Crème",s:"Pineapple Coconut",i:"Pineapple, coconut, banana"},p:"65.000 / 85.000"},
+    {l:"Sport",vi:{n:"Sức Mạnh Vàng Đen",s:"Whey Socola +Creatine",i:"Whey socola, chuối, sữa yến mạch, bơ đậu phộng, 3g creatine"},en:{n:"Black Gold Power",s:"Chocolate Protein +Creatine",i:"Choc protein, banana, oat milk, peanut butter, 3g creatine"},p:"165.000"},
+    {l:"Sport",vi:{n:"Phục Hồi Dâu",s:"Whey +Creatine",i:"Dâu, chuối, whey vani, sữa chua, 3g creatine"},en:{n:"Strawberry Recovery",s:"Protein +Creatine",i:"Strawberry, banana, vanilla protein, yogurt, 3g creatine"},p:"160.000"},
+    {l:"Sport",vi:{n:"VĐV Açaí",s:"",i:"Açaí, chuối, whey, sữa hạnh nhân"},en:{n:"Açaí Athlete",s:"",i:"Açaí, banana, protein, almond milk"},p:"170.000"},
+    {l:"Sport",vi:{n:"Mây Xanh",s:"Tảo Xoắn Xanh",i:"Tảo xoắn xanh, nước cốt dừa (MCT), chuối, whey"},en:{n:"Blue Cloud",s:"Blue Spirulina",i:"Blue spirulina, coconut milk (MCT), banana, protein"},p:"175.000"},
+    {l:"Sport",vi:{n:"Tăng Cơ No.7",s:"Mass Gainer",i:"Bơ đậu phộng, chuối, yến mạch, sữa, whey"},en:{n:"Build No.7",s:"Mass Gainer",i:"Peanut butter, banana, oats, milk, protein"},p:"165.000"},
+    {l:"Sport",vi:{n:"Sức Bền Xanh",s:"Thuần Chay",i:"Cải bó xôi, dứa, chuối, đạm thực vật, sữa hạnh nhân"},en:{n:"Green Performance",s:"Vegan",i:"Spinach, pineapple, banana, pea/hemp protein, almond milk"},p:"160.000"},
+    {l:"Sport",vi:{n:"Động Lực Espresso",s:"Cà Phê Protein",i:"Cà phê cold brew, chuối, whey socola, sữa yến mạch"},en:{n:"Espresso Drive",s:"Coffee Protein",i:"Cold brew, banana, choc protein, oat milk"},p:"160.000"},
+    {l:"Sport",vi:{n:"Tái Tạo Anh Đào",s:"Anh Đào Chua",i:"Anh đào chua, chuối, sữa chua, whey"},en:{n:"Cherry Regeneration",s:"Tart Cherry",i:"Tart cherry, banana, yogurt, protein"},p:"160.000"},
+    {l:"Refresh",vi:{n:"Dưa & Bạc Hà",s:"Dưa Hấu Mát",i:"Dưa hấu, dâu, bạc hà, chanh"},en:{n:"Melon & Mint",s:"Watermelon Cooler",i:"Watermelon, strawberry, mint, lime"},p:"55.000 / 75.000"},
+    {l:"Refresh",vi:{n:"Gương Xanh",s:"Dưa Leo Chanh",i:"Dưa leo, chanh, bạc hà, nước dừa"},en:{n:"Green Mirror",s:"Cucumber Lime",i:"Cucumber, lime, mint, coconut water"},p:"55.000 / 75.000"},
+    {l:"Refresh",vi:{n:"Bùng Nổ Điện Giải",s:"",i:"Nước dừa, dứa, chanh"},en:{n:"Electrolyte Splash",s:"",i:"Coconut water, pineapple, lime"},p:"60.000 / 80.000"},
+    {l:"Refresh",vi:{n:"Xoài Chanh Dây Mát",s:"",i:"Xoài, chanh dây, nước dừa"},en:{n:"Mango Passion Refresher",s:"",i:"Mango, passion fruit, coconut water"},p:"65.000 / 85.000"},
+    {l:"Refresh",vi:{n:"Vải & Hoa Hồng",s:"Vải Hoa Hồng",i:"Vải, hoa hồng, chanh, nước dừa"},en:{n:"Lychee & Rose",s:"Lychee Rose Cooler",i:"Lychee, rose, lime, coconut water"},p:"75.000 / 95.000"},
+    {l:"Refresh",vi:{n:"Nắng Cam",s:"",i:"Cam, quýt, cà rốt, gừng"},en:{n:"Citrus Sunshine",s:"",i:"Orange, mandarin, carrot, ginger"},p:"60.000 / 80.000"},
+    {l:"Refresh",vi:{n:"Việt Quất Oải Hương",s:"Spritz",i:"Việt quất, oải hương, chanh, nước dừa"},en:{n:"Lavender Berry",s:"Spritz",i:"Blueberry, lavender, lime, coconut water"},p:"75.000 / 95.000"},
+    {l:"Detox",vi:{n:"Khởi Động Xanh",s:"Detox Xanh",i:"Cải bó xôi, dưa leo, táo xanh, cần tây, gừng"},en:{n:"Green Reset",s:"Classic Green Detox",i:"Spinach, cucumber, green apple, celery, ginger"},p:"75.000 / 95.000"},
+    {l:"Detox",vi:{n:"Dứa Probiotic",s:"Lợi Khuẩn",i:"Dứa, sữa chua probiotic, chuối"},en:{n:"Probiotic Pineapple",s:"Gut-Health",i:"Pineapple, probiotic yogurt, banana"},p:"85.000 / 110.000"},
+    {l:"Detox",vi:{n:"Nghệ Vàng",s:"Rạng Rỡ",i:"Nghệ, xoài, gừng, nước cốt dừa, tiêu"},en:{n:"Golden Turmeric",s:"Golden Glow",i:"Turmeric, mango, ginger, coconut milk, pepper"},p:"85.000 / 110.000"},
+    {l:"Detox",vi:{n:"Tím Thẳm",s:"Chống Oxy Hóa",i:"Việt quất, açaí, lựu, chuối"},en:{n:"Deep Violet",s:"Berry Antioxidant",i:"Blueberry, açaí, pomegranate, banana"},p:"95.000 / 120.000"},
+    {l:"Detox",vi:{n:"Chùm Ngây Nhiệt Đới",s:"Thanh Lọc",i:"Chùm ngây, dứa, xoài, cải bó xôi"},en:{n:"Moringa Tropic",s:"Tropical Cleanse",i:"Moringa, pineapple, mango, spinach"},p:"90.000 / 115.000"},
+    {l:"Detox",vi:{n:"Chất Xơ Chia",s:"Detox Chất Xơ",i:"Hạt chia, dâu, chanh vàng, táo"},en:{n:"Chia Fiber",s:"Fiber Detox",i:"Chia, strawberry, lemon, apple"},p:"85.000 / 110.000"},
+    {l:"Detox",vi:{n:"Hồi Sinh Củ Dền",s:"Củ Dền",i:"Củ dền, táo, gừng, cà rốt"},en:{n:"Beet Revival",s:"Beet Root Reviver",i:"Beetroot, apple, ginger, carrot"},p:"85.000 / 110.000"},
+    {l:"Detox",vi:{n:"Khoáng Rong Biển",s:"Khoáng Chất",i:"Gel rong biển, xoài, dứa, chanh"},en:{n:"Sea Moss Mineral",s:"Mineral Cleanse",i:"Sea moss gel, mango, pineapple, lime"},p:"95.000 / 120.000"},
+  ];
+  const NOTE={
+    vi:{hook:'"Không đá. Không nước. Chỉ trái cây."',text:"400 ml no bụng như ly 500–600 ml của nơi khác. Giá tính bằng VND · 1 € ≈ 27.000 VND."},
+    en:{hook:'"No ice. No water. Just fruit."',text:"400 ml feels as filling as a 500–600 ml competitor cup. Prices in VND · 1 € ≈ 27,000 VND."},
+  };
+  let lang="vi", lineKey="all";
+  const grid=document.getElementById('grid'), linesEl=document.getElementById('lines');
+
+  function renderLines(){
+    linesEl.innerHTML=LINES.map(L=>`<button class="line-btn${L.k===lineKey?' active':''}" data-l="${L.k}">${L[lang]}</button>`).join('');
+  }
+  function render(){
+    grid.innerHTML=M.filter(x=>lineKey==="all"||x.l===lineKey).map(x=>{
+      const d=x[lang];const lineLbl=(LINES.find(L=>L.k===x.l)||{})[lang]||x.l;
+      return `<div class="m"><div class="m-tag">${lineLbl}</div><h3>${d.n}</h3><div class="sub">${d.s||'&nbsp;'}</div><div class="ing">${d.i}</div><div class="price">${x.p} <small>VND</small></div></div>`;
+    }).join('');
+  }
+  function applyLang(){
+    document.querySelectorAll('[data-vi]').forEach(el=>{const v=el.getAttribute('data-'+lang);if(v!==null)el.innerHTML=v;});
+    document.getElementById('menuNoteHook').textContent=NOTE[lang].hook;
+    document.getElementById('menuNoteText').textContent=NOTE[lang].text;
+    document.documentElement.lang=lang;
+    renderLines();render();
+  }
+  document.getElementById('langtoggle').addEventListener('click',e=>{
+    if(!e.target.dataset.setlang)return;lang=e.target.dataset.setlang;
+    document.querySelectorAll('#langtoggle button').forEach(b=>b.classList.toggle('active',b.dataset.setlang===lang));
+    applyLang();
+  });
+  linesEl.addEventListener('click',e=>{
+    if(!e.target.dataset.l)return;lineKey=e.target.dataset.l;render();
+    document.querySelectorAll('.line-btn').forEach(b=>b.classList.toggle('active',b.dataset.l===lineKey));
+  });
+  applyLang();
+</script>
+</body>
+</html>
