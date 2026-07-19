@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>100blend · Rezept-Verkostung</title>
+<style>
+  :root{--bg:#0f1419;--card:#1b232d;--line:#2b3742;--txt:#e8eef3;--mut:#9fb0bd;--gold:#C2A14D;--gold-lt:#E8D08A;--green:#36c08a;--red:#e06a5a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,'Segoe UI',Roboto,'Noto Sans Thai',Arial,sans-serif}
+  header{padding:24px 16px 4px;text-align:center}
+  h1{margin:0 0 2px;font-size:24px}h1 b{color:var(--gold-lt)}
+  .sub{color:var(--mut);font-size:13px}
+  .wrap{max-width:860px;margin:0 auto;padding:10px 14px 70px}
+  .tabs{display:flex;gap:8px;justify-content:center;margin:14px 0;flex-wrap:wrap}
+  .tabs button{background:var(--card);border:1px solid var(--line);color:var(--mut);padding:9px 16px;border-radius:24px;font-size:14px;cursor:pointer;font-weight:600}
+  .tabs button.act{background:var(--gold);border-color:var(--gold);color:#161006}
+  .pane{display:none}.pane.act{display:block}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0}
+  label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px;font-weight:600}
+  label small{color:#7a8b98;font-weight:400}
+  select,input[type=text],input[type=number],textarea{width:100%;background:#121a22;border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px;font-size:16px;font-family:inherit}
+  textarea{min-height:60px;resize:vertical}
+  .rec{background:#16202b;border-left:4px solid var(--gold);border-radius:8px;padding:12px 14px;margin-top:10px;font-size:14px}
+  .rec h3{margin:0 0 6px;font-size:15px;color:var(--gold-lt)}
+  .rec ul{margin:4px 0 0;padding-left:18px;color:var(--txt)}
+  .rec .meta{color:var(--mut);font-size:12.5px;margin-top:6px}
+  .slider-row{display:grid;grid-template-columns:1fr 64px;gap:10px;align-items:center;margin:2px 0 8px}
+  input[type=range]{width:100%;accent-color:var(--gold)}
+  .val{background:#121a22;border:1px solid var(--line);border-radius:8px;text-align:center;padding:6px 0;font-weight:700;color:var(--gold-lt)}
+  .btn{display:inline-block;background:var(--gold);color:#161006;border:none;border-radius:8px;padding:12px 22px;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--mut)}
+  .btn.red{background:transparent;border:1px solid var(--red);color:var(--red);padding:4px 10px;font-size:12px;margin:0}
+  .ok{color:var(--green);font-weight:700;margin-left:10px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+  th,td{border-bottom:1px solid var(--line);padding:7px 6px;text-align:left;vertical-align:top}
+  th{color:var(--gold-lt);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .num{text-align:center}
+  .checkline{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14px}
+  .checkline input{width:18px;height:18px;accent-color:var(--gold)}
+  .hint{color:var(--mut);font-size:12.5px;margin-top:4px}
+  .tablewrap{overflow-x:auto}
+  .rp{page-break-inside:avoid;border-bottom:1px solid var(--line);padding:10px 0}
+  .rp h3{margin:0;font-size:15px}.rp h3 span{color:var(--mut);font-weight:400;font-size:12px}
+  .rp p{margin:3px 0 0;font-size:13.5px;color:var(--txt)}
+  @media print{
+    body{background:#fff;color:#000;font-size:11pt}
+    .tabs,.btn,header .sub{display:none}
+    .card{border:none;padding:0}
+    .pane{display:none}.pane#p-rezepte{display:block!important}
+    .rp{border-bottom:1px solid #999}
+    .rp h3 span{color:#444}
+    h1 b{color:#000}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><b>100blend</b> Rezept-Verkostung</h1>
+  <div class="sub">Interne Testküche · 2 × 100 ml pro Rezept · Bewertung wird auf diesem Gerät gespeichert</div>
+</header>
+<div class="wrap">
+  <div class="tabs">
+    <button class="act" data-p="test">🥤 Verkosten</button>
+    <button data-p="ergebnis">📊 Ergebnisse</button>
+    <button data-p="rezepte">📋 Rezeptliste (Druck)</button>
+  </div>
+
+  <!-- VERKOSTUNG -->
+  <div class="pane act" id="p-test">
+    <div class="card">
+      <label>Blend auswählen <small>· เลือกเมนู</small></label>
+      <select id="blend"></select>
+      <div class="rec" id="recbox"></div>
+      <label>Tester/in <small>· ผู้ชิม</small></label>
+      <input type="text" id="tester" placeholder="Peter / Lexi / …">
+      <div class="checkline"><input type="checkbox" id="ginger"><span>Mit Ingwer-Boost (+5 g) getestet <small style="color:#7a8b98">· เพิ่มขิง</small></span></div>
+    </div>
+
+    <div class="card">
+      <div id="sliders"></div>
+      <label>Besonders positiv <small>· จุดเด่น</small></label>
+      <textarea id="pos" placeholder="Was ist richtig gut?"></textarea>
+      <label>Besonders negativ <small>· จุดด้อย</small></label>
+      <textarea id="neg" placeholder="Was stört?"></textarea>
+      <label>Kaufanreiz: Warum würdest du genau diesen wählen? <small>· ทำไมถึงเลือกแก้วนี้</small></label>
+      <textarea id="why" placeholder="Der eine Satz, der zum Kauf führt …"></textarea>
+      <label>Preisgefühl: Was wäre ein fairer Preis? (฿ für 400 ml) <small>· ราคาที่เหมาะสม</small></label>
+      <input type="number" id="fair" min="0" step="5" placeholder="z. B. 120">
+      <button class="btn" id="save">Bewertung speichern</button><span id="okmsg"></span>
+    </div>
+  </div>
+
+  <!-- ERGEBNISSE -->
+  <div class="pane" id="p-ergebnis">
+    <div class="card">
+      <h3 style="margin:0 0 6px">Durchschnitt je Blend (sortiert nach Gesamtgefühl)</h3>
+      <div class="tablewrap"><table id="avg"></table></div>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 6px">Alle Einzelbewertungen</h3>
+      <div class="tablewrap"><table id="alle"></table></div>
+      <button class="btn" id="csv">⬇️ Als CSV exportieren (Excel)</button>
+      <p class="hint">Die Daten liegen nur auf diesem Gerät (Browser-Speicher). Nach jeder Verkostungsrunde CSV exportieren und in die G-Ablage legen!</p>
+    </div>
+  </div>
+
+  <!-- REZEPTLISTE -->
+  <div class="pane" id="p-rezepte">
+    <div class="card">
+      <h3 style="margin:0">Experimente-Liste: alle 30 Blends · Testmenge ≈ 220–240 g ➜ 2 Becher à 100 ml</h3>
+      <p class="hint">Protein-Rezepte: 10 g Pulver statt voller Portion. Kreatin wird bei der Verkostung weggelassen (geschmacksneutral, unnötig teuer im Test). Mengen mit Küchenwaage abwiegen, Reihenfolge: Flüssiges zuerst in den Mixer. Drucken: Strg+P.</p>
+      <div id="reclist"></div>
+      <button class="btn" onclick="print()">🖨️ Drucken</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const R=[
+ {l:"Fruit",n:"Golden Mango",p:"120/150",z:["Mango 120 g","Banane 60 g","Orange (Saft/Filets) 50 g"]},
+ {l:"Fruit",n:"Pink Dragon",p:"120/150",z:["Pink Drachenfrucht 100 g","Erdbeere 50 g","Banane 40 g","Kokoswasser 40 ml"]},
+ {l:"Fruit",n:"Avocado Crème",p:"120/150",z:["Avocado 70 g","Banane 70 g","Basis nach Wahl (z. B. Hafermilch) 90 ml"]},
+ {l:"Fruit",n:"Soursop Dream",p:"120/150",z:["Soursop 120 g","Joghurt 70 g","Limettensaft 10 g"]},
+ {l:"Fruit",n:"Passion Sunrise",p:"120/150",z:["Passionsfrucht 60 g","Mango 90 g","Ananas 80 g"]},
+ {l:"Fruit",n:"Forest Gold",p:"120/150",z:["Erdbeere 60 g","Blaubeere 50 g","Himbeere 50 g","Banane 60 g"]},
+ {l:"Fruit",n:"Island Crème",p:"120/150",z:["Ananas 100 g","Kokosmilch 60 ml","Banane 60 g"]},
+ {l:"Sport",n:"Black Gold Power",p:"220",z:["Schoko-Protein 10 g","Banane 80 g","Hafermilch 100 ml","Erdnussbutter 15 g"]},
+ {l:"Sport",n:"Strawberry Recovery",p:"220",z:["Erdbeere 80 g","Banane 50 g","Vanille-Protein 10 g","Joghurt 60 g"]},
+ {l:"Sport",n:"Açaí Athlete",p:"220",z:["Açaí-Püree 80 g","Banane 60 g","Protein 10 g","Mandelmilch 80 ml"]},
+ {l:"Sport",n:"Blue Cloud",p:"220",z:["Blaue Spirulina 1 g","Kokosmilch 80 ml","Banane 80 g","Protein 10 g"]},
+ {l:"Sport",n:"Build No.7",p:"220",z:["Erdnussbutter 15 g","Banane 70 g","Haferflocken 15 g","Milch 100 ml","Protein 10 g"]},
+ {l:"Sport",n:"Green Performance",p:"220",z:["Spinat 25 g","Ananas 80 g","Banane 60 g","Erbsen/Hanf-Protein 10 g","Mandelmilch 60 ml"]},
+ {l:"Sport",n:"Espresso Drive",p:"220",z:["Cold Brew 60 ml","Banane 70 g","Schoko-Protein 10 g","Hafermilch 70 ml"]},
+ {l:"Sport",n:"Cherry Regeneration",p:"220",z:["Sauerkirsche 90 g","Banane 50 g","Joghurt 60 g","Protein 10 g"]},
+ {l:"Refresh",n:"Melon & Mint",p:"110/140",z:["Wassermelone 140 g","Erdbeere 40 g","Minze 3 g","Limettensaft 10 g"]},
+ {l:"Refresh",n:"Green Mirror",p:"110/140",z:["Gurke 100 g","Limettensaft 10 g","Minze 3 g","Kokoswasser 90 ml"]},
+ {l:"Refresh",n:"Electrolyte Splash",p:"110/140",z:["Kokoswasser 110 ml","Ananas 90 g","Limettensaft 10 g"]},
+ {l:"Refresh",n:"Mango Passion Refresher",p:"110/140",z:["Mango 90 g","Passionsfrucht 50 g","Kokoswasser 70 ml"]},
+ {l:"Refresh",n:"Lychee & Rose",p:"110/140",z:["Litschi 100 g","Rosenwasser 5 ml","Limettensaft 10 g","Kokoswasser 90 ml"]},
+ {l:"Refresh",n:"Citrus Sunshine",p:"110/140",z:["Orange 90 g","Mandarine 60 g","Karotte 50 g","Ingwer 8 g"]},
+ {l:"Refresh",n:"Lavender Berry",p:"110/140",z:["Blaubeere 90 g","Lavendel 1 g","Limettensaft 10 g","Kokoswasser 100 ml"]},
+ {l:"Detox",n:"Green Reset",p:"150/190",z:["Spinat 30 g","Gurke 70 g","Grüner Apfel 70 g","Sellerie 40 g","Ingwer 8 g"]},
+ {l:"Detox",n:"Probiotic Pineapple",p:"150/190",z:["Ananas 100 g","Probiotischer Joghurt 80 g","Banane 40 g"]},
+ {l:"Detox",n:"Golden Turmeric",p:"150/190",z:["Kurkuma 4 g","Mango 100 g","Ingwer 6 g","Kokosmilch 90 ml","Prise schwarzer Pfeffer"]},
+ {l:"Detox",n:"Deep Violet",p:"150/190",z:["Blaubeere 70 g","Açaí 60 g","Granatapfel 50 g","Banane 50 g"]},
+ {l:"Detox",n:"Moringa Tropic",p:"150/190",z:["Moringa-Pulver 3 g","Ananas 80 g","Mango 80 g","Spinat 25 g","Wasser 40 ml"]},
+ {l:"Detox",n:"Chia Fiber",p:"150/190",z:["Chiasamen 12 g","Erdbeere 80 g","Zitronensaft 10 g","Apfel 80 g","Wasser 50 ml"]},
+ {l:"Detox",n:"Beet Revival",p:"150/190",z:["Rote Beete 80 g","Apfel 80 g","Ingwer 8 g","Karotte 60 g"]},
+ {l:"Detox",n:"Sea Moss Mineral",p:"150/190",z:["Sea-Moss-Gel 15 g","Mango 80 g","Ananas 80 g","Limettensaft 10 g","Wasser 40 ml"]},
+];
+const CRIT=[
+ ["optik","Optik / Farbe","รูปลักษณ์"],
+ ["geschmack","Geschmack","รสชาติ"],
+ ["konsistenz","Konsistenz","เนื้อสัมผัส"],
+ ["mund","Mundgefühl","สัมผัสในปาก"],
+ ["wow","Überraschungseffekt","ความว้าว"],
+ ["pl","Preis-Leistung (zum Kartenpreis)","ความคุ้มค่า"],
+ ["kauf","Kaufwahrscheinlichkeit","โอกาสซื้อ"],
+ ["gesamt","Gesamtgefühl","ความรู้สึกโดยรวม"],
+];
+const KEY="blend_verkostung_v1";
+const load=()=>JSON.parse(localStorage.getItem(KEY)||"[]");
+const store=d=>localStorage.setItem(KEY,JSON.stringify(d));
+
+// UI Aufbau
+const sel=document.getElementById('blend');
+R.forEach((r,i)=>sel.insertAdjacentHTML('beforeend',`<option value="${i}">${String(i+1).padStart(2,'0')} · ${r.n} (${r.l})</option>`));
+const sliders=document.getElementById('sliders');
+CRIT.forEach(([k,de,th])=>{
+  sliders.insertAdjacentHTML('beforeend',
+   `<label>${de} <small>· ${th} · 1–10</small></label>
+    <div class="slider-row"><input type="range" min="1" max="10" value="5" id="s_${k}"><div class="val" id="v_${k}">5</div></div>`);
+  document.getElementById('s_'+k).addEventListener('input',e=>document.getElementById('v_'+k).textContent=e.target.value);
+});
+function showRec(){
+  const r=R[sel.value];
+  document.getElementById('recbox').innerHTML=
+   `<h3>${r.n} <span style="color:#9fb0bd;font-weight:400">· Linie ${r.l} · Kartenpreis ฿${r.p}</span></h3>
+    <ul>${r.z.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <div class="meta">Testmenge ➜ ca. 2 × 100 ml. Flüssiges zuerst, dann Gefrorenes. Sport-Blends: ohne Kreatin testen.</div>`;
+}
+sel.addEventListener('change',showRec);showRec();
+
+// Speichern
+document.getElementById('save').addEventListener('click',()=>{
+  const r=R[sel.value];
+  const e={ts:new Date().toISOString().slice(0,16).replace('T',' '),blend:r.n,linie:r.l,
+    tester:document.getElementById('tester').value||'?',
+    ingwer:document.getElementById('ginger').checked?'ja':'nein',
+    pos:document.getElementById('pos').value,neg:document.getElementById('neg').value,
+    why:document.getElementById('why').value,fair:document.getElementById('fair').value};
+  CRIT.forEach(([k])=>e[k]=+document.getElementById('s_'+k).value);
+  const d=load();d.push(e);store(d);
+  document.getElementById('okmsg').textContent='✔ gespeichert';document.getElementById('okmsg').className='ok';
+  setTimeout(()=>document.getElementById('okmsg').textContent='',2500);
+  ['pos','neg','why','fair'].forEach(id=>document.getElementById(id).value='');
+  renderTables();
+});
+
+// Ergebnisse
+function renderTables(){
+  const d=load();
+  const byBlend={};
+  d.forEach(e=>{(byBlend[e.blend]=byBlend[e.blend]||[]).push(e)});
+  const rows=Object.entries(byBlend).map(([n,es])=>{
+    const avg=k=>(es.reduce((s,e)=>s+(+e[k]||0),0)/es.length).toFixed(1);
+    const fairs=es.filter(e=>e.fair).map(e=>+e.fair);
+    return {n,c:es.length,g:avg('gesamt'),ge:avg('geschmack'),o:avg('optik'),w:avg('wow'),pl:avg('pl'),k:avg('kauf'),
+      f:fairs.length?Math.round(fairs.reduce((a,b)=>a+b,0)/fairs.length):'–'};
+  }).sort((a,b)=>b.g-a.g);
+  document.getElementById('avg').innerHTML=
+   `<tr><th>Blend</th><th class="num">n</th><th class="num">Gesamt</th><th class="num">Geschm.</th><th class="num">Optik</th><th class="num">Wow</th><th class="num">P/L</th><th class="num">Kauf</th><th class="num">fair ฿</th></tr>`+
+   rows.map(r=>`<tr><td>${r.n}</td><td class="num">${r.c}</td><td class="num"><b>${r.g}</b></td><td class="num">${r.ge}</td><td class="num">${r.o}</td><td class="num">${r.w}</td><td class="num">${r.pl}</td><td class="num">${r.k}</td><td class="num">${r.f}</td></tr>`).join('')
+   ||'<tr><td>Noch keine Bewertungen.</td></tr>';
+  document.getElementById('alle').innerHTML=
+   `<tr><th>Datum</th><th>Blend</th><th>Tester</th><th class="num">Gesamt</th><th>Positiv</th><th>Negativ</th><th>Warum kaufen?</th><th></th></tr>`+
+   d.map((e,i)=>`<tr><td>${e.ts}</td><td>${e.blend}${e.ingwer==='ja'?' 🫚':''}</td><td>${e.tester}</td><td class="num">${e.gesamt}</td><td>${e.pos||''}</td><td>${e.neg||''}</td><td>${e.why||''}</td><td><button class="btn red" data-del="${i}">✕</button></td></tr>`).join('')
+   ||'<tr><td>Noch keine Bewertungen.</td></tr>';
+  document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
+    const d=load();d.splice(+b.dataset.del,1);store(d);renderTables();
+  }));
+}
+renderTables();
+
+// CSV Export
+document.getElementById('csv').addEventListener('click',()=>{
+  const d=load();if(!d.length)return alert('Noch keine Daten.');
+  const cols=['ts','blend','linie','tester','ingwer',...CRIT.map(c=>c[0]),'fair','pos','neg','why'];
+  const head=['Datum','Blend','Linie','Tester','IngwerBoost','Optik','Geschmack','Konsistenz','Mundgefuehl','Ueberraschung','PreisLeistung','Kaufwahrscheinlichkeit','Gesamt','FairerPreisTHB','Positiv','Negativ','WarumKaufen'];
+  const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const csv='﻿'+head.join(';')+'\n'+d.map(e=>cols.map(c=>esc(e[c])).join(';')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='100blend_Verkostung_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+});
+
+// Rezeptliste (Druck)
+document.getElementById('reclist').innerHTML=R.map((r,i)=>
+ `<div class="rp"><h3>${String(i+1).padStart(2,'0')} · ${r.n} <span>· ${r.l} · ฿${r.p}</span></h3><p>${r.z.join(' · ')}</p></div>`).join('');
+
+// Tabs
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('act'));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('act'));
+  b.classList.add('act');document.getElementById('p-'+b.dataset.p).classList.add('act');
+  if(b.dataset.p==='ergebnis')renderTables();
+}));
+</script>
+</body>
+</html>
