@@ -26,6 +26,18 @@
   .rec h3{margin:0 0 6px;font-size:15px;color:var(--gold-lt)}
   .rec ul{margin:4px 0 0;padding-left:18px;color:var(--txt)}
   .rec .meta{color:var(--mut);font-size:12.5px;margin-top:6px}
+  .ed-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:14px 0 6px}
+  .ed-head h3{margin:0;font-size:16px;color:var(--gold-lt)}
+  .ingrow{display:grid;grid-template-columns:1fr 72px 40px 32px;gap:6px;align-items:center;margin:5px 0}
+  .ingrow input{padding:8px}
+  .ingrow .ingamt{text-align:right}
+  .ingrow .ingunit{color:var(--mut);font-size:13px;text-align:center}
+  .ingrow .del{background:transparent;border:1px solid var(--red);color:var(--red);border-radius:6px;padding:6px 0;cursor:pointer;font-size:12px}
+  .ed-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .ed-actions button{font-size:13px;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--line);background:#16202b;color:var(--txt);font-weight:600}
+  .ed-total{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-weight:700}
+  .ed-total small{color:#9fb0bd;font-weight:400}
+  .delta{font-size:13px;font-weight:700}
   .slider-row{display:grid;grid-template-columns:1fr 64px;gap:10px;align-items:center;margin:2px 0 8px}
   input[type=range]{width:100%;accent-color:var(--gold)}
   .val{background:#121a22;border:1px solid var(--line);border-radius:8px;text-align:center;padding:6px 0;font-weight:700;color:var(--gold-lt)}
@@ -72,7 +84,8 @@
     <div class="card">
       <label>Blend auswählen <small>· เลือกเมนู</small></label>
       <select id="blend"></select>
-      <div class="rec" id="recbox"></div>
+      <div id="editor"></div>
+      <p class="hint">Zutaten während des Mixens frei anpassen. Nimmst du irgendwo weg, gib es woanders zu — die Anzeige sagt dir auf's Gramm, wie weit du vom Ziel bist. Die <b>tatsächlich gemixte</b> Rezeptur wird mit der Bewertung gespeichert.</p>
       <label>Tester/in <small>· ผู้ชิม</small></label>
       <input type="text" id="tester" placeholder="Peter / Lexi / …">
       <div class="checkline"><input type="checkbox" id="ginger"><span>Mit Ingwer-Boost (+5 g) getestet <small style="color:#7a8b98">· เพิ่มขิง</small></span></div>
@@ -182,14 +195,56 @@ CRIT.forEach(([k,de,th])=>{
     <div class="slider-row"><input type="range" min="1" max="10" value="5" id="s_${k}"><div class="val" id="v_${k}">5</div></div>`);
   document.getElementById('s_'+k).addEventListener('input',e=>document.getElementById('v_'+k).textContent=e.target.value);
 });
-function showRec(){
-  const r=R[sel.value];
-  document.getElementById('recbox').innerHTML=
-   `<h3>${r.n} <span style="color:#9fb0bd;font-weight:400">· Linie ${r.l} · Kartenpreis ฿${r.p}</span></h3>
-    <ul>${r.z.map(x=>`<li>${x}</li>`).join('')}</ul>
-    <div class="meta">Testmenge ➜ ca. 2 × 100 ml. Flüssiges zuerst, dann Gefrorenes. Sport-Blends: ohne Kreatin testen.</div>`;
+// --- Zutaten-Editor mit Mengen-Kontrolle ---
+let curIng=[], baseTotal=0;
+function parseIng(s){
+  const m=s.match(/^(.*?)[\s]+([\d]+(?:[.,]\d+)?)\s*(g|ml)$/i);
+  if(m) return {name:m[1].trim(), amt:parseFloat(m[2].replace(',','.')), unit:m[3].toLowerCase()};
+  return {name:s.trim(), amt:0, unit:''}; // z.B. "Prise schwarzer Pfeffer"
 }
-sel.addEventListener('change',showRec);showRec();
+function recTotal(){return curIng.reduce((s,x)=>s+(x.unit?(+x.amt||0):0),0);}
+function esc(v){return String(v).replace(/"/g,'&quot;');}
+function loadBlend(){
+  const r=R[sel.value];
+  curIng=r.z.map(parseIng);
+  baseTotal=recTotal();
+  renderEditor();
+}
+function deltaHTML(){
+  const d=Math.round(recTotal()-baseTotal);
+  if(d===0) return '<span class="delta" style="color:var(--green)">✔ genau am Ziel</span>';
+  if(d>0)   return `<span class="delta" style="color:var(--accent2)">+${d} g über Ziel · woanders wegnehmen</span>`;
+  return `<span class="delta" style="color:var(--red)">${-d} g fehlen · woanders zugeben</span>`;
+}
+function updateTotalLine(){
+  const el=document.getElementById('edTotal');
+  if(el) el.innerHTML=`<span>Summe: <b>${recTotal()} g</b> <small>≈ 2×100 ml · Ziel ${baseTotal} g</small></span>${deltaHTML()}`;
+}
+function renderEditor(){
+  const r=R[sel.value];
+  const rows=curIng.map((ing,i)=>
+    `<div class="ingrow"><input class="ingname" data-i="${i}" value="${esc(ing.name)}">`+
+    `<input class="ingamt" type="number" min="0" step="1" data-i="${i}" value="${ing.amt}" ${ing.unit?'':'disabled'}>`+
+    `<span class="ingunit">${ing.unit||'—'}</span>`+
+    `<button class="del" data-del="${i}">✕</button></div>`).join('');
+  document.getElementById('editor').innerHTML=
+    `<div class="ed-head"><h3>${r.n}</h3><span style="color:#9fb0bd;font-size:12px">Linie ${r.l} · Kartenpreis ฿${r.p}</span></div>`+
+    rows+
+    `<div class="ed-actions"><button id="addIng">+ Zutat</button><button id="resetIng">↺ Original</button><button id="scaleIng">⚖ auf Ziel skalieren</button></div>`+
+    `<div class="ed-total" id="edTotal"></div>`;
+  updateTotalLine();
+  editor.querySelectorAll('.ingamt').forEach(inp=>inp.addEventListener('input',e=>{curIng[+e.target.dataset.i].amt=parseFloat(e.target.value)||0;updateTotalLine();}));
+  editor.querySelectorAll('.ingname').forEach(inp=>inp.addEventListener('input',e=>{curIng[+e.target.dataset.i].name=e.target.value;}));
+  editor.querySelectorAll('.del').forEach(b=>b.addEventListener('click',()=>{curIng.splice(+b.dataset.del,1);renderEditor();}));
+  document.getElementById('addIng').addEventListener('click',()=>{curIng.push({name:'',amt:0,unit:'g'});renderEditor();});
+  document.getElementById('resetIng').addEventListener('click',loadBlend);
+  document.getElementById('scaleIng').addEventListener('click',()=>{
+    const t=recTotal();if(!t)return;const f=baseTotal/t;
+    curIng.forEach(x=>{if(x.unit)x.amt=Math.round(x.amt*f);});renderEditor();
+  });
+}
+const editor=document.getElementById('editor');
+sel.addEventListener('change',loadBlend);loadBlend();
 
 // Speichern
 document.getElementById('save').addEventListener('click',()=>{
@@ -198,7 +253,9 @@ document.getElementById('save').addEventListener('click',()=>{
     tester:document.getElementById('tester').value||'?',
     ingwer:document.getElementById('ginger').checked?'ja':'nein',
     pos:document.getElementById('pos').value,neg:document.getElementById('neg').value,
-    why:document.getElementById('why').value,fair:document.getElementById('fair').value};
+    why:document.getElementById('why').value,fair:document.getElementById('fair').value,
+    rezept:curIng.filter(x=>x.name).map(x=>x.name+(x.unit?` ${x.amt} ${x.unit}`:'')).join(' · '),
+    summe:recTotal(),geaendert:(recTotal()!==baseTotal||curIng.length!==R[sel.value].z.length)?'ja':'nein'};
   CRIT.forEach(([k])=>e[k]=+document.getElementById('s_'+k).value);
   const d=load();d.push(e);store(d);
   document.getElementById('okmsg').textContent='✔ gespeichert';document.getElementById('okmsg').className='ok';
@@ -223,8 +280,8 @@ function renderTables(){
    rows.map(r=>`<tr><td>${r.n}</td><td class="num">${r.c}</td><td class="num"><b>${r.g}</b></td><td class="num">${r.ge}</td><td class="num">${r.o}</td><td class="num">${r.w}</td><td class="num">${r.pl}</td><td class="num">${r.k}</td><td class="num">${r.f}</td></tr>`).join('')
    ||'<tr><td>Noch keine Bewertungen.</td></tr>';
   document.getElementById('alle').innerHTML=
-   `<tr><th>Datum</th><th>Blend</th><th>Tester</th><th class="num">Gesamt</th><th>Positiv</th><th>Negativ</th><th>Warum kaufen?</th><th></th></tr>`+
-   d.map((e,i)=>`<tr><td>${e.ts}</td><td>${e.blend}${e.ingwer==='ja'?' 🫚':''}</td><td>${e.tester}</td><td class="num">${e.gesamt}</td><td>${e.pos||''}</td><td>${e.neg||''}</td><td>${e.why||''}</td><td><button class="btn red" data-del="${i}">✕</button></td></tr>`).join('')
+   `<tr><th>Datum</th><th>Blend</th><th>Tester</th><th class="num">Gesamt</th><th>Rezept (gemixt)</th><th>Positiv</th><th>Negativ</th><th>Warum kaufen?</th><th></th></tr>`+
+   d.map((e,i)=>`<tr><td>${e.ts}</td><td>${e.blend}${e.ingwer==='ja'?' 🫚':''}${e.geaendert==='ja'?' ✎':''}</td><td>${e.tester}</td><td class="num">${e.gesamt}</td><td style="font-size:12px;color:#cdd8cf">${e.rezept||'–'} <small style="color:#7a8b98">(${e.summe||'?'} g)</small></td><td>${e.pos||''}</td><td>${e.neg||''}</td><td>${e.why||''}</td><td><button class="btn red" data-del="${i}">✕</button></td></tr>`).join('')
    ||'<tr><td>Noch keine Bewertungen.</td></tr>';
   document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
     const d=load();d.splice(+b.dataset.del,1);store(d);renderTables();
@@ -235,8 +292,8 @@ renderTables();
 // CSV Export
 document.getElementById('csv').addEventListener('click',()=>{
   const d=load();if(!d.length)return alert('Noch keine Daten.');
-  const cols=['ts','blend','linie','tester','ingwer',...CRIT.map(c=>c[0]),'fair','pos','neg','why'];
-  const head=['Datum','Blend','Linie','Tester','IngwerBoost','Optik','Geschmack','Konsistenz','Mundgefuehl','Ueberraschung','PreisLeistung','Kaufwahrscheinlichkeit','Gesamt','FairerPreisTHB','Positiv','Negativ','WarumKaufen'];
+  const cols=['ts','blend','linie','tester','ingwer','geaendert','rezept','summe',...CRIT.map(c=>c[0]),'fair','pos','neg','why'];
+  const head=['Datum','Blend','Linie','Tester','IngwerBoost','Rezept_geaendert','Rezept_gemixt','Summe_g','Optik','Geschmack','Konsistenz','Mundgefuehl','Ueberraschung','PreisLeistung','Kaufwahrscheinlichkeit','Gesamt','FairerPreisTHB','Positiv','Negativ','WarumKaufen'];
   const esc=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   const csv='﻿'+head.join(';')+'\n'+d.map(e=>cols.map(c=>esc(e[c])).join(';')).join('\n');
   const a=document.createElement('a');
