@@ -371,8 +371,13 @@ function render(){
   $("sum").innerHTML=n?`${n} Charge${n>1?"n":""}<br>${bxA} × Brix · ${duA} × 👃`:"noch leer";
   document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
   const v=$("view"), bar=`<div class="bar">
-      <button class="b p" id="csv">CSV exportieren</button>
-      <button class="b r" id="clear">Alles löschen</button></div>`;
+      <button class="b p" id="send">📤 Daten senden / sichern</button>
+      <button class="b" id="csv">CSV zum Kopieren</button>
+      <button class="b r" id="clear">Alles löschen</button></div>
+    <div class="note" style="margin-top:2px">
+      „Daten senden" öffnet das Teilen-Menü des Handys (LINE, Mail, Drive) mit der fertigen CSV-Datei.
+      <b>Mach das nach jedem Markttag</b> — die Messungen liegen sonst nur auf diesem Gerät.
+    </div>`;
   if(view==="neu"){v.innerHTML=formular();bindForm();}
   else if(view==="liste"){v.innerHTML=liste()+(D.length?bar:"");bindList();}
   else {v.innerHTML=auswertung()+(D.length?bar:"");bindList();}
@@ -421,14 +426,35 @@ function bindForm(){
   };
 }
 
+/* CSV mit BOM, damit Excel die Umlaute und das Thai richtig anzeigt */
+function csvText(){
+  return "﻿Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;Haendler;Bemerkung\n"
+    +D.map(e=>[e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.duft,
+      (e.des||[]).map(k=>lbl(DUFT,k)).join(" / "),(e.feh||[]).map(k=>lbl(FEHL,k)).join(" / "),
+      e.note,e.kg,e.pr,e.h,e.bem]
+      .map(x=>String(x==null?"":x).replace(/;/g,",")).join(";")).join("\n");
+}
+
+/* Vom Handy weg: erst echtes Teilen (LINE/Mail/Drive), sonst Datei-Download */
+async function csvSenden(){
+  const txt=csvText(), name="100blend_einkauf_"+heute()+".csv";
+  try{
+    const file=new File([txt],name,{type:"text/csv"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:"100blend Einkauf",
+        text:`Messreihe ${D.length} Chargen, Stand ${heute()}`});
+      return;
+    }
+  }catch(err){ if(err&&err.name==="AbortError") return; }
+  const a=document.createElement("a"), url=URL.createObjectURL(new Blob([txt],{type:"text/csv"}));
+  a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
 function bindList(){
+  const s=$("send");if(s)s.onclick=csvSenden;
   const c=$("csv");if(c)c.onclick=()=>{
-    const t="Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;Haendler;Bemerkung\n"
-      +D.map(e=>[e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.duft,
-        (e.des||[]).map(k=>lbl(DUFT,k)).join(" / "),(e.feh||[]).map(k=>lbl(FEHL,k)).join(" / "),
-        e.note,e.kg,e.pr,e.h,e.bem]
-        .map(x=>String(x==null?"":x).replace(/;/g,",")).join(";")).join("\n");
-    $("out").value=t;$("out").style.display="block";$("out").select();
+    $("out").value=csvText().replace(/^﻿/,"");$("out").style.display="block";$("out").select();
   };
   const cl=$("clear");if(cl)cl.onclick=()=>{if(confirm("Wirklich alle Chargen löschen?")){D=[];save();render()}};
   document.querySelectorAll(".del").forEach(b=>b.onclick=()=>{D.splice(+b.dataset.i,1);save();render()});
@@ -441,7 +467,6 @@ render();
 if("serviceWorker" in navigator)
   navigator.serviceWorker.register("./sw.js").catch(()=>{});
 
-/* Installations-Hinweis nur zeigen, solange die App im Browser läuft (nicht als Icon-App) */
 (function(){
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   if(standalone || localStorage.getItem("bl_hidehint")) return;
@@ -449,11 +474,11 @@ if("serviceWorker" in navigator)
   const d = document.createElement("div");
   d.className = "tip";
   d.style.cssText = "position:sticky;bottom:0;margin:16px;z-index:20";
-  d.innerHTML = `<b>📲 Aufs Handy legen:</b> ` + (ios
-      ? `unten auf <b>Teilen</b> ⃞↑ tippen → <b>„Zum Home-Bildschirm"</b>.`
-      : `Browser-Menü ⋮ → <b>„App installieren"</b> bzw. „Zum Startbildschirm hinzufügen".`)
-    + ` Danach startet sie wie eine App — <b>auch ohne Netz auf dem Markt</b>.
-       <button class="b" style="padding:5px 10px;font-size:12px;margin-left:6px">verstanden</button>`;
+  d.innerHTML = '<b>📲 Aufs Handy legen:</b> ' + (ios
+      ? 'unten auf <b>Teilen</b> tippen → <b>„Zum Home-Bildschirm"</b>.'
+      : 'Browser-Menü ⋮ → <b>„App installieren"</b> bzw. „Zum Startbildschirm hinzufügen".')
+    + ' Danach startet sie wie eine App — <b>auch ohne Netz auf dem Markt</b>.'
+    + ' <button class="b" style="padding:5px 10px;font-size:12px;margin-left:6px">verstanden</button>';
   d.querySelector("button").onclick=()=>{localStorage.setItem("bl_hidehint","1");d.remove()};
   document.body.appendChild(d);
 })();
