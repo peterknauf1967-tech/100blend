@@ -203,6 +203,7 @@ const FEHL=[
 
 const KEY="bl_einkauf1";
 let D=JSON.parse(localStorage.getItem(KEY)||"[]");
+let WHO=localStorage.getItem("bl_who")||"";      // Peter oder Lexi — steckt im Dateinamen und in jeder Zeile
 let view="neu", note=0, duft=0, des=[], feh=[];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -261,8 +262,14 @@ function formular(){
   </div>
   <div class="card">
     <div class="f2">
+      <div class="f"><label>Wer misst? <i>— Nase ist Person</i></label>
+        <input id="i_who" list="wer" value="${esc(WHO)}" placeholder="Peter / Lexi">
+        <datalist id="wer"><option value="Peter"><option value="Lexi"></datalist></div>
       <div class="f"><label>Datum</label><input type="date" id="i_dat" value="${heute()}"></div>
+    </div>
+    <div class="f2">
       <div class="f"><label>Preis ฿/kg</label><input type="number" inputmode="decimal" step="0.5" id="i_pr" placeholder="z. B. 54"></div>
+      <div class="f"><label>Menge kg</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="z. B. 3"></div>
     </div>
     <div class="f"><label>Frucht <i>— ${FRUCHT.length} im Katalog</i></label><select id="i_code">
       ${GRUPPEN.map(g=>`<optgroup label="${esc(g[0])}">`+
@@ -273,10 +280,7 @@ function formular(){
       <input id="i_sorte" placeholder="z. B. น้ำดอกไม้ / Nam Dok Mai" list="sorten">
       <datalist id="sorten"></datalist>
       <div class="meta" id="i_hint"></div></div>
-    <div class="f2">
-      <div class="f"><label>°Brix</label><input type="number" inputmode="decimal" step="0.1" id="i_bx" placeholder="z. B. 16.4"></div>
-      <div class="f"><label>Menge kg</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="z. B. 3"></div>
-    </div>
+    <div class="f"><label>°Brix</label><input type="number" inputmode="decimal" step="0.1" id="i_bx" placeholder="z. B. 16.4"></div>
 
     <div class="f"><label>👃 Duft-Intensität 1–5 <i>— am Stielansatz, Frucht handwarm</i></label>
       <div class="stars nose" id="i_duft">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
@@ -378,8 +382,11 @@ function render(){
       <button class="b" id="csv">CSV zum Kopieren</button>
       <button class="b r" id="clear">Alles löschen</button></div>
     <div class="note" style="margin-top:2px">
-      „Daten senden" öffnet das Teilen-Menü des Handys (LINE, Mail, Drive) mit der fertigen CSV-Datei.
-      <b>Mach das nach jedem Markttag</b> — die Messungen liegen sonst nur auf diesem Gerät.
+      <b>Nach jedem Markttag: „Daten senden" → Google Drive →</b>
+      Ordner <b>100BLEND — Brand / Messungen-Einkauf</b>.<br>
+      Von dort holt Claude die Datei automatisch ab. Peter und Lexi können beide dorthin senden —
+      der Name aus „Wer misst?" steckt im Dateinamen, es überschreibt sich nichts.<br>
+      <b>Ohne Senden liegen die Messungen nur auf diesem Handy.</b>
     </div>`;
   if(view==="neu"){v.innerHTML=formular();bindForm();}
   else if(view==="liste"){v.innerHTML=liste()+(D.length?bar:"");bindList();}
@@ -441,7 +448,8 @@ function bindForm(){
   toggle("i_des",des); toggle("i_feh",feh);
 
   $("add").onclick=()=>{
-    const e={dat:$("i_dat").value||heute(),code:sel.value,sorte:$("i_sorte").value.trim(),
+    WHO=$("i_who").value.trim(); localStorage.setItem("bl_who",WHO);
+    const e={who:WHO,dat:$("i_dat").value||heute(),code:sel.value,sorte:$("i_sorte").value.trim(),
       bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,h:$("i_h").value.trim(),
       duft:duft||"",des:des.slice(),feh:feh.slice(),note:note||"",bem:$("i_bem").value.trim()};
     if(!e.bx&&!e.pr&&!e.sorte&&!e.duft){alert("Mindestens Sorte, Brix, Duft oder Preis eintragen.");return}
@@ -451,8 +459,8 @@ function bindForm(){
 
 /* CSV mit BOM, damit Excel die Umlaute und das Thai richtig anzeigt */
 function csvText(){
-  return "﻿Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;Haendler;Bemerkung\n"
-    +D.map(e=>[e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.duft,
+  return "﻿Wer;Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;Haendler;Bemerkung\n"
+    +D.map(e=>[e.who,e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.duft,
       (e.des||[]).map(k=>lbl(DUFT,k)).join(" / "),(e.feh||[]).map(k=>lbl(FEHL,k)).join(" / "),
       e.note,e.kg,e.pr,e.h,e.bem]
       .map(x=>String(x==null?"":x).replace(/;/g,",")).join(";")).join("\n");
@@ -460,7 +468,8 @@ function csvText(){
 
 /* Vom Handy weg: erst echtes Teilen (LINE/Mail/Drive), sonst Datei-Download */
 async function csvSenden(){
-  const txt=csvText(), name="100blend_einkauf_"+heute()+".csv";
+  const wer=(WHO||"unbekannt").toLowerCase().replace(/[^a-z0-9]+/g,"-");
+  const txt=csvText(), name=`100blend_einkauf_${heute()}_${wer}.csv`;
   try{
     const file=new File([txt],name,{type:"text/csv"});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
