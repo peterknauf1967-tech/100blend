@@ -156,7 +156,7 @@ const GRUPPEN=[
  ["PO","Pomelo","ส้มโอ","⚠ für Peter privat tabu (Eliquis)",null,false,null,null],
  ["LS","Limette","มะนาว","schwer = saftig · TK-Saft 150 ฿/l",null,false,null,null]
 ]],
-["B · TK — GO Wholesale (1-kg-Beutel)",[
+["B · TK — GO Wholesale (alle Beutel 1 kg)",[
  ["MB","Maulbeere TK","หม่อน","🏆 Beeren-Geheimtipp, lokal",null,false,69,69],
  ["ER","Erdbeere TK","สตรอว์เบอร์รี","SuperSave 69 · A-Choice 79 (beide China)",null,true,69,79],
  ["KI","Kiwi TK geschnitten","กีวี","Aktion (statt 85)",null,false,69,69],
@@ -178,6 +178,9 @@ const GRUPPEN=[
  ["XX","Andere / neue Frucht","อื่น ๆ","in der Bemerkung benennen",null,false,null,null]
 ]]];
 const FRUCHT=GRUPPEN.flatMap(g=>g[1]);
+/* TK-Codes: 1-kg-Beutel von GO Wholesale → Händler, Menge und Preis werden vorausgefüllt */
+const TK_CODES=GRUPPEN[1][1].map(f=>f[0]);
+const TK_HAENDLER="GO Wholesale";
 
 /* Duft-Charakter — was die Nase meldet. [key, deutsch, thai] */
 const DUFT=[
@@ -391,10 +394,12 @@ function bindForm(){
     const preis = lo==null
       ? `💰 <b>Preis noch nicht erfasst</b> — deiner wird der erste Referenzwert.`
       : `💰 Referenz <b>${lo===hi?lo:lo+"–"+hi} ฿/kg</b> <span style="opacity:.7">(Notion, 11.07.26)</span>`;
+    const tk=TK_CODES.includes(sel.value);
     $("i_hint").innerHTML=(f[5]
       ? `🔴 <b>Sorte ist hier entscheidend.</b> ${esc(f[3])}${f[4]?` · Ziel ab <b>${f[4]} °Bx</b>`:""}`
       : `🟢 Sorte zweitrangig — <b>reif und billig</b> schlägt hier den Namen. ${esc(f[3])}`)
-      +`<br>${preis}<span id="i_prchk"></span>`;
+      +`<br>${preis}<span id="i_prchk"></span>`
+      +(tk?`<br>🧊 <b>1-kg-Beutel · ${TK_HAENDLER}</b> — Händler, Menge und Preis sind vorausgefüllt. Nur ändern, wenn das Schild etwas anderes sagt.`:"");
     $("sorten").innerHTML=f[3].split("·").map(s=>`<option value="${esc(s.trim().replace(/\s*\d+([–-]\d+)?\s*$/,""))}">`).join("")
       +[...new Set(D.filter(e=>e.code===sel.value&&e.sorte).map(e=>e.sorte))].map(s=>`<option value="${esc(s)}">`).join("");
     prCheck();
@@ -404,7 +409,25 @@ function bindForm(){
     const [c,t]=prUrteil(sel.value,$("i_pr").value);
     el.innerHTML=t?` · <b class="bx ${c}">${esc(t)}</b>`:"";
   };
-  sel.onchange=hint; $("i_pr").oninput=prCheck; hint();
+
+  /* TK-Beutel von GO Wholesale: Händler, 1 kg und aktueller Preis stehen schon fest.
+     Nur füllen, was leer ist oder noch aus der letzten Vorbelegung stammt —
+     was Peter selbst eingetippt hat, bleibt unangetastet. */
+  const auto={i_h:null,i_kg:null,i_pr:null};
+  const setAuto=(id,val)=>{
+    const el=$(id); if(!el)return;
+    if(el.value===""||el.value===String(auto[id]??"")){ el.value=val==null?"":val; auto[id]=val; }
+  };
+  const vorbelegen=()=>{
+    const f=fr(sel.value), tk=TK_CODES.includes(sel.value);
+    setAuto("i_h", tk?TK_HAENDLER:null);
+    setAuto("i_kg",tk?1:null);
+    setAuto("i_pr",tk?f[6]:null);
+  };
+
+  sel.onchange=()=>{vorbelegen();hint()};
+  $("i_pr").oninput=prCheck;
+  vorbelegen(); hint();
 
   const sterne=(id,setter)=>{$(id).onclick=e=>{const b=e.target.closest("button");if(!b)return;
     const n=+b.dataset.n; setter(n);
