@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>100blend · Einkaufs-Protokoll</title>
+<link rel="manifest" href="./einkauf.webmanifest">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Einkauf">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+<style>
+:root{--bg:#faf8f5;--card:#fff;--ink:#1a1a1a;--muted:#6b6b6b;--line:#e6e2dc;
+ --accent:#e2543f;--ok:#2f8f5b;--okbg:#f4faf6;--okln:#c4e2d0;--miss:#c0392b;--missbg:#fdf4f3;--missln:#f0cdc8;
+ --warn:#b8860b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif;
+ padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 16px}
+.top{display:flex;align-items:center;gap:10px}
+.brand{font-weight:800;font-size:19px;letter-spacing:-.02em}
+.brand span{color:var(--accent)}
+.sum{margin-left:auto;font-size:12.5px;color:var(--muted);font-weight:700;text-align:right;line-height:1.35}
+.tabs{display:flex;gap:6px;margin-top:10px}
+.tabs button{flex:1;border:1px solid var(--line);background:var(--card);color:var(--muted);
+ padding:9px;border-radius:9px;font:700 13px inherit;cursor:pointer}
+.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+main{padding:16px;max-width:780px;margin:0 auto}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 8px;font-weight:800}
+.note{color:var(--muted);font-size:13.5px;line-height:1.6;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+label{display:block;font:700 11.5px/1.4 inherit;text-transform:uppercase;letter-spacing:.05em;
+ color:var(--muted);margin:0 0 4px}
+.f{margin-bottom:11px}
+.f2{display:flex;gap:10px}
+.f2>div{flex:1}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;
+ font:16px inherit;background:#fff;color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.stars{display:flex;gap:6px}
+.stars button{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 0;
+ font:700 15px inherit;cursor:pointer;color:var(--muted)}
+.stars button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}
+button.b{border:1px solid var(--line);background:var(--card);color:var(--ink);
+ padding:11px 15px;border-radius:10px;font:700 14px inherit;cursor:pointer}
+button.b.p{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.b.r{background:var(--miss);color:#fff;border-color:var(--miss)}
+.e{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.e.good{border-color:var(--okln);background:var(--okbg)}
+.e.bad{border-color:var(--missln);background:var(--missbg)}
+.eh{display:flex;align-items:baseline;gap:8px}
+.eh b{font-size:15px}
+.eh .d{margin-left:auto;color:var(--muted);font-size:12px;font-weight:700}
+.code{font:800 12px/1 ui-monospace,Menlo,monospace;background:#f0ede8;border-radius:6px;padding:6px 7px}
+.meta{color:var(--muted);font-size:13px;margin-top:4px}
+.meta b{color:var(--ink)}
+.bx{font:800 15px inherit}
+.bx.good{color:var(--ok)} .bx.bad{color:var(--miss)} .bx.warn{color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);
+ border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line)}
+th{font:800 11px/1.4 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#f6f3ef}
+tr:last-child td{border-bottom:0}
+td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:40px 20px;font-size:15px}
+textarea#out{height:220px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:12px}
+.tip{background:#fffdf5;border:1px solid #ecdfae;border-radius:10px;padding:11px 13px;
+ font-size:13px;line-height:1.6;margin-bottom:14px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">100<span>blend</span> · Einkauf</div>
+    <div class="sum" id="sum"></div>
+  </div>
+  <div class="tabs">
+    <button data-v="neu" class="on">➕ Erfassen</button>
+    <button data-v="liste">Chargen</button>
+    <button data-v="aus">Auswertung</button>
+  </div>
+</header>
+<main>
+  <div id="view"></div>
+  <textarea id="out" style="display:none" readonly></textarea>
+</main>
+<script>
+/* ============================================================
+   Einkaufs-Protokoll — Sorte + Brix + Sensorik je Charge.
+   Grundlage: rezepte/_grundlagen/11_sorten-und-einkaufsspezifikation.md
+   Ziel: nach 4 Wochen Messreihe steht der eigene Hausstandard.
+   ============================================================ */
+
+/* [Code, Deutsch, Thai, Königs-Sorte(n), Brix-Ziel min (null = noch offen), Sorte-kritisch?] */
+const FRUCHT=[
+ ["MG","Mango","มะม่วง","Nam Dok Mai · Ok Rong · Maha Chanok",15,true],
+ ["BA","Banane","กล้วย","Kluai Nam Wa · Kluai Hom",null,true],
+ ["ER","Erdbeere","สตรอว์เบอร์รี","Praratchatan 80 · Akihime · Nr. 70/72/329",null,true],
+ ["AN","Ananas","สับปะรด","Nang Lae · Phuket · Sri Racha",null,true],
+ ["DR","Drachenfrucht rot","แก้วมังกรแดง","rotfleischig (เนื้อแดง)",null,true],
+ ["DW","Drachenfrucht weiß","แก้วมังกรขาว","weißfleischig",null,false],
+ ["OR","Orange","ส้ม","Som Sai Nam Phueng",null,true],
+ ["WM","Wassermelone","แตงโม","— Reife zählt",null,false],
+ ["PY","Papaya","มะละกอ","— Reife zählt",null,false],
+ ["GU","Guave","ฝรั่ง","— Reife zählt",null,false],
+ ["AV","Avocado","อะโวคาโด","— Reife zählt",null,false],
+ ["MS","Mangostan","มังคุด","— Reife zählt",null,false],
+ ["RO","Roselle (Krachiap)","กระเจี๊ยบแดง","— Reife zählt",null,false],
+ ["LI","Litschi","ลิ้นจี่","— Reife zählt",null,false],
+ ["TM","Thai-Melone","แตงไทย","— Reife zählt",null,false],
+ ["ME","Cantaloupe","แคนตาลูป","— Reife zählt",null,false],
+ ["AB","Apfel/Birne","แอปเปิล/สาลี่","— Reife zählt",null,false],
+ ["BM","Beeren-Mix (TK)","เบอร์รีรวม","IQF-Zukauf",null,false],
+ ["MB","Maulbeere","หม่อน","— Reife zählt",null,false],
+ ["PS","Pfirsich","พีช","Import/TK",null,false],
+ ["PF","Passionsfrucht","เสาวรส","— Reife zählt",null,false],
+ ["LS","Limette","มะนาว","— schwer = saftig",null,false],
+ ["XX","Andere","อื่น ๆ","",null,false]
+];
+
+const KEY="bl_einkauf1";
+let D=JSON.parse(localStorage.getItem(KEY)||"[]");
+let view="neu", note=0;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const save=()=>localStorage.setItem(KEY,JSON.stringify(D));
+const fr=c=>FRUCHT.find(f=>f[0]===c)||["XX","?","","",null,false];
+const heute=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+
+/* Brix-Bewertung: gegen Zielwert, sonst gegen den eigenen bisherigen Schnitt */
+function bxUrteil(code,bx){
+  if(bx==null||bx==="")return["",""];
+  const ziel=fr(code)[4];
+  if(ziel!=null)return bx>=ziel?["good","≥ Ziel "+ziel]:bx>=ziel-2?["warn","knapp unter Ziel "+ziel]:["bad","unter Ziel "+ziel];
+  const alt=D.filter(e=>e.code===code&&e.bx).map(e=>+e.bx);
+  if(alt.length<3)return["","noch kein Vergleich (min. 3 Messungen)"];
+  const s=alt.reduce((a,b)=>a+b,0)/alt.length;
+  return bx>=s?["good","über eurem Schnitt "+s.toFixed(1)]:["bad","unter eurem Schnitt "+s.toFixed(1)];
+}
+
+function formular(){
+  return `
+  <div class="tip">
+    <b>So läuft eine Messung:</b> Frucht anschneiden → 2–3 Tropfen Saft aufs Refraktometer-Prisma →
+    gegen das Licht ablesen → Wert eintragen. 10 Sekunden.<br>
+    <b>Sorte immer auf Thai erfragen</b> (Lexi) und exakt so eintragen, wie der Händler sie nennt —
+    auch wenn sie nicht in der Liste steht.
+  </div>
+  <div class="card">
+    <div class="f2">
+      <div class="f"><label>Datum</label><input type="date" id="i_dat" value="${heute()}"></div>
+      <div class="f"><label>Preis ฿/kg</label><input type="number" inputmode="decimal" step="0.5" id="i_pr" placeholder="z. B. 54"></div>
+    </div>
+    <div class="f"><label>Frucht</label><select id="i_code">
+      ${FRUCHT.map(f=>`<option value="${f[0]}">${f[0]} · ${esc(f[1])} ${esc(f[2])}</option>`).join("")}
+    </select></div>
+    <div class="f"><label>Sorte (Thai-Name, wie der Händler sie nennt)</label>
+      <input id="i_sorte" placeholder="z. B. น้ำดอกไม้ / Nam Dok Mai" list="sorten">
+      <datalist id="sorten"></datalist>
+      <div class="meta" id="i_hint"></div></div>
+    <div class="f2">
+      <div class="f"><label>°Brix</label><input type="number" inputmode="decimal" step="0.1" id="i_bx" placeholder="z. B. 16.4"></div>
+      <div class="f"><label>Menge kg</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="z. B. 3"></div>
+    </div>
+    <div class="f"><label>Händler / Markt</label><input id="i_h" placeholder="z. B. Ratanakorn, Stand 12 – Khun Noi" list="haendler">
+      <datalist id="haendler">${[...new Set(D.map(e=>e.h).filter(Boolean))].map(h=>`<option value="${esc(h)}">`).join("")}</datalist></div>
+    <div class="f"><label>Sensorik 1–5 (nach dem Probieren)</label>
+      <div class="stars" id="i_note">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
+    <div class="f"><label>Bemerkung</label><input id="i_bem" placeholder="faserig / überreif / Reduziert-Kiste …"></div>
+    <div class="bar" style="margin:4px 0 0">
+      <button class="b p" id="add" style="flex:1">Charge speichern</button>
+    </div>
+  </div>`;
+}
+
+function liste(){
+  if(!D.length)return `<div class="empty">Noch keine Charge erfasst.<br>Erste Messung = erster Datenpunkt.</div>`;
+  return D.slice().reverse().map((e,ri)=>{
+    const i=D.length-1-ri, f=fr(e.code), [cls,txt]=bxUrteil(e.code,e.bx);
+    return `<div class="e ${cls}">
+      <div class="eh"><span class="code">${e.code}</span><b>${esc(f[1])}</b>
+        <span class="d">${esc(e.dat)}</span></div>
+      <div class="meta">
+        ${e.sorte?`Sorte <b>${esc(e.sorte)}</b> · `:""}${e.pr?`<b>${e.pr} ฿/kg</b>`:"Preis –"}${e.kg?` · ${e.kg} kg`:""}
+        ${e.bx?` · <span class="bx ${cls}">${e.bx} °Bx</span>`:""}${e.note?` · Sensorik <b>${e.note}/5</b>`:""}
+      </div>
+      <div class="meta">${e.h?esc(e.h):"Händler –"}${txt?` · ${esc(txt)}`:""}${e.bem?` · <i>${esc(e.bem)}</i>`:""}</div>
+      <div class="bar" style="margin:8px 0 0"><button class="b del" data-i="${i}" style="padding:6px 11px;font-size:12.5px">löschen</button></div>
+    </div>`;
+  }).join("");
+}
+
+function auswertung(){
+  if(D.length<2)return `<div class="empty">Auswertung ab 2 Chargen.<br><br>
+    Ziel: nach 4 Wochen siehst du hier, welcher Händler und welche Sorte konstant liefern.</div>`;
+  const grp={};
+  D.forEach(e=>{const k=e.code+"|"+(e.sorte||"—");(grp[k]=grp[k]||[]).push(e)});
+  const rows=Object.entries(grp).map(([k,es])=>{
+    const [code,sorte]=k.split("|"), bx=es.filter(e=>e.bx).map(e=>+e.bx),
+      no=es.filter(e=>e.note).map(e=>+e.note), pr=es.filter(e=>e.pr).map(e=>+e.pr),
+      m=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length):null;
+    return{code,sorte,n:es.length,bx:m(bx),no:m(no),pr:m(pr)};
+  }).sort((a,b)=>(b.bx||0)-(a.bx||0));
+  const hg={};
+  D.forEach(e=>{if(e.h){(hg[e.h]=hg[e.h]||[]).push(e)}});
+  const hr=Object.entries(hg).map(([h,es])=>{
+    const bx=es.filter(e=>e.bx).map(e=>+e.bx), no=es.filter(e=>e.note).map(e=>+e.note),
+      m=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length):null;
+    return{h,n:es.length,bx:m(bx),no:m(no)};
+  }).sort((a,b)=>(b.bx||0)-(a.bx||0));
+
+  return `<h2>Nach Frucht &amp; Sorte <em>— Ø aller Chargen</em></h2>
+  <table><tr><th>Frucht</th><th>Sorte</th><th class="n">n</th><th class="n">Ø °Bx</th><th class="n">Ø Note</th><th class="n">Ø ฿/kg</th></tr>
+  ${rows.map(r=>`<tr><td><span class="code">${r.code}</span> ${esc(fr(r.code)[1])}</td><td>${esc(r.sorte)}</td>
+    <td class="n">${r.n}</td><td class="n">${r.bx?r.bx.toFixed(1):"–"}</td>
+    <td class="n">${r.no?r.no.toFixed(1):"–"}</td><td class="n">${r.pr?r.pr.toFixed(1):"–"}</td></tr>`).join("")}</table>
+  <h2>Nach Händler <em>— wer liefert konstant?</em></h2>
+  <table><tr><th>Händler / Markt</th><th class="n">Chargen</th><th class="n">Ø °Bx</th><th class="n">Ø Note</th></tr>
+  ${hr.length?hr.map(r=>`<tr><td>${esc(r.h)}</td><td class="n">${r.n}</td>
+    <td class="n">${r.bx?r.bx.toFixed(1):"–"}</td><td class="n">${r.no?r.no.toFixed(1):"–"}</td></tr>`).join("")
+    :`<tr><td colspan="4">Noch kein Händler erfasst.</td></tr>`}</table>
+  <div class="tip" style="margin-top:16px">
+    <b>Was du daraus machst:</b> Sobald eine Zeile 4–5 Chargen hat, ist ihr Ø-Brix euer Zielwert für diese Frucht.
+    Trag ihn in <code>_grundlagen/11_sorten-und-einkaufsspezifikation.md</code> ein — dann steht die Spezifikation,
+    die auch der fünfte Stand anwenden kann.
+  </div>`;
+}
+
+function render(){
+  const n=D.length, bxA=D.filter(e=>e.bx).length;
+  $("sum").innerHTML=n?`${n} Charge${n>1?"n":""}<br>${bxA} × Brix gemessen`:"noch leer";
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
+  const v=$("view"), bar=`<div class="bar">
+      <button class="b p" id="csv">CSV exportieren</button>
+      <button class="b r" id="clear">Alles löschen</button></div>`;
+  if(view==="neu"){v.innerHTML=formular();bindForm();}
+  else if(view==="liste"){v.innerHTML=liste()+(D.length?bar:"");bindList();}
+  else {v.innerHTML=auswertung()+(D.length?bar:"");bindList();}
+  $("out").style.display="none";
+}
+
+function bindForm(){
+  const sel=$("i_code");
+  const hint=()=>{
+    const f=fr(sel.value);
+    $("i_hint").innerHTML=f[5]
+      ? `🔴 <b>Sorte ist hier entscheidend.</b> Königs-Sorte: ${esc(f[3])}${f[4]?` · Ziel ab <b>${f[4]} °Bx</b>`:""}`
+      : `🟢 Sorte zweitrangig — <b>reif und billig</b> schlägt hier den Namen.`;
+    $("sorten").innerHTML=f[3].split("·").map(s=>`<option value="${esc(s.trim())}">`).join("")
+      +[...new Set(D.filter(e=>e.code===sel.value&&e.sorte).map(e=>e.sorte))].map(s=>`<option value="${esc(s)}">`).join("");
+  };
+  sel.onchange=hint; hint();
+  $("i_note").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    note=+b.dataset.n;
+    $("i_note").querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.n<=note));};
+  $("add").onclick=()=>{
+    const e={dat:$("i_dat").value||heute(),code:sel.value,sorte:$("i_sorte").value.trim(),
+      bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,h:$("i_h").value.trim(),
+      note:note||"",bem:$("i_bem").value.trim()};
+    if(!e.bx&&!e.pr&&!e.sorte){alert("Mindestens Sorte, Brix oder Preis eintragen.");return}
+    D.push(e);save();note=0;view="liste";render();
+  };
+}
+
+function bindList(){
+  const c=$("csv");if(c)c.onclick=()=>{
+    const t="Datum;Code;Frucht;Sorte;Brix;kg;THB/kg;Haendler;Sensorik;Bemerkung\n"
+      +D.map(e=>[e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.kg,e.pr,e.h,e.note,e.bem]
+        .map(x=>String(x==null?"":x).replace(/;/g,",")).join(";")).join("\n");
+    $("out").value=t;$("out").style.display="block";$("out").select();
+  };
+  const cl=$("clear");if(cl)cl.onclick=()=>{if(confirm("Wirklich alle Chargen löschen?")){D=[];save();render()}};
+  document.querySelectorAll(".del").forEach(b=>b.onclick=()=>{D.splice(+b.dataset.i,1);save();render()});
+}
+
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{view=b.dataset.v;render()});
+render();
+
+/* ---- Smartphone: offline lauffähig + auf den Startbildschirm ---- */
+if("serviceWorker" in navigator)
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+
+/* Installations-Hinweis nur zeigen, solange die App im Browser läuft (nicht als Icon-App) */
+(function(){
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if(standalone || localStorage.getItem("bl_hidehint")) return;
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const d = document.createElement("div");
+  d.className = "tip";
+  d.style.cssText = "position:sticky;bottom:0;margin:16px;z-index:20";
+  d.innerHTML = `<b>📲 Aufs Handy legen:</b> ` + (ios
+      ? `unten auf <b>Teilen</b> ⃞↑ tippen → <b>„Zum Home-Bildschirm"</b>.`
+      : `Browser-Menü ⋮ → <b>„App installieren"</b> bzw. „Zum Startbildschirm hinzufügen".`)
+    + ` Danach startet sie wie eine App — <b>auch ohne Netz auf dem Markt</b>.
+       <button class="b" style="padding:5px 10px;font-size:12px;margin-left:6px">verstanden</button>`;
+  d.querySelector("button").onclick=()=>{localStorage.setItem("bl_hidehint","1");d.remove()};
+  document.body.appendChild(d);
+})();
+</script>
+</body>
+</html>
