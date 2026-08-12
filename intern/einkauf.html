@@ -16,7 +16,7 @@
 <style>
 :root{--bg:#faf8f5;--card:#fff;--ink:#1a1a1a;--muted:#6b6b6b;--line:#e6e2dc;
  --accent:#e2543f;--ok:#2f8f5b;--okbg:#f4faf6;--okln:#c4e2d0;--miss:#c0392b;--missbg:#fdf4f3;--missln:#f0cdc8;
- --warn:#b8860b}
+ --warn:#b8860b;--nose:#5b6cb8}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);
  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif;
@@ -32,10 +32,12 @@ header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px s
 .tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 main{padding:16px;max-width:780px;margin:0 auto}
 h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 8px;font-weight:800}
+h2 em{font-style:normal;text-transform:none;letter-spacing:0;font-weight:600;color:#a09a92}
 .note{color:var(--muted);font-size:13.5px;line-height:1.6;margin-bottom:14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
 label{display:block;font:700 11.5px/1.4 inherit;text-transform:uppercase;letter-spacing:.05em;
  color:var(--muted);margin:0 0 4px}
+label i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:600;color:#a09a92}
 .f{margin-bottom:11px}
 .f2{display:flex;gap:10px}
 .f2>div{flex:1}
@@ -46,6 +48,13 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
 .stars button{flex:1;border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px 0;
  font:700 15px inherit;cursor:pointer;color:var(--muted)}
 .stars button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.stars.nose button.on{background:var(--nose);color:#fff;border-color:var(--nose)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:20px;
+ padding:8px 12px;font:600 13.5px inherit;cursor:pointer;line-height:1.25;text-align:left}
+.chips button small{display:block;font-size:11px;opacity:.75;font-weight:500}
+.chips button.on{background:var(--nose);color:#fff;border-color:var(--nose)}
+.chips.bad button.on{background:var(--miss);color:#fff;border-color:var(--miss)}
 .bar{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}
 button.b{border:1px solid var(--line);background:var(--card);color:var(--ink);
  padding:11px 15px;border-radius:10px;font:700 14px inherit;cursor:pointer}
@@ -60,18 +69,24 @@ button.b.r{background:var(--miss);color:#fff;border-color:var(--miss)}
 .code{font:800 12px/1 ui-monospace,Menlo,monospace;background:#f0ede8;border-radius:6px;padding:6px 7px}
 .meta{color:var(--muted);font-size:13px;margin-top:4px}
 .meta b{color:var(--ink)}
+.tags{margin-top:5px;display:flex;flex-wrap:wrap;gap:4px}
+.tags span{font:600 11px/1 inherit;background:#eceaf5;color:#414a78;padding:4px 7px;border-radius:5px}
+.tags span.bad{background:#f6ddd9;color:#9b3226}
 .bx{font:800 15px inherit}
 .bx.good{color:var(--ok)} .bx.bad{color:var(--miss)} .bx.warn{color:var(--warn)}
+.ns{font:800 15px inherit;color:var(--nose)}
 table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);
  border:1px solid var(--line);border-radius:12px;overflow:hidden}
 th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line)}
 th{font:800 11px/1.4 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:#f6f3ef}
 tr:last-child td{border-bottom:0}
 td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+td small{color:var(--muted);font-weight:400}
 .empty{color:var(--muted);text-align:center;padding:40px 20px;font-size:15px}
 textarea#out{height:220px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:12px}
 .tip{background:#fffdf5;border:1px solid #ecdfae;border-radius:10px;padding:11px 13px;
  font-size:13px;line-height:1.6;margin-bottom:14px}
+.tip.nose{background:#f7f8fd;border-color:#ccd2ec}
 </style>
 </head>
 <body>
@@ -92,45 +107,116 @@ textarea#out{height:220px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:
 </main>
 <script>
 /* ============================================================
-   Einkaufs-Protokoll — Sorte + Brix + Sensorik je Charge.
+   Einkaufs-Protokoll — Sorte + Brix + NASE + Sensorik je Charge.
    Grundlage: rezepte/_grundlagen/11_sorten-und-einkaufsspezifikation.md
-   Ziel: nach 4 Wochen Messreihe steht der eigene Hausstandard.
+   Brix misst nur Zucker. Der Rest vom Geschmack passiert in der Nase —
+   deshalb wird der Duft hier gleichwertig erfasst, nicht als Nebenbemerkung.
    ============================================================ */
 
-/* [Code, Deutsch, Thai, Königs-Sorte(n), Brix-Ziel min (null = noch offen), Sorte-kritisch?] */
-const FRUCHT=[
- ["MG","Mango","มะม่วง","Nam Dok Mai · Ok Rong · Maha Chanok",15,true],
- ["BA","Banane","กล้วย","Kluai Nam Wa · Kluai Hom",null,true],
- ["ER","Erdbeere","สตรอว์เบอร์รี","Praratchatan 80 · Akihime · Nr. 70/72/329",null,true],
- ["AN","Ananas","สับปะรด","Nang Lae · Phuket · Sri Racha",null,true],
- ["DR","Drachenfrucht rot","แก้วมังกรแดง","rotfleischig (เนื้อแดง)",null,true],
- ["DW","Drachenfrucht weiß","แก้วมังกรขาว","weißfleischig",null,false],
- ["OR","Orange","ส้ม","Som Sai Nam Phueng",null,true],
- ["WM","Wassermelone","แตงโม","— Reife zählt",null,false],
- ["PY","Papaya","มะละกอ","— Reife zählt",null,false],
- ["GU","Guave","ฝรั่ง","— Reife zählt",null,false],
- ["AV","Avocado","อะโวคาโด","— Reife zählt",null,false],
- ["MS","Mangostan","มังคุด","— Reife zählt",null,false],
- ["RO","Roselle (Krachiap)","กระเจี๊ยบแดง","— Reife zählt",null,false],
- ["LI","Litschi","ลิ้นจี่","— Reife zählt",null,false],
- ["TM","Thai-Melone","แตงไทย","— Reife zählt",null,false],
- ["ME","Cantaloupe","แคนตาลูป","— Reife zählt",null,false],
- ["AB","Apfel/Birne","แอปเปิล/สาลี่","— Reife zählt",null,false],
- ["BM","Beeren-Mix (TK)","เบอร์รีรวม","IQF-Zukauf",null,false],
- ["MB","Maulbeere","หม่อน","— Reife zählt",null,false],
- ["PS","Pfirsich","พีช","Import/TK",null,false],
- ["PF","Passionsfrucht","เสาวรส","— Reife zählt",null,false],
- ["LS","Limette","มะนาว","— schwer = saftig",null,false],
- ["XX","Andere","อื่น ๆ","",null,false]
+/* ------------------------------------------------------------------
+   Früchte-Katalog
+   [Code, Deutsch, Thai, Sorte/Hinweis, Brix-Ziel (null=offen), sorten-kritisch?,
+    Preis min, Preis max (฿/kg, null=nicht erfasst)]
+   Preise: Notion „🛒 Marktpreise" — konsolidierte Liste 11.07.2026
+           (Frischmarkt = Ratanakorn Theprasit · TK = GO Wholesale 1-kg-Beutel)
+   Brix-Ziele: bisher nur Mango belegt. Alle anderen misst Peter selbst.
+   ------------------------------------------------------------------ */
+const GRUPPEN=[
+["A · Frischmarkt (Ratanakorn)",[
+ ["MG","Mango","มะม่วง","Morakot ⭐ 35 · R2E2 45 · Nam Dok Mai 50–60",15,true,35,60],
+ ["BA","Banane","กล้วย","Kluai Nam Wa · Kluai Hom · 15 ฿/Staude",null,true,10,15],
+ ["WM","Wassermelone","แตงโม","Reife zählt · verhandeln lohnt",null,false,10,18],
+ ["AN","Ananas","สับปะรด","Nang Lae · Phuket · 8 ฿/Stück à ~400 g",null,true,20,25],
+ ["AV","Avocado","อะโวคาโด","grün lokal 59 · Hass-Typ 120 · Fleisch ≈91",null,false,59,120],
+ ["DR","Drachenfrucht rot","แก้วมังกรแดง","rotfleischig = Farbgeber",null,true,45,70],
+ ["DW","Drachenfrucht weiß","แก้วมังกรขาว","milder, billiger",null,false,25,35],
+ ["OR","Orange","ส้ม","Som Sai Nam Phueng · stark standabhängig",null,true,30,70],
+ ["TM","Thai-Melone (Taeng Thai)","แตงไทย","zuckerarm → Ampel-grün-Basis",null,false,25,25],
+ ["ME","Cantaloupe / Honigmelone","แคนตาลูป","—",null,false,40,55],
+ ["GU","Guave","ฝรั่ง","Vitamin-C-Held, ersetzt Acerola",null,false,35,35],
+ ["PY","Papaya","มะละกอ","Reife zählt",null,false,null,null],
+ ["LI","Litschi","ลิ้นจี่","Saison · Mengenrabatt 3 kg=100",null,false,35,60],
+ ["LG","Longan (Lamyai)","ลำไย","sehr süß",null,false,80,80],
+ ["LK","Longkong","ลองกอง","—",null,false,30,30],
+ ["RM","Rambutan","เงาะ","❌ nur ~40 % Ausbeute → ~110 ฿/kg Fleisch",null,false,45,45],
+ ["MS","Mangostan","มังคุด","❌ nur ~30 % Ausbeute → ~130 ฿/kg Fleisch",null,false,39,39],
+ ["AB","Apfel/Birne B-Ware","แอปเปิล/สาลี่","2. Wahl, sofort verarbeiten + frosten",null,false,15,15],
+ ["PL","Pflaume XXL (Import)","พลัม","Purple-Farbgeber · SALE-Fenster nutzen",null,false,65,65],
+ ["WT","Weintrauben","องุ่น","rot/schwarz 100–140 · Shine Muscat 160",null,false,100,160],
+ ["KN","Kokosnuss jung","มะพร้าวอ่อน","immer pro Stück (10–15 ฿, max. 20)",null,false,null,null],
+ ["RO","Roselle (Krachiap)","กระเจี๊ยบแดง","Thai-Ersatz für Granatapfel",null,false,null,null],
+ ["PF","Passionsfrucht frisch","เสาวรส","frisch teuer/Aufwand → TK-Püree 179",null,false,null,null],
+ ["DU","Durian","ทุเรียน","Mon Thong 149 · Premium 179",null,false,149,179],
+ ["SN","Santol (Krathon)","กระท้อน","3 kg = 100",null,false,35,35],
+ ["CH","Rose Apple (Chomphu)","ชมพู่","wasserreich, mild",null,false,null,null],
+ ["JF","Jackfruit","ขนุน","sehr süß, intensiv",null,false,null,null],
+ ["SD","Sapodilla (Lamut)","ละมุด","karamellig-süß",null,false,null,null],
+ ["NN","Zuckerapfel (Noi Na)","น้อยหน่า","cremig-süß",null,false,null,null],
+ ["SF","Sternfrucht (Carambola)","มะเฟือง","sauer-frisch",null,false,null,null],
+ ["PO","Pomelo","ส้มโอ","⚠ für Peter privat tabu (Eliquis)",null,false,null,null],
+ ["LS","Limette","มะนาว","schwer = saftig · TK-Saft 150 ฿/l",null,false,null,null]
+]],
+["B · TK — GO Wholesale (1-kg-Beutel)",[
+ ["MB","Maulbeere TK","หม่อน","🏆 Beeren-Geheimtipp, lokal",null,false,69,69],
+ ["ER","Erdbeere TK","สตรอว์เบอร์รี","SuperSave 69 · A-Choice 79 (beide China)",null,true,69,79],
+ ["KI","Kiwi TK geschnitten","กีวี","Aktion (statt 85)",null,false,69,69],
+ ["PS","Pfirsich TK","พีช","frisch 100 → TK vorziehen",null,false,79,79],
+ ["MD","Mandarine TK","ส้มแมนดาริน","Aktion (statt 119)",null,false,99,99],
+ ["BR","Brombeere TK","แบล็กเบอร์รี","Aktion (statt 149)",null,false,109,109],
+ ["BM","Beeren-Mix TK fertig","เบอร์รีรวม","Eigen-Mix ~130 ist billiger",null,false,149,149],
+ ["JB","Schwarze Johannisbeere TK","ลูกเกดดำ","—",null,false,179,179],
+ ["BB","Blaubeere TK","บลูเบอร์รี","im Purple-Mix strecken · frisch 658 ❌",null,false,209,209],
+ ["HB","Himbeere TK","ราสป์เบอร์รี","teuerste — nur Premium",null,false,285,285],
+ ["MY","Marian Plum TK (Mayongchid)","มะยงชิด","500 g = 153 → Saison-Special",null,false,306,306],
+ ["MP","Mango-Püree Namdokmai TK","มะม่วงบด","nur Backup — Eigen-Frost gewinnt",null,false,131,131],
+ ["PP2","Passionsfrucht-Püree TK","เสาวรสบด","kernlos · 30 g/Becher ≈ 5,4 ฿",null,false,179,189],
+ ["AT","Avocado TK / Püree","อะโวคาโดแช่แข็ง","❌ frisch gewinnt Faktor 3",null,false,278,318],
+ ["SP","Spinat TK gehackt","ผักโขม","Aktion (statt 99) · Green Detox 40 g = 2,40 ฿",null,false,59,59],
+ ["BK","Brokkoli TK","บรอกโคลี","Aktion (statt 79)",null,false,69,69]
+]],
+["C · Sonstiges",[
+ ["XX","Andere / neue Frucht","อื่น ๆ","in der Bemerkung benennen",null,false,null,null]
+]]];
+const FRUCHT=GRUPPEN.flatMap(g=>g[1]);
+
+/* Duft-Charakter — was die Nase meldet. [key, deutsch, thai] */
+const DUFT=[
+ ["blumig","blumig","หอมดอกไม้"],
+ ["tropisch","tropisch-süß","หอมหวานเขตร้อน"],
+ ["honig","honigartig","หอมน้ำผึ้ง"],
+ ["zitrus","zitrus-frisch","หอมสดชื่น เปรี้ยว"],
+ ["beerig","beerig","หอมเบอร์รี"],
+ ["karamell","karamellig / gekocht","หอมคาราเมล"],
+ ["gruen","grün / krautig","กลิ่นเขียว"]
+];
+/* Fehlnoten — jede einzelne ist ein Kaufabbruch-Grund */
+const FEHL=[
+ ["unreif","unreif / geruchlos","ไม่มีกลิ่น (ดิบ)"],
+ ["gaerig","gärig / alkoholisch","กลิ่นหมัก แอลกอฮอล์"],
+ ["muffig","dumpf / muffig","กลิ่นอับ"],
+ ["kuehl","Kühlhaus-flach","จืด (เก็บห้องเย็นนาน)"],
+ ["chem","chemisch / fremd","กลิ่นแปลก สารเคมี"]
 ];
 
 const KEY="bl_einkauf1";
 let D=JSON.parse(localStorage.getItem(KEY)||"[]");
-let view="neu", note=0;
+let view="neu", note=0, duft=0, des=[], feh=[];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const save=()=>localStorage.setItem(KEY,JSON.stringify(D));
-const fr=c=>FRUCHT.find(f=>f[0]===c)||["XX","?","","",null,false];
+const fr=c=>FRUCHT.find(f=>f[0]===c)||["XX","?","","",null,false,null,null];
+
+/* Preis-Check gegen die erfassten Referenzpreise (Notion, 11.07.2026) */
+function prUrteil(code,pr){
+  const f=fr(code), lo=f[6], hi=f[7];
+  if(!pr||lo==null)return["",""];
+  const p=+pr, sp=lo===hi?`${lo}`:`${lo}–${hi}`;
+  if(p>hi*1.15)return["bad",`⚠ über Referenz ${sp} ฿`];
+  if(p>hi)return["warn",`leicht über Referenz ${sp} ฿`];
+  if(p<=lo)return["good",`✓ auf/unter Referenz ${sp} ฿`];
+  return["",`im Rahmen ${sp} ฿`];
+}
+const lbl=(arr,k)=>{const x=arr.find(a=>a[0]===k);return x?x[1]:k};
 const heute=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 
 /* Brix-Bewertung: gegen Zielwert, sonst gegen den eigenen bisherigen Schnitt */
@@ -144,26 +230,43 @@ function bxUrteil(code,bx){
   return bx>=s?["good","über eurem Schnitt "+s.toFixed(1)]:["bad","unter eurem Schnitt "+s.toFixed(1)];
 }
 
+/* Gesamturteil: Brix UND Nase. Eine Fehlnote kippt die Charge, egal wie süß. */
+function urteil(e){
+  if(e.feh&&e.feh.length)return"bad";
+  const [c]=bxUrteil(e.code,e.bx);
+  if(e.duft&&+e.duft<=2)return"bad";
+  if(c==="good"&&(!e.duft||+e.duft>=4))return"good";
+  return c==="bad"?"bad":"";
+}
+
+function chips(id,arr,sel,bad){
+  return `<div class="chips${bad?" bad":""}" id="${id}">`+arr.map(a=>
+    `<button data-k="${a[0]}"${sel.includes(a[0])?' class="on"':''}>${esc(a[1])}<small>${esc(a[2])}</small></button>`).join("")+`</div>`;
+}
+
 function formular(){
   return `
   <div class="tip">
-    <b>So läuft eine Messung:</b> Frucht anschneiden → Stück durch Sieb/Knoblauchpresse drücken →
-    2–3 Tropfen <b>Saft</b> (kein Fruchtfleisch!) aufs Prisma → gegen das Licht ablesen. 10 Sekunden.<br>
-    <b>Einmal pro Markttag:</b> Nullpunkt mit klarem Wasser prüfen → muss 0,0 zeigen, sonst nachstellen.
-    Prisma zwischen den Früchten abwischen.<br>
-    <b>Sorte immer auf Thai erfragen</b> (Lexi) und exakt so eintragen, wie der Händler sie nennt —
-    auch wenn sie nicht in der Liste steht.<br>
-    <b>Hoher Brix allein ist kein Sieger:</b> überreif = viel Zucker, wenig Aroma. Deshalb immer auch die Note 1–5 vergeben.
+    <b>Messung:</b> Stück durch Sieb/Knoblauchpresse drücken → 2–3 Tropfen <b>Saft</b> (kein Fruchtfleisch) aufs Prisma → ablesen.<br>
+    <b>Einmal pro Markttag:</b> Nullpunkt mit klarem Wasser prüfen → muss 0,0 zeigen. Prisma zwischen den Früchten abwischen.<br>
+    <b>Sorte auf Thai erfragen</b> (Lexi) und exakt so eintragen, wie der Händler sie nennt.
+  </div>
+  <div class="tip nose">
+    <b>👃 Und dann die Nase — sie ist die andere Hälfte.</b> Brix misst nur Zucker; alles, was du „Aroma" nennst,
+    riecht du. Deshalb: <b>am Stielansatz riechen</b> (dort sitzen die Duftstoffe), Frucht muss dabei
+    <b>handwarm</b> sein. Kalte Frucht riecht nach fast nichts — ein kühlschrankkaltes Stück ist nicht beurteilbar.
   </div>
   <div class="card">
     <div class="f2">
       <div class="f"><label>Datum</label><input type="date" id="i_dat" value="${heute()}"></div>
       <div class="f"><label>Preis ฿/kg</label><input type="number" inputmode="decimal" step="0.5" id="i_pr" placeholder="z. B. 54"></div>
     </div>
-    <div class="f"><label>Frucht</label><select id="i_code">
-      ${FRUCHT.map(f=>`<option value="${f[0]}">${f[0]} · ${esc(f[1])} ${esc(f[2])}</option>`).join("")}
+    <div class="f"><label>Frucht <i>— ${FRUCHT.length} im Katalog</i></label><select id="i_code">
+      ${GRUPPEN.map(g=>`<optgroup label="${esc(g[0])}">`+
+        g[1].map(f=>`<option value="${f[0]}">${f[0]} · ${esc(f[1])} ${esc(f[2])}</option>`).join("")+
+        `</optgroup>`).join("")}
     </select></div>
-    <div class="f"><label>Sorte (Thai-Name, wie der Händler sie nennt)</label>
+    <div class="f"><label>Sorte <i>— Thai-Name, wie der Händler sie nennt</i></label>
       <input id="i_sorte" placeholder="z. B. น้ำดอกไม้ / Nam Dok Mai" list="sorten">
       <datalist id="sorten"></datalist>
       <div class="meta" id="i_hint"></div></div>
@@ -171,11 +274,17 @@ function formular(){
       <div class="f"><label>°Brix</label><input type="number" inputmode="decimal" step="0.1" id="i_bx" placeholder="z. B. 16.4"></div>
       <div class="f"><label>Menge kg</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="z. B. 3"></div>
     </div>
+
+    <div class="f"><label>👃 Duft-Intensität 1–5 <i>— am Stielansatz, Frucht handwarm</i></label>
+      <div class="stars nose" id="i_duft">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
+    <div class="f"><label>Duft-Charakter <i>— mehrfach möglich</i></label>${chips("i_des",DUFT,[],false)}</div>
+    <div class="f"><label>Fehlnoten <i>— eine reicht zum Ablehnen</i></label>${chips("i_feh",FEHL,[],true)}</div>
+
+    <div class="f"><label>Gesamt-Note 1–5 <i>— nach dem Probieren</i></label>
+      <div class="stars" id="i_note">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
     <div class="f"><label>Händler / Markt</label><input id="i_h" placeholder="z. B. Ratanakorn, Stand 12 – Khun Noi" list="haendler">
       <datalist id="haendler">${[...new Set(D.map(e=>e.h).filter(Boolean))].map(h=>`<option value="${esc(h)}">`).join("")}</datalist></div>
-    <div class="f"><label>Sensorik 1–5 (nach dem Probieren)</label>
-      <div class="stars" id="i_note">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
-    <div class="f"><label>Bemerkung</label><input id="i_bem" placeholder="faserig / überreif / Reduziert-Kiste …"></div>
+    <div class="f"><label>Bemerkung</label><input id="i_bem" placeholder="faserig / Reduziert-Kiste / Stielansatz trocken …"></div>
     <div class="bar" style="margin:4px 0 0">
       <button class="b p" id="add" style="flex:1">Charge speichern</button>
     </div>
@@ -185,15 +294,21 @@ function formular(){
 function liste(){
   if(!D.length)return `<div class="empty">Noch keine Charge erfasst.<br>Erste Messung = erster Datenpunkt.</div>`;
   return D.slice().reverse().map((e,ri)=>{
-    const i=D.length-1-ri, f=fr(e.code), [cls,txt]=bxUrteil(e.code,e.bx);
+    const i=D.length-1-ri, f=fr(e.code), [bcls,btxt]=bxUrteil(e.code,e.bx),
+          [pcls,ptxt]=prUrteil(e.code,e.pr), cls=urteil(e);
+    const tags=[...(e.des||[]).map(k=>`<span>${esc(lbl(DUFT,k))}</span>`),
+                ...(e.feh||[]).map(k=>`<span class="bad">⚠ ${esc(lbl(FEHL,k))}</span>`)].join("");
     return `<div class="e ${cls}">
       <div class="eh"><span class="code">${e.code}</span><b>${esc(f[1])}</b>
         <span class="d">${esc(e.dat)}</span></div>
       <div class="meta">
         ${e.sorte?`Sorte <b>${esc(e.sorte)}</b> · `:""}${e.pr?`<b>${e.pr} ฿/kg</b>`:"Preis –"}${e.kg?` · ${e.kg} kg`:""}
-        ${e.bx?` · <span class="bx ${cls}">${e.bx} °Bx</span>`:""}${e.note?` · Sensorik <b>${e.note}/5</b>`:""}
+        ${e.bx?` · <span class="bx ${bcls}">${e.bx} °Bx</span>`:""}
+        ${e.duft?` · <span class="ns">👃 ${e.duft}/5</span>`:""}
+        ${e.note?` · Gesamt <b>${e.note}/5</b>`:""}
       </div>
-      <div class="meta">${e.h?esc(e.h):"Händler –"}${txt?` · ${esc(txt)}`:""}${e.bem?` · <i>${esc(e.bem)}</i>`:""}</div>
+      ${tags?`<div class="tags">${tags}</div>`:""}
+      <div class="meta">${e.h?esc(e.h):"Händler –"}${btxt?` · ${esc(btxt)}`:""}${ptxt?` · <b class="bx ${pcls}">${esc(ptxt)}</b>`:""}${e.bem?` · <i>${esc(e.bem)}</i>`:""}</div>
       <div class="bar" style="margin:8px 0 0"><button class="b del" data-i="${i}" style="padding:6px 11px;font-size:12.5px">löschen</button></div>
     </div>`;
   }).join("");
@@ -201,43 +316,59 @@ function liste(){
 
 function auswertung(){
   if(D.length<2)return `<div class="empty">Auswertung ab 2 Chargen.<br><br>
-    Ziel: nach 4 Wochen siehst du hier, welcher Händler und welche Sorte konstant liefern.</div>`;
+    Ziel: nach 4 Wochen siehst du hier, welcher Händler und welche Sorte konstant liefern —
+    in Zucker <b>und</b> in Duft.</div>`;
+  const m=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length):null;
+  const top=(es,feld,arr)=>{const c={};es.forEach(e=>(e[feld]||[]).forEach(k=>c[k]=(c[k]||0)+1));
+    return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,n])=>lbl(arr,k)+" ×"+n).join(", ")};
+
   const grp={};
   D.forEach(e=>{const k=e.code+"|"+(e.sorte||"—");(grp[k]=grp[k]||[]).push(e)});
   const rows=Object.entries(grp).map(([k,es])=>{
-    const [code,sorte]=k.split("|"), bx=es.filter(e=>e.bx).map(e=>+e.bx),
-      no=es.filter(e=>e.note).map(e=>+e.note), pr=es.filter(e=>e.pr).map(e=>+e.pr),
-      m=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length):null;
-    return{code,sorte,n:es.length,bx:m(bx),no:m(no),pr:m(pr)};
-  }).sort((a,b)=>(b.bx||0)-(a.bx||0));
+    const [code,sorte]=k.split("|");
+    return{code,sorte,n:es.length,
+      bx:m(es.filter(e=>e.bx).map(e=>+e.bx)),
+      du:m(es.filter(e=>e.duft).map(e=>+e.duft)),
+      no:m(es.filter(e=>e.note).map(e=>+e.note)),
+      pr:m(es.filter(e=>e.pr).map(e=>+e.pr)),
+      dtop:top(es,"des",DUFT), ftop:top(es,"feh",FEHL)};
+  }).sort((a,b)=>(b.no||0)-(a.no||0)||(b.du||0)-(a.du||0));
+
   const hg={};
   D.forEach(e=>{if(e.h){(hg[e.h]=hg[e.h]||[]).push(e)}});
-  const hr=Object.entries(hg).map(([h,es])=>{
-    const bx=es.filter(e=>e.bx).map(e=>+e.bx), no=es.filter(e=>e.note).map(e=>+e.note),
-      m=a=>a.length?(a.reduce((x,y)=>x+y,0)/a.length):null;
-    return{h,n:es.length,bx:m(bx),no:m(no)};
-  }).sort((a,b)=>(b.bx||0)-(a.bx||0));
+  const hr=Object.entries(hg).map(([h,es])=>({h,n:es.length,
+      bx:m(es.filter(e=>e.bx).map(e=>+e.bx)),
+      du:m(es.filter(e=>e.duft).map(e=>+e.duft)),
+      no:m(es.filter(e=>e.note).map(e=>+e.note)),
+      fq:es.filter(e=>e.feh&&e.feh.length).length}))
+    .sort((a,b)=>(b.du||0)-(a.du||0));
 
-  return `<h2>Nach Frucht &amp; Sorte <em>— Ø aller Chargen</em></h2>
-  <table><tr><th>Frucht</th><th>Sorte</th><th class="n">n</th><th class="n">Ø °Bx</th><th class="n">Ø Note</th><th class="n">Ø ฿/kg</th></tr>
-  ${rows.map(r=>`<tr><td><span class="code">${r.code}</span> ${esc(fr(r.code)[1])}</td><td>${esc(r.sorte)}</td>
+  return `<h2>Nach Frucht &amp; Sorte <em>— Ø aller Chargen, sortiert nach Gesamturteil</em></h2>
+  <table><tr><th>Frucht / Sorte</th><th class="n">n</th><th class="n">Ø °Bx</th><th class="n">Ø 👃</th><th class="n">Ø Note</th><th class="n">Ø ฿/kg</th></tr>
+  ${rows.map(r=>`<tr><td><span class="code">${r.code}</span> ${esc(fr(r.code)[1])} · ${esc(r.sorte)}
+      ${r.dtop?`<br><small>👃 ${esc(r.dtop)}</small>`:""}${r.ftop?`<br><small style="color:var(--miss)">⚠ ${esc(r.ftop)}</small>`:""}</td>
     <td class="n">${r.n}</td><td class="n">${r.bx?r.bx.toFixed(1):"–"}</td>
+    <td class="n">${r.du?r.du.toFixed(1):"–"}</td>
     <td class="n">${r.no?r.no.toFixed(1):"–"}</td><td class="n">${r.pr?r.pr.toFixed(1):"–"}</td></tr>`).join("")}</table>
+
   <h2>Nach Händler <em>— wer liefert konstant?</em></h2>
-  <table><tr><th>Händler / Markt</th><th class="n">Chargen</th><th class="n">Ø °Bx</th><th class="n">Ø Note</th></tr>
+  <table><tr><th>Händler / Markt</th><th class="n">Chargen</th><th class="n">Ø °Bx</th><th class="n">Ø 👃</th><th class="n">Ø Note</th><th class="n">Fehlnoten</th></tr>
   ${hr.length?hr.map(r=>`<tr><td>${esc(r.h)}</td><td class="n">${r.n}</td>
-    <td class="n">${r.bx?r.bx.toFixed(1):"–"}</td><td class="n">${r.no?r.no.toFixed(1):"–"}</td></tr>`).join("")
-    :`<tr><td colspan="4">Noch kein Händler erfasst.</td></tr>`}</table>
+    <td class="n">${r.bx?r.bx.toFixed(1):"–"}</td><td class="n">${r.du?r.du.toFixed(1):"–"}</td>
+    <td class="n">${r.no?r.no.toFixed(1):"–"}</td><td class="n">${r.fq||"–"}</td></tr>`).join("")
+    :`<tr><td colspan="6">Noch kein Händler erfasst.</td></tr>`}</table>
+
   <div class="tip" style="margin-top:16px">
-    <b>Was du daraus machst:</b> Sobald eine Zeile 4–5 Chargen hat, ist ihr Ø-Brix euer Zielwert für diese Frucht.
-    Trag ihn in <code>_grundlagen/11_sorten-und-einkaufsspezifikation.md</code> ein — dann steht die Spezifikation,
-    die auch der fünfte Stand anwenden kann.
+    <b>Was du daraus machst:</b> Sobald eine Zeile 4–5 Chargen hat, sind ihr Ø-Brix <b>und</b> ihr Ø-Duft euer
+    Zielwert für diese Frucht. Beides in <code>_grundlagen/11_sorten-und-einkaufsspezifikation.md</code> eintragen.<br>
+    <b>Die spannendste Spalte ist Ø 👃:</b> zwei Sorten mit gleichem Brix, aber unterschiedlichem Duft —
+    da entscheidet sich, welche in den Becher kommt. Süße kann man nicht schmecken lassen, Aroma schon.
   </div>`;
 }
 
 function render(){
-  const n=D.length, bxA=D.filter(e=>e.bx).length;
-  $("sum").innerHTML=n?`${n} Charge${n>1?"n":""}<br>${bxA} × Brix gemessen`:"noch leer";
+  const n=D.length, bxA=D.filter(e=>e.bx).length, duA=D.filter(e=>e.duft).length;
+  $("sum").innerHTML=n?`${n} Charge${n>1?"n":""}<br>${bxA} × Brix · ${duA} × 👃`:"noch leer";
   document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));
   const v=$("view"), bar=`<div class="bar">
       <button class="b p" id="csv">CSV exportieren</button>
@@ -251,30 +382,51 @@ function render(){
 function bindForm(){
   const sel=$("i_code");
   const hint=()=>{
-    const f=fr(sel.value);
-    $("i_hint").innerHTML=f[5]
-      ? `🔴 <b>Sorte ist hier entscheidend.</b> Königs-Sorte: ${esc(f[3])}${f[4]?` · Ziel ab <b>${f[4]} °Bx</b>`:""}`
-      : `🟢 Sorte zweitrangig — <b>reif und billig</b> schlägt hier den Namen.`;
-    $("sorten").innerHTML=f[3].split("·").map(s=>`<option value="${esc(s.trim())}">`).join("")
+    const f=fr(sel.value), lo=f[6], hi=f[7];
+    const preis = lo==null
+      ? `💰 <b>Preis noch nicht erfasst</b> — deiner wird der erste Referenzwert.`
+      : `💰 Referenz <b>${lo===hi?lo:lo+"–"+hi} ฿/kg</b> <span style="opacity:.7">(Notion, 11.07.26)</span>`;
+    $("i_hint").innerHTML=(f[5]
+      ? `🔴 <b>Sorte ist hier entscheidend.</b> ${esc(f[3])}${f[4]?` · Ziel ab <b>${f[4]} °Bx</b>`:""}`
+      : `🟢 Sorte zweitrangig — <b>reif und billig</b> schlägt hier den Namen. ${esc(f[3])}`)
+      +`<br>${preis}<span id="i_prchk"></span>`;
+    $("sorten").innerHTML=f[3].split("·").map(s=>`<option value="${esc(s.trim().replace(/\s*\d+([–-]\d+)?\s*$/,""))}">`).join("")
       +[...new Set(D.filter(e=>e.code===sel.value&&e.sorte).map(e=>e.sorte))].map(s=>`<option value="${esc(s)}">`).join("");
+    prCheck();
   };
-  sel.onchange=hint; hint();
-  $("i_note").onclick=e=>{const b=e.target.closest("button");if(!b)return;
-    note=+b.dataset.n;
-    $("i_note").querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.n<=note));};
+  const prCheck=()=>{
+    const el=$("i_prchk"); if(!el)return;
+    const [c,t]=prUrteil(sel.value,$("i_pr").value);
+    el.innerHTML=t?` · <b class="bx ${c}">${esc(t)}</b>`:"";
+  };
+  sel.onchange=hint; $("i_pr").oninput=prCheck; hint();
+
+  const sterne=(id,setter)=>{$(id).onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    const n=+b.dataset.n; setter(n);
+    $(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.n<=n))}};
+  sterne("i_note",n=>note=n); sterne("i_duft",n=>duft=n);
+
+  const toggle=(id,list)=>{$(id).onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    const k=b.dataset.k, i=list.indexOf(k);
+    if(i<0)list.push(k); else list.splice(i,1);
+    b.classList.toggle("on",i<0)}};
+  toggle("i_des",des); toggle("i_feh",feh);
+
   $("add").onclick=()=>{
     const e={dat:$("i_dat").value||heute(),code:sel.value,sorte:$("i_sorte").value.trim(),
       bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,h:$("i_h").value.trim(),
-      note:note||"",bem:$("i_bem").value.trim()};
-    if(!e.bx&&!e.pr&&!e.sorte){alert("Mindestens Sorte, Brix oder Preis eintragen.");return}
-    D.push(e);save();note=0;view="liste";render();
+      duft:duft||"",des:des.slice(),feh:feh.slice(),note:note||"",bem:$("i_bem").value.trim()};
+    if(!e.bx&&!e.pr&&!e.sorte&&!e.duft){alert("Mindestens Sorte, Brix, Duft oder Preis eintragen.");return}
+    D.push(e);save();note=0;duft=0;des=[];feh=[];view="liste";render();
   };
 }
 
 function bindList(){
   const c=$("csv");if(c)c.onclick=()=>{
-    const t="Datum;Code;Frucht;Sorte;Brix;kg;THB/kg;Haendler;Sensorik;Bemerkung\n"
-      +D.map(e=>[e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.kg,e.pr,e.h,e.note,e.bem]
+    const t="Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;Haendler;Bemerkung\n"
+      +D.map(e=>[e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.duft,
+        (e.des||[]).map(k=>lbl(DUFT,k)).join(" / "),(e.feh||[]).map(k=>lbl(FEHL,k)).join(" / "),
+        e.note,e.kg,e.pr,e.h,e.bem]
         .map(x=>String(x==null?"":x).replace(/;/g,",")).join(";")).join("\n");
     $("out").value=t;$("out").style.display="block";$("out").select();
   };
