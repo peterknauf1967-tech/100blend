@@ -300,25 +300,24 @@ function chips(id,arr,sel,bad){
 function formular(){
   return `
   <div class="card">
-    <h2 style="margin:2px 0 10px">🛒 Am Markt <em>— nur diese Felder, Rest zuhause</em></h2>
     <div class="f"><label>Frucht <i>— tippen zum Suchen: English / ไทย / Deutsch (${FRUCHT.length} im Katalog)</i></label>
       <input id="i_such" placeholder="z. B. straw… / สตรอ… / Erdbe…" autocomplete="off">
       <div id="i_pick"></div>
       <div class="fruitlist" id="i_list"></div></div>
-    <div class="tip" id="i_reife" style="margin-bottom:11px"></div>
     <div class="f"><label>Sorte <i>— Thai-Name, wie der Händler sie nennt (Lexi fragt)</i></label>
       <input id="i_sorte" placeholder="z. B. น้ำดอกไม้ / Nam Dok Mai" list="sorten">
       <datalist id="sorten"></datalist>
       <div class="meta" id="i_hint"></div></div>
+    <div class="tip" id="i_reife" style="margin-bottom:11px"></div>
     <div class="f2">
       <div class="f"><label>Preis ฿/kg</label><input type="number" inputmode="decimal" step="0.5" id="i_pr" placeholder="z. B. 54"></div>
       <div class="f"><label>Menge kg</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="z. B. 3"></div>
     </div>
-    <div class="f"><label>Markt <i>— antippen, bleibt stehen</i></label>
-      <div class="chips" id="i_markt">${MAERKTE.map(m=>`<button type="button" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
     <div class="f"><label>Stand-Nr. <i>— reicht statt Name; kein Schild → eigenes Kürzel</i></label>
       <input id="i_stand" placeholder="z. B. 12 · leer ok">
       <div class="meta"><span id="i_geo">📍 GPS wird gesucht …</span> — Geodaten werden beim Speichern automatisch mit abgelegt</div></div>
+    <div class="f"><label>Markt <i>— antippen, bleibt stehen</i></label>
+      <div class="chips" id="i_markt">${MAERKTE.map(m=>`<button type="button" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
     <div class="bar" style="margin:4px 0 0">
       <button class="b p" id="add" style="flex:1">✔ Charge speichern</button>
     </div>
@@ -326,22 +325,7 @@ function formular(){
 
   <details class="card" id="i_lab">
     <summary>🏠 Zuhause nachtragen — Brix, Nase, Note <em>(antippen zum Öffnen)</em></summary>
-    <div class="tip" style="margin-top:11px">
-      <b>So geht's zuhause:</b> Charge unter „Chargen" öffnen ODER hier vor dem Speichern ausfüllen.
-      <b>°Brix:</b> Stück durch Sieb/Presse → 2–3 Tropfen <b>Saft</b> aufs Prisma (Nullpunkt einmal mit Wasser auf 0,0).
-      <b>Kein Refraktometer am Marktstand</b> — treibt bei Kleinmengen nur den Preis.
-    </div>
-    <div class="tip nose">
-      <b>👃 Die Nase ist die andere Hälfte:</b> am <b>Stielansatz</b> riechen, Frucht <b>handwarm</b> —
-      kalte Frucht riecht nach fast nichts und ist nicht beurteilbar.
-    </div>
-    <div class="f2">
-      <div class="f"><label>Wer misst? <i>— Nase ist Person</i></label>
-        <input id="i_who" list="wer" value="${esc(WHO)}" placeholder="Peter / Lexi">
-        <datalist id="wer"><option value="Peter"><option value="Lexi"></datalist></div>
-      <div class="f"><label>Datum</label><input type="date" id="i_dat" value="${heute()}"></div>
-    </div>
-    <div class="f"><label>°Brix <i>— optional</i></label><input type="number" inputmode="decimal" step="0.1" id="i_bx" placeholder="leer lassen ist ok"></div>
+    <div class="f" style="margin-top:11px"><label>°Brix <i>— optional</i></label><input type="number" inputmode="decimal" step="0.1" id="i_bx" placeholder="leer lassen ist ok"></div>
     <div class="f"><label>👃 Duft-Intensität 1–5 <i>— am Stielansatz, handwarm</i></label>
       <div class="stars nose" id="i_duft">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
     <div class="f"><label>Duft-Charakter <i>— mehrfach möglich</i></label>${chips("i_des",DUFT,[],false)}</div>
@@ -349,6 +333,19 @@ function formular(){
     <div class="f"><label>Gesamt-Note 1–5 <i>— nach dem Probieren</i></label>
       <div class="stars" id="i_note">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
     <div class="f"><label>Bemerkung</label><input id="i_bem" placeholder="faserig / Reduziert-Kiste / Stielansatz trocken …"></div>
+    <div class="f"><label>Wer misst? <i>— Nase ist Person</i></label>
+      <input id="i_who" list="wer" value="${esc(WHO)}" placeholder="Peter / Lexi">
+      <datalist id="wer"><option value="Peter"><option value="Lexi"></datalist></div>
+    <div class="f"><label>Datum <i>— heute ist vorbelegt</i></label><input type="date" id="i_dat" value="${heute()}"></div>
+    <div class="tip">
+      <b>So geht's zuhause:</b> Charge unter „Chargen" öffnen ODER hier vor dem Speichern ausfüllen.
+      <b>°Brix:</b> Stück durch Sieb/Presse → 2–3 Tropfen <b>Saft</b> aufs Prisma (Nullpunkt einmal mit Wasser auf 0,0).
+      <b>Kein Refraktometer am Marktstand</b> — treibt bei Kleinmengen nur den Preis.
+    </div>
+    <div class="tip nose" style="margin-bottom:0">
+      <b>👃 Die Nase ist die andere Hälfte:</b> am <b>Stielansatz</b> riechen, Frucht <b>handwarm</b> —
+      kalte Frucht riecht nach fast nichts und ist nicht beurteilbar.
+    </div>
   </details>`;
 }
 

@@ -1,7 +1,7 @@
 /* 100blend Einkaufs-Protokoll — Offline-Cache.
    Auf dem Markt gibt es oft kein Netz. Die App muss trotzdem starten.
    Strategie: beim Installieren alles cachen; danach Cache zuerst, Netz nur zum Auffrischen. */
-const CACHE = "blend-einkauf-v11";   /* hochzählen, wenn einkauf.html geändert wurde — sonst behält das Handy die alte Version */
+const CACHE = "blend-einkauf-v12";   /* hochzählen, wenn einkauf.html geändert wurde — sonst behält das Handy die alte Version */
 const FILES = ["./einkauf.html", "./einkauf.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
