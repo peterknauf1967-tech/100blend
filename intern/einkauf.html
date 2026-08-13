@@ -93,6 +93,9 @@ textarea#out{height:220px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:
 .fruitlist button.frow:last-child{border-bottom:0}
 .fruitlist button.frow small{display:block;color:var(--muted);font-weight:500;font-size:11.5px}
 #i_pick{margin:6px 0 0;font-size:14px}
+details.card summary{cursor:pointer;font:800 12px/1.4 inherit;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+details.card summary em{font-style:normal;text-transform:none;letter-spacing:0;font-weight:600;color:#a09a92}
+details.card[open] summary{margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -122,67 +125,69 @@ textarea#out{height:220px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:
 /* ------------------------------------------------------------------
    Früchte-Katalog
    [Code, Deutsch, Thai, Sorte/Hinweis, Brix-Ziel (null=offen), sorten-kritisch?,
-    Preis min, Preis max (฿/kg, null=nicht erfasst), Englisch]
+    Preis min, Preis max (฿/kg, null=nicht erfasst), Englisch,
+    Reife-Erkennung (Quelle: 07_frucht-sortenguide-thai.md + Standard-Reifezeichen)]
    Preise: Notion „🛒 Marktpreise" — konsolidierte Liste 11.07.2026
            (Frischmarkt = Ratanakorn Theprasit · TK = GO Wholesale 1-kg-Beutel)
    Brix-Ziele: bisher nur Mango belegt. Alle anderen misst Peter selbst.
    Suche läuft über Englisch + Thai + Deutsch (Peter-Wunsch 13.08.).
    ------------------------------------------------------------------ */
+const TKREIFE="Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen";
 const GRUPPEN=[
 ["A · Frischmarkt (Ratanakorn)",[
- ["MG","Mango","มะม่วง","Morakot ⭐ 35 · R2E2 45 · Nam Dok Mai 50–60",15,true,35,60,"Mango"],
- ["BA","Banane","กล้วย","Kluai Nam Wa · Kluai Hom · 15 ฿/Staude",null,true,10,15,"Banana"],
- ["WM","Wassermelone","แตงโม","Reife zählt · verhandeln lohnt",null,false,10,18,"Watermelon"],
- ["AN","Ananas","สับปะรด","Nang Lae · Phuket · 8 ฿/Stück à ~400 g",null,true,20,25,"Pineapple"],
- ["AV","Avocado","อะโวคาโด","grün lokal 59 · Hass-Typ 120 · Fleisch ≈91",null,false,59,120,"Avocado"],
- ["DR","Drachenfrucht rot","แก้วมังกรแดง","rotfleischig = Farbgeber",null,true,45,70,"Dragon fruit red"],
- ["DW","Drachenfrucht weiß","แก้วมังกรขาว","milder, billiger",null,false,25,35,"Dragon fruit white"],
- ["OR","Orange","ส้ม","Som Sai Nam Phueng · stark standabhängig",null,true,30,70,"Orange"],
- ["TM","Thai-Melone (Taeng Thai)","แตงไทย","zuckerarm → Ampel-grün-Basis",null,false,25,25,"Thai melon (muskmelon)"],
- ["ME","Cantaloupe / Honigmelone","แคนตาลูป","—",null,false,40,55,"Cantaloupe / Honeydew melon"],
- ["GU","Guave","ฝรั่ง","Vitamin-C-Held, ersetzt Acerola",null,false,35,35,"Guava"],
- ["PY","Papaya","มะละกอ","Reife zählt",null,false,null,null,"Papaya"],
- ["LI","Litschi","ลิ้นจี่","Saison · Mengenrabatt 3 kg=100",null,false,35,60,"Lychee"],
- ["LG","Longan (Lamyai)","ลำไย","sehr süß",null,false,80,80,"Longan"],
- ["LK","Longkong","ลองกอง","—",null,false,30,30,"Longkong (langsat)"],
- ["RM","Rambutan","เงาะ","❌ nur ~40 % Ausbeute → ~110 ฿/kg Fleisch",null,false,45,45,"Rambutan"],
- ["MS","Mangostan","มังคุด","❌ nur ~30 % Ausbeute → ~130 ฿/kg Fleisch",null,false,39,39,"Mangosteen"],
- ["AB","Apfel/Birne B-Ware","แอปเปิล/สาลี่","2. Wahl, sofort verarbeiten + frosten",null,false,15,15,"Apple / Pear (B-grade)"],
- ["PL","Pflaume XXL (Import)","พลัม","Purple-Farbgeber · SALE-Fenster nutzen",null,false,65,65,"Plum"],
- ["WT","Weintrauben","องุ่น","rot/schwarz 100–140 · Shine Muscat 160",null,false,100,160,"Grapes"],
- ["KN","Kokosnuss jung","มะพร้าวอ่อน","immer pro Stück (10–15 ฿, max. 20)",null,false,null,null,"Young coconut"],
- ["RO","Roselle (Krachiap)","กระเจี๊ยบแดง","Thai-Ersatz für Granatapfel",null,false,null,null,"Roselle (hibiscus)"],
- ["PF","Passionsfrucht frisch","เสาวรส","frisch teuer/Aufwand → TK-Püree 179",null,false,null,null,"Passion fruit"],
- ["DU","Durian","ทุเรียน","Mon Thong 149 · Premium 179",null,false,149,179,"Durian"],
- ["SN","Santol (Krathon)","กระท้อน","3 kg = 100",null,false,35,35,"Santol"],
- ["CH","Rose Apple (Chomphu)","ชมพู่","wasserreich, mild",null,false,null,null,"Rose apple"],
- ["JF","Jackfruit","ขนุน","sehr süß, intensiv",null,false,null,null,"Jackfruit"],
- ["SD","Sapodilla (Lamut)","ละมุด","karamellig-süß",null,false,null,null,"Sapodilla"],
- ["NN","Zuckerapfel (Noi Na)","น้อยหน่า","cremig-süß",null,false,null,null,"Sugar apple (custard apple)"],
- ["SF","Sternfrucht (Carambola)","มะเฟือง","sauer-frisch",null,false,null,null,"Star fruit (carambola)"],
- ["PO","Pomelo","ส้มโอ","⚠ für Peter privat tabu (Eliquis)",null,false,null,null,"Pomelo"],
- ["LS","Limette","มะนาว","schwer = saftig · TK-Saft 150 ฿/l",null,false,null,null,"Lime"]
+ ["MG","Mango","มะม่วง","Morakot ⭐ 35 · R2E2 45 · Nam Dok Mai 50–60",15,true,35,60,"Mango","goldgelb · gibt auf sanften Druck nach · duftet am Stielansatz — grün-hart = sauer, nicht fürs Mixen"],
+ ["BA","Banane","กล้วย","Kluai Nam Wa · Kluai Hom · 15 ฿/Staude",null,true,10,15,"Banana","gelb mit braunen Zuckerflecken · gibt leicht nach · süßer Duft — grün = stärkig/fad"],
+ ["WM","Wassermelone","แตงโม","Reife zählt · verhandeln lohnt",null,false,10,18,"Watermelon","matte (nicht glänzende) Schale · gelber Bodenfleck · klingt hohl beim Klopfen · schwer"],
+ ["AN","Ananas","สับปะรด","Nang Lae · Phuket · 8 ฿/Stück à ~400 g",null,true,20,25,"Pineapple","Boden goldgelb · süßer Duft · ein Blatt löst sich mit leichtem Zug"],
+ ["AV","Avocado","อะโวคาโด","grün lokal 59 · Hass-Typ 120 · Fleisch ≈91",null,false,59,120,"Avocado","gibt auf sanften Druck gleichmäßig nach · Stielansatz grün-gelb, nicht braun"],
+ ["DR","Drachenfrucht rot","แก้วมังกรแดง","rotfleischig = Farbgeber",null,true,45,70,"Dragon fruit red","gleichmäßig kräftig pink · Flügel leicht trocken (nicht welk) · schwer für die Größe"],
+ ["DW","Drachenfrucht weiß","แก้วมังกรขาว","milder, billiger",null,false,25,35,"Dragon fruit white","gleichmäßige Farbe · Flügel frisch · schwer für die Größe · gibt minimal nach"],
+ ["OR","Orange","ส้ม","Som Sai Nam Phueng · stark standabhängig",null,true,30,70,"Orange","schwer = saftig · leicht weich · duftet an der Schale"],
+ ["TM","Thai-Melone (Taeng Thai)","แตงไทย","zuckerarm → Ampel-grün-Basis",null,false,25,25,"Thai melon (muskmelon)","duftet süß am Blütenende · gibt dort leicht nach"],
+ ["ME","Cantaloupe / Honigmelone","แคนตาลูป","—",null,false,40,55,"Cantaloupe / Honeydew melon","duftet am Blütenende · gibt dort leicht nach · schwer für die Größe"],
+ ["GU","Guave","ฝรั่ง","Vitamin-C-Held, ersetzt Acerola",null,false,35,35,"Guava","gelblich-grün · duftet · gibt minimal nach — steinhart = unreif"],
+ ["PY","Papaya","มะละกอ","Reife zählt",null,false,null,null,"Papaya","Schale großflächig gelb-orange · gibt auf Druck nach — grün = unreif"],
+ ["LI","Litschi","ลิ้นจี่","Saison · Mengenrabatt 3 kg=100",null,false,35,60,"Lychee","Schale kräftig rot + prall · duftet blumig — braun/trocken = alt"],
+ ["LG","Longan (Lamyai)","ลำไย","sehr süß",null,false,80,80,"Longan","Schale glatt hellbraun + prall · Probierfrucht: saftig-süß"],
+ ["LK","Longkong","ลองกอง","—",null,false,30,30,"Longkong (langsat)","hellgelb + prall · löst sich leicht vom Zweig · Probe kosten"],
+ ["RM","Rambutan","เงาะ","❌ nur ~40 % Ausbeute → ~110 ฿/kg Fleisch",null,false,45,45,"Rambutan","leuchtend rot · Haare frisch grün-rot, nicht schwarz/trocken"],
+ ["MS","Mangostan","มังคุด","❌ nur ~30 % Ausbeute → ~130 ฿/kg Fleisch",null,false,39,39,"Mangosteen","Schale gibt auf Daumendruck leicht nach — steinhart = innen verdorben"],
+ ["AB","Apfel/Birne B-Ware","แอปเปิล/สาลี่","2. Wahl, sofort verarbeiten + frosten",null,false,15,15,"Apple / Pear (B-grade)","Druckstellen sind ok (wird gemixt) · kein Schimmel, kein Gärgeruch"],
+ ["PL","Pflaume XXL (Import)","พลัม","Purple-Farbgeber · SALE-Fenster nutzen",null,false,65,65,"Plum","satte dunkle Farbe · duftet · gibt auf Druck leicht nach"],
+ ["WT","Weintrauben","องุ่น","rot/schwarz 100–140 · Shine Muscat 160",null,false,100,160,"Grapes","Beeren prall am festen grünen Stiel · weißer Duftfilm ist gut · eine probieren"],
+ ["KN","Kokosnuss jung","มะพร้าวอ่อน","immer pro Stück (10–15 ฿, max. 20)",null,false,null,null,"Young coconut","schwer · beim Schütteln hörbar viel Wasser · Schale hell ohne Schimmel"],
+ ["RO","Roselle (Krachiap)","กระเจี๊ยบแดง","Thai-Ersatz für Granatapfel",null,false,null,null,"Roselle (hibiscus)","Kelche prall + kräftig rot, nicht welk"],
+ ["PF","Passionsfrucht frisch","เสาวรส","frisch teuer/Aufwand → TK-Püree 179",null,false,null,null,"Passion fruit","schrumpelige Schale = reif + süß! glatt-prall = noch sauer"],
+ ["DU","Durian","ทุเรียน","Mon Thong 149 · Premium 179",null,false,149,179,"Durian","duftet stark am Stiel · klingt beim Klopfen dumpf-hohl · Händler öffnen lassen"],
+ ["SN","Santol (Krathon)","กระท้อน","3 kg = 100",null,false,35,35,"Santol","gelb-bräunlich · duftet · gibt leicht nach"],
+ ["CH","Rose Apple (Chomphu)","ชมพู่","wasserreich, mild",null,false,null,null,"Rose apple","kräftige Farbe · prall-glänzend · keine braunen Stellen"],
+ ["JF","Jackfruit","ขนุน","sehr süß, intensiv",null,false,null,null,"Jackfruit","duftet süß · Stacheln flach + weit auseinander · klingt dumpf — meist fertig geschält kaufen"],
+ ["SD","Sapodilla (Lamut)","ละมุด","karamellig-süß",null,false,null,null,"Sapodilla","gibt deutlich nach wie reife Kiwi — hart = herb-ungenießbar"],
+ ["NN","Zuckerapfel (Noi Na)","น้อยหน่า","cremig-süß",null,false,null,null,"Sugar apple (custard apple)","Schuppen weit auseinander · gibt leicht nach · duftet süß"],
+ ["SF","Sternfrucht (Carambola)","มะเฟือง","sauer-frisch",null,false,null,null,"Star fruit (carambola)","Kanten gelb-orange (nicht grün) · glänzend"],
+ ["PO","Pomelo","ส้มโอ","⚠ für Peter privat tabu (Eliquis)",null,false,null,null,"Pomelo","schwer für die Größe · duftet an der Schale"],
+ ["LS","Limette","มะนาว","schwer = saftig · TK-Saft 150 ฿/l",null,false,null,null,"Lime","schwer für die Größe · dünne glatte Schale · leicht weich = viel Saft"]
 ]],
 ["B · TK — GO Wholesale (alle Beutel 1 kg)",[
- ["MB","Maulbeere TK","หม่อน","❌ Note 1 am 13.08. (kein Duft/Geschmack)",null,false,69,69,"Mulberry frozen"],
- ["ER","Erdbeere TK","สตรอว์เบอร์รี","SuperSave 69 · A-Choice 79 (beide China)",null,true,69,79,"Strawberry frozen"],
- ["KI","Kiwi TK geschnitten","กีวี","Aktion (statt 85)",null,false,69,69,"Kiwi frozen sliced"],
- ["PS","Pfirsich TK","พีช","frisch 100 → TK vorziehen",null,false,79,79,"Peach frozen"],
- ["MD","Mandarine TK","ส้มแมนดาริน","Aktion (statt 119)",null,false,99,99,"Mandarin frozen"],
- ["BR","Brombeere TK","แบล็กเบอร์รี","Aktion (statt 149)",null,false,109,109,"Blackberry frozen"],
- ["BM","Beeren-Mix TK fertig","เบอร์รีรวม","Eigen-Mix ~130 ist billiger",null,false,149,149,"Berry mix frozen"],
- ["JB","Schwarze Johannisbeere TK","ลูกเกดดำ","⭐ Note 4 am 13.08. — Beeren-Träger",null,false,179,179,"Blackcurrant frozen"],
- ["BB","Blaubeere TK","บลูเบอร์รี","im Purple-Mix strecken · frisch 658 ❌",null,false,209,209,"Blueberry frozen"],
- ["HB","Himbeere TK","ราสป์เบอร์รี","teuerste — nur Premium",null,false,285,285,"Raspberry frozen"],
- ["MY","Marian Plum TK (Mayongchid)","มะยงชิด","500 g = 153 → Saison-Special",null,false,306,306,"Marian plum frozen"],
- ["MP","Mango-Püree Namdokmai TK","มะม่วงบด","nur Backup — Eigen-Frost gewinnt",null,false,131,131,"Mango puree frozen"],
- ["PP2","Passionsfrucht-Püree TK","เสาวรสบด","kernlos · 30 g/Becher ≈ 5,4 ฿",null,false,179,189,"Passion fruit puree frozen"],
- ["AT","Avocado TK / Püree","อะโวคาโดแช่แข็ง","❌ frisch gewinnt Faktor 3",null,false,278,318,"Avocado frozen / puree"],
- ["SP","Spinat TK gehackt","ผักโขม","Aktion (statt 99) · Green Detox 40 g = 2,40 ฿",null,false,59,59,"Spinach frozen chopped"],
- ["BK","Brokkoli TK","บรอกโคลี","Aktion (statt 79)",null,false,69,69,"Broccoli frozen"]
+ ["MB","Maulbeere TK","หม่อน","❌ Note 1 am 13.08. (kein Duft/Geschmack)",null,false,69,69,"Mulberry frozen",TKREIFE],
+ ["ER","Erdbeere TK","สตรอว์เบอร์รี","SuperSave 69 · A-Choice 79 (beide China)",null,true,69,79,"Strawberry frozen",TKREIFE],
+ ["KI","Kiwi TK geschnitten","กีวี","Aktion (statt 85)",null,false,69,69,"Kiwi frozen sliced",TKREIFE],
+ ["PS","Pfirsich TK","พีช","frisch 100 → TK vorziehen",null,false,79,79,"Peach frozen",TKREIFE],
+ ["MD","Mandarine TK","ส้มแมนดาริน","Aktion (statt 119)",null,false,99,99,"Mandarin frozen",TKREIFE],
+ ["BR","Brombeere TK","แบล็กเบอร์รี","Aktion (statt 149)",null,false,109,109,"Blackberry frozen",TKREIFE],
+ ["BM","Beeren-Mix TK fertig","เบอร์รีรวม","Eigen-Mix ~130 ist billiger",null,false,149,149,"Berry mix frozen",TKREIFE],
+ ["JB","Schwarze Johannisbeere TK","ลูกเกดดำ","⭐ Note 4 am 13.08. — Beeren-Träger",null,false,179,179,"Blackcurrant frozen",TKREIFE],
+ ["BB","Blaubeere TK","บลูเบอร์รี","im Purple-Mix strecken · frisch 658 ❌",null,false,209,209,"Blueberry frozen",TKREIFE],
+ ["HB","Himbeere TK","ราสป์เบอร์รี","teuerste — nur Premium",null,false,285,285,"Raspberry frozen",TKREIFE],
+ ["MY","Marian Plum TK (Mayongchid)","มะยงชิด","500 g = 153 → Saison-Special",null,false,306,306,"Marian plum frozen",TKREIFE],
+ ["MP","Mango-Püree Namdokmai TK","มะม่วงบด","nur Backup — Eigen-Frost gewinnt",null,false,131,131,"Mango puree frozen","Becher/Beutel unbeschädigt · kein Eisreif · MHD prüfen"],
+ ["PP2","Passionsfrucht-Püree TK","เสาวรสบด","kernlos · 30 g/Becher ≈ 5,4 ฿",null,false,179,189,"Passion fruit puree frozen","Becher/Beutel unbeschädigt · kein Eisreif · MHD prüfen"],
+ ["AT","Avocado TK / Püree","อะโวคาโดแช่แข็ง","❌ frisch gewinnt Faktor 3",null,false,278,318,"Avocado frozen / puree",TKREIFE],
+ ["SP","Spinat TK gehackt","ผักโขม","Aktion (statt 99) · Green Detox 40 g = 2,40 ฿",null,false,59,59,"Spinach frozen chopped",TKREIFE],
+ ["BK","Brokkoli TK","บรอกโคลี","Aktion (statt 79)",null,false,69,69,"Broccoli frozen",TKREIFE]
 ]],
 ["C · Sonstiges",[
- ["XX","Andere / neue Frucht","อื่น ๆ","in der Bemerkung benennen",null,false,null,null,"Other / new fruit"]
+ ["XX","Andere / neue Frucht","อื่น ๆ","in der Bemerkung benennen",null,false,null,null,"Other / new fruit","Merksatz: reif + duftend schlägt schön + fest · am Stielansatz riechen"]
 ]]];
 const FRUCHT=GRUPPEN.flatMap(g=>g[1]);
 /* TK-Codes: 1-kg-Beutel von GO Wholesale → Händler, Menge und Preis werden vorausgefüllt */
@@ -220,6 +225,7 @@ const KEY="bl_einkauf1";
 let D=JSON.parse(localStorage.getItem(KEY)||"[]");
 let WHO=localStorage.getItem("bl_who")||"";      // Peter oder Lexi — steckt im Dateinamen und in jeder Zeile
 let view="neu", note=0, duft=0, des=[], feh=[];
+let EDIT=-1;   // Index der Charge, die gerade zuhause nachgetragen wird (-1 = neue Charge)
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const save=()=>localStorage.setItem(KEY,JSON.stringify(D));
@@ -293,55 +299,57 @@ function chips(id,arr,sel,bad){
 
 function formular(){
   return `
-  <div class="tip">
-    <b>🛒 Am Markt reicht:</b> Frucht antippen · Sorte erfragen (Lexi) · Preis · <b>am Stielansatz riechen</b> — fertig.
-    <b>Kein Refraktometer am Stand</b> — bei Kleinmengen treibt das nur den Preis.<br>
-    <b>°Brix ist optional</b> und wird <b>zuhause beim Schneiden</b> nachgetragen:
-    Stück durch Sieb/Presse → 2–3 Tropfen <b>Saft</b> aufs Prisma (Nullpunkt vorher einmal mit Wasser auf 0,0).
-  </div>
-  <div class="tip nose">
-    <b>👃 Und dann die Nase — sie ist die andere Hälfte.</b> Brix misst nur Zucker; alles, was du „Aroma" nennst,
-    riecht du. Deshalb: <b>am Stielansatz riechen</b> (dort sitzen die Duftstoffe), Frucht muss dabei
-    <b>handwarm</b> sein. Kalte Frucht riecht nach fast nichts — ein kühlschrankkaltes Stück ist nicht beurteilbar.
-  </div>
   <div class="card">
+    <h2 style="margin:2px 0 10px">🛒 Am Markt <em>— nur diese Felder, Rest zuhause</em></h2>
+    <div class="f"><label>Frucht <i>— tippen zum Suchen: English / ไทย / Deutsch (${FRUCHT.length} im Katalog)</i></label>
+      <input id="i_such" placeholder="z. B. straw… / สตรอ… / Erdbe…" autocomplete="off">
+      <div id="i_pick"></div>
+      <div class="fruitlist" id="i_list"></div></div>
+    <div class="tip" id="i_reife" style="margin-bottom:11px"></div>
+    <div class="f"><label>Sorte <i>— Thai-Name, wie der Händler sie nennt (Lexi fragt)</i></label>
+      <input id="i_sorte" placeholder="z. B. น้ำดอกไม้ / Nam Dok Mai" list="sorten">
+      <datalist id="sorten"></datalist>
+      <div class="meta" id="i_hint"></div></div>
+    <div class="f2">
+      <div class="f"><label>Preis ฿/kg</label><input type="number" inputmode="decimal" step="0.5" id="i_pr" placeholder="z. B. 54"></div>
+      <div class="f"><label>Menge kg</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="z. B. 3"></div>
+    </div>
+    <div class="f"><label>Markt <i>— antippen, bleibt stehen</i></label>
+      <div class="chips" id="i_markt">${MAERKTE.map(m=>`<button type="button" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
+    <div class="f"><label>Stand-Nr. <i>— reicht statt Name; kein Schild → eigenes Kürzel</i></label>
+      <input id="i_stand" placeholder="z. B. 12 · leer ok">
+      <div class="meta"><span id="i_geo">📍 GPS wird gesucht …</span> — Geodaten werden beim Speichern automatisch mit abgelegt</div></div>
+    <div class="bar" style="margin:4px 0 0">
+      <button class="b p" id="add" style="flex:1">✔ Charge speichern</button>
+    </div>
+  </div>
+
+  <details class="card" id="i_lab">
+    <summary>🏠 Zuhause nachtragen — Brix, Nase, Note <em>(antippen zum Öffnen)</em></summary>
+    <div class="tip" style="margin-top:11px">
+      <b>So geht's zuhause:</b> Charge unter „Chargen" öffnen ODER hier vor dem Speichern ausfüllen.
+      <b>°Brix:</b> Stück durch Sieb/Presse → 2–3 Tropfen <b>Saft</b> aufs Prisma (Nullpunkt einmal mit Wasser auf 0,0).
+      <b>Kein Refraktometer am Marktstand</b> — treibt bei Kleinmengen nur den Preis.
+    </div>
+    <div class="tip nose">
+      <b>👃 Die Nase ist die andere Hälfte:</b> am <b>Stielansatz</b> riechen, Frucht <b>handwarm</b> —
+      kalte Frucht riecht nach fast nichts und ist nicht beurteilbar.
+    </div>
     <div class="f2">
       <div class="f"><label>Wer misst? <i>— Nase ist Person</i></label>
         <input id="i_who" list="wer" value="${esc(WHO)}" placeholder="Peter / Lexi">
         <datalist id="wer"><option value="Peter"><option value="Lexi"></datalist></div>
       <div class="f"><label>Datum</label><input type="date" id="i_dat" value="${heute()}"></div>
     </div>
-    <div class="f2">
-      <div class="f"><label>Preis ฿/kg</label><input type="number" inputmode="decimal" step="0.5" id="i_pr" placeholder="z. B. 54"></div>
-      <div class="f"><label>Menge kg</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="z. B. 3"></div>
-    </div>
-    <div class="f"><label>Frucht <i>— tippen zum Suchen: English / ไทย / Deutsch (${FRUCHT.length} im Katalog)</i></label>
-      <input id="i_such" placeholder="z. B. straw… / สตรอ… / Erdbe…" autocomplete="off">
-      <div id="i_pick"></div>
-      <div class="fruitlist" id="i_list"></div></div>
-    <div class="f"><label>Sorte <i>— Thai-Name, wie der Händler sie nennt</i></label>
-      <input id="i_sorte" placeholder="z. B. น้ำดอกไม้ / Nam Dok Mai" list="sorten">
-      <datalist id="sorten"></datalist>
-      <div class="meta" id="i_hint"></div></div>
-    <div class="f"><label>°Brix <i>— optional · zuhause beim Schneiden nachtragen, nicht am Stand</i></label><input type="number" inputmode="decimal" step="0.1" id="i_bx" placeholder="leer lassen ist ok"></div>
-
-    <div class="f"><label>👃 Duft-Intensität 1–5 <i>— am Stielansatz, Frucht handwarm</i></label>
+    <div class="f"><label>°Brix <i>— optional</i></label><input type="number" inputmode="decimal" step="0.1" id="i_bx" placeholder="leer lassen ist ok"></div>
+    <div class="f"><label>👃 Duft-Intensität 1–5 <i>— am Stielansatz, handwarm</i></label>
       <div class="stars nose" id="i_duft">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
     <div class="f"><label>Duft-Charakter <i>— mehrfach möglich</i></label>${chips("i_des",DUFT,[],false)}</div>
     <div class="f"><label>Fehlnoten <i>— eine reicht zum Ablehnen</i></label>${chips("i_feh",FEHL,[],true)}</div>
-
     <div class="f"><label>Gesamt-Note 1–5 <i>— nach dem Probieren</i></label>
       <div class="stars" id="i_note">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
-    <div class="f"><label>Markt <i>— antippen, bleibt stehen</i></label>
-      <div class="chips" id="i_markt">${MAERKTE.map(m=>`<button type="button" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
-    <div class="f"><label>Stand-Nr. <i>— reicht statt Name; kein Schild → eigenes Kürzel (z. B. „Ecke links")</i></label>
-      <input id="i_stand" placeholder="z. B. 12 · leer ok">
-      <div class="meta"><span id="i_geo">📍 GPS wird gesucht …</span> — wird beim Speichern automatisch mit abgelegt</div></div>
     <div class="f"><label>Bemerkung</label><input id="i_bem" placeholder="faserig / Reduziert-Kiste / Stielansatz trocken …"></div>
-    <div class="bar" style="margin:4px 0 0">
-      <button class="b p" id="add" style="flex:1">Charge speichern</button>
-    </div>
-  </div>`;
+  </details>`;
 }
 
 function liste(){
@@ -362,7 +370,9 @@ function liste(){
       </div>
       ${tags?`<div class="tags">${tags}</div>`:""}
       <div class="meta">${e.h?esc(e.h):"Händler –"}${e.lat?` · 📍±${e.acc} m`:""}${btxt?` · ${esc(btxt)}`:""}${ptxt?` · <b class="bx ${pcls}">${esc(ptxt)}</b>`:""}${e.bem?` · <i>${esc(e.bem)}</i>`:""}</div>
-      <div class="bar" style="margin:8px 0 0"><button class="b del" data-i="${i}" style="padding:6px 11px;font-size:12.5px">löschen</button></div>
+      <div class="bar" style="margin:8px 0 0">
+        <button class="b edit" data-i="${i}" style="padding:6px 11px;font-size:12.5px">🏠 nachtragen</button>
+        <button class="b del" data-i="${i}" style="padding:6px 11px;font-size:12.5px">löschen</button></div>
     </div>`;
   }).join("");
 }
@@ -502,6 +512,7 @@ function bindForm(){
     CODE=c; localStorage.setItem("bl_code",c);
     const f=fr(c);
     pick.innerHTML=`<div class="meta">✓ <b>${esc(f[8])}</b> · ${esc(f[2])} · ${esc(f[1])} <span class="code">${f[0]}</span></div>`;
+    $("i_reife").innerHTML=`🍈 <b>So erkennst du die perfekte ${esc(f[1])}:</b><br>${esc(f[9]||"reif + duftend schlägt schön + fest")}`;
     list.style.display="none"; such.value="";
     vorbelegen(); hint();
   };
@@ -509,7 +520,25 @@ function bindForm(){
   such.onfocus=zeigen;
   list.onclick=e=>{const b=e.target.closest("button.frow");if(b)waehlen(b.dataset.c)};
   $("i_pr").oninput=prCheck;
-  waehlen(CODE);
+
+  const paint=(id,n)=>$(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.n<=n));
+  if(EDIT>=0){
+    /* Zuhause-Nachtragen: gespeicherte Charge in die Maske laden */
+    const e=D[EDIT];
+    waehlen(e.code);
+    const m=MAERKTE.find(x=>e.h&&e.h.indexOf(x)===0)||"";
+    setMarkt(m);
+    $("i_stand").value=e.h?e.h.slice(m.length).replace(/^ Stand /,"").trim():"";
+    $("i_sorte").value=e.sorte||"";$("i_pr").value=e.pr||"";$("i_kg").value=e.kg||"";
+    $("i_who").value=e.who||WHO;$("i_dat").value=e.dat||heute();
+    $("i_bx").value=e.bx||"";$("i_bem").value=e.bem||"";
+    note=+e.note||0;duft=+e.duft||0;des=(e.des||[]).slice();feh=(e.feh||[]).slice();
+    paint("i_note",note);paint("i_duft",duft);
+    des.forEach(k=>{const b=$("i_des").querySelector(`button[data-k="${k}"]`);if(b)b.classList.add("on")});
+    feh.forEach(k=>{const b=$("i_feh").querySelector(`button[data-k="${k}"]`);if(b)b.classList.add("on")});
+    $("i_lab").open=true;
+    $("add").textContent="✔ Änderungen speichern";
+  } else waehlen(CODE);
 
   const sterne=(id,setter)=>{$(id).onclick=e=>{const b=e.target.closest("button");if(!b)return;
     const n=+b.dataset.n; setter(n);
@@ -529,9 +558,17 @@ function bindForm(){
       bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,
       h:MARKT?(MARKT+(stand?" Stand "+stand:"")):stand,
       duft:duft||"",des:des.slice(),feh:feh.slice(),note:note||"",bem:$("i_bem").value.trim()};
-    if(GEO&&Date.now()-GEO.t<5*60*1000){e.lat=GEO.lat.toFixed(6);e.lon=GEO.lon.toFixed(6);e.acc=GEO.acc}
     if(!e.bx&&!e.pr&&!e.sorte&&!e.duft){alert("Mindestens Sorte, Brix, Duft oder Preis eintragen.");return}
-    D.push(e);save();note=0;duft=0;des=[];feh=[];view="liste";render();
+    if(EDIT>=0){
+      /* beim Nachtragen die Markt-GPS-Position behalten — die Heim-Position wäre falsch */
+      const alt=D[EDIT];
+      if(alt.lat){e.lat=alt.lat;e.lon=alt.lon;e.acc=alt.acc}
+      D[EDIT]=e;EDIT=-1;
+    }else{
+      if(GEO&&Date.now()-GEO.t<5*60*1000){e.lat=GEO.lat.toFixed(6);e.lon=GEO.lon.toFixed(6);e.acc=GEO.acc}
+      D.push(e);
+    }
+    save();note=0;duft=0;des=[];feh=[];view="liste";render();
   };
 }
 
@@ -568,9 +605,10 @@ function bindList(){
   };
   const cl=$("clear");if(cl)cl.onclick=()=>{if(confirm("Wirklich alle Chargen löschen?")){D=[];save();render()}};
   document.querySelectorAll(".del").forEach(b=>b.onclick=()=>{D.splice(+b.dataset.i,1);save();render()});
+  document.querySelectorAll(".edit").forEach(b=>b.onclick=()=>{EDIT=+b.dataset.i;view="neu";render()});
 }
 
-document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{view=b.dataset.v;render()});
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{EDIT=-1;view=b.dataset.v;render()});
 render();
 geoStart();
 
