@@ -161,7 +161,7 @@ const GRUPPEN=[
  ["AB","Apfel/Birne B-Ware","แอปเปิล/สาลี่","2. Wahl, sofort verarbeiten + frosten",null,false,15,15,"Apple / Pear (B-grade)","Druckstellen sind ok (wird gemixt) · kein Schimmel, kein Gärgeruch","รอยช้ำไม่เป็นไร (เอาไปปั่น) ห้ามมีรา/กลิ่นหมัก"],
  ["PL","Pflaume XXL (Import)","พลัม","Purple-Farbgeber · SALE-Fenster nutzen",null,false,65,65,"Plum","satte dunkle Farbe · duftet · gibt auf Druck leicht nach","สีเข้ม หอม กดนิ่มเล็กน้อย"],
  ["WT","Weintrauben","องุ่น","rot/schwarz 100–140 · Shine Muscat 160",null,false,100,160,"Grapes","Beeren prall am festen grünen Stiel · weißer Duftfilm ist gut · eine probieren","ลูกเต่งติดก้านเขียวแน่น ผิวมีนวลขาว = ดี ลองชิมหนึ่งลูก"],
- ["KN","Kokosnuss jung","มะพร้าวอ่อน","immer pro Stück (10–15 ฿, max. 20)",null,false,null,null,"Young coconut","schwer · beim Schütteln hörbar viel Wasser · Schale hell ohne Schimmel","หนัก เขย่าได้ยินน้ำเยอะ เปลือกขาวสะอาด ไม่มีรา"],
+ ["KN","Kokosnuss jung","มะพร้าวอ่อน","pro STÜCK: klein 10 ฿ · XXL 26 ฿ (gemessen 13.08.)",null,false,10,26,"Young coconut","schwer · beim Schütteln hörbar viel Wasser · Schale hell ohne Schimmel","หนัก เขย่าได้ยินน้ำเยอะ เปลือกขาวสะอาด ไม่มีรา"],
  ["RO","Roselle (Krachiap)","กระเจี๊ยบแดง","Thai-Ersatz für Granatapfel",null,false,null,null,"Roselle (hibiscus)","Kelche prall + kräftig rot, nicht welk","กลีบเต่งตึง แดงสด ไม่เหี่ยว"],
  ["PF","Passionsfrucht frisch","เสาวรส","rot 65 · grün 99 (gemessen 14.08.) · TK-Püree 179",null,false,65,99,"Passion fruit","schrumpelige Schale = reif + süß! glatt-prall = noch sauer","เปลือกเหี่ยวย่น = สุกหวาน! ผิวเรียบตึง = ยังเปรี้ยว"],
  ["DU","Durian","ทุเรียน","Mon Thong 149 · Premium 179",null,false,149,179,"Durian","duftet stark am Stiel · klingt beim Klopfen dumpf-hohl · Händler öffnen lassen","หอมแรงที่ขั้ว เคาะเสียงทึบ ให้แม่ค้าแกะให้"],
@@ -198,6 +198,15 @@ const GRUPPEN=[
 const FRUCHT=GRUPPEN.flatMap(g=>g[1]);
 /* TK-Codes: 1-kg-Beutel von GO Wholesale → Händler, Menge und Preis werden vorausgefüllt */
 const TK_CODES=GRUPPEN[1][1].map(f=>f[0]);
+/* Nur die Kokosnuss hat eine Referenz PRO STÜCK — bei allen anderen ist die Referenz ฿/kg.
+   (Ananas wird zwar auch stückweise verkauft, unsere Referenz 20–25 ist aber ฿/kg.) */
+const STUECK_CODES=["KN"];
+
+/* AUSBEUTE: wie viel vom gekauften Gewicht landet wirklich im Becher (%).
+   Ohne das vergleicht man Äpfel mit Birnen — eine geschälte Ananas für 71 ฿/kg ist
+   NICHT teurer als eine ganze für 25 ฿/kg bei ~50 % Ausbeute plus Schälarbeit.
+   Quellen: Notion-Marktpreise (Mangostan ~30 %, Rambutan ~40 %, Avocado 59→91 ฿/kg Fleisch). */
+const AUSBEUTE={AN:50,MS:30,RM:40,AV:65,DR:60,DW:60,PY:65,WM:60,LI:55,LG:60,DU:35,PF:40,OR:60,ME:55,TM:60,JF:35,PO:50,KN:25};
 const TK_HAENDLER="GO Wholesale";
 /* Händler = Markt (antippen) + Standnummer (Peter-Wunsch 13.08.: Namen eintippen ist
    am Markt unzumutbar — Thai/Khmer-Namen; die Standnummer reicht zum Wiederfinden) */
@@ -402,6 +411,11 @@ function formular(){
       <div class="f"><label>${t("preis")}</label><input type="number" inputmode="decimal" step="0.5" id="i_pr" placeholder="54"></div>
       <div class="f"><label>${t("menge")}</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="3"></div>
     </div>
+    <label style="display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:0;
+      font-size:14px;font-weight:600;color:var(--ink);margin:-4px 0 8px">
+      <input type="checkbox" id="i_verarb" style="width:20px;height:20px;flex:0 0 auto">
+      ${lang()==="th"?"ปอกเปลือก/หั่นแล้ว (ใช้ได้ทั้งหมด)":"schon geschält / verarbeitet (kein Abfall)"}</label>
+    <div class="meta" id="i_sum" style="margin:-6px 0 11px"></div>
     <div class="f"><label>${t("stand")} <i>${t("stand_i")}</i></label>
       <input id="i_stand" placeholder="${t("stand_ph")}">
       <div class="meta"><span id="i_geo">${t("geo_such")}</span>${t("geo_note")}</div></div>
@@ -542,6 +556,30 @@ function bindForm(){
     const el=$("i_prchk"); if(!el)return;
     const [c,t]=prUrteil(CODE,$("i_pr").value);
     el.innerHTML=t?` · <b class="bx ${c}">${esc(t)}</b>`:"";
+    sumCheck();
+  };
+
+  /* Gegenprobe gegen den Kassenzettel: Menge × Preis muss das sein, was wirklich
+     bezahlt wurde. Ohne diese Zeile ist nicht erkennbar, ob jemand versehentlich
+     den GESAMTPREIS ins Feld "pro kg" getippt hat (Vorfall 13.08., Drachenfrucht). */
+  const sumCheck=()=>{
+    const el=$("i_sum"); if(!el)return;
+    const kg=parseFloat($("i_kg").value), pr=parseFloat($("i_pr").value);
+    if(!(kg>0)||!(pr>0)){ el.innerHTML=""; return; }
+    const g=Math.round(kg*pr*10)/10, stk=STUECK_CODES.includes(CODE), th=lang()==="th";
+    const einheit=stk?(th?"ลูก":"Stück"):"kg";
+    let s = th
+      ? `🧾 ${kg} ${einheit} × ${pr} ฿ = <b>${g} ฿</b> รวม — ตรงกับที่จ่ายจริงไหม?`
+      : `🧾 ${kg} ${einheit} × ${pr} ฿ = <b>${g} ฿</b> gesamt — stimmt das mit dem Bezahlten überein?`;
+    /* Was kostet das, was wirklich in den Becher kommt? */
+    const a=$("i_verarb")&&$("i_verarb").checked?100:AUSBEUTE[CODE];
+    if(a&&a<100&&!stk){
+      const eff=Math.round(pr/a*100);
+      s += th
+        ? `<br>🥤 เนื้อผลไม้จริง ~${a}% → <b>${eff} ฿/kg</b> ที่ใช้ได้จริง`
+        : `<br>🥤 Ausbeute ~${a} % → <b>${eff} ฿/kg Fruchtfleisch</b> (das ist die Zahl für die Kalkulation)`;
+    }
+    el.innerHTML=s;
   };
 
   /* Markt-Chips: einmal antippen, bleibt für den ganzen Markttag stehen */
@@ -596,6 +634,9 @@ function bindForm(){
   such.onfocus=zeigen;
   list.onclick=e=>{const b=e.target.closest("button.frow");if(b)waehlen(b.dataset.c)};
   $("i_pr").oninput=prCheck;
+  $("i_kg").oninput=sumCheck;
+  if($("i_verarb"))$("i_verarb").onchange=sumCheck;
+  sumCheck();
 
   const paint=(id,n)=>$(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.n<=n));
   if(EDIT>=0){
@@ -606,6 +647,7 @@ function bindForm(){
     setMarkt(m);
     $("i_stand").value=e.h?e.h.slice(m.length).replace(/^ Stand /,"").trim():"";
     $("i_sorte").value=e.sorte||"";$("i_pr").value=e.pr||"";$("i_kg").value=e.kg||"";
+    if($("i_verarb"))$("i_verarb").checked=!!e.verarb;
     $("i_who").value=e.who||WHO;$("i_dat").value=e.dat||heute();
     $("i_bx").value=e.bx||"";$("i_bem").value=e.bem||"";
     note=+e.note||0;duft=+e.duft||0;des=(e.des||[]).slice();feh=(e.feh||[]).slice();
@@ -632,6 +674,7 @@ function bindForm(){
     const stand=$("i_stand").value.trim();
     const e={who:WHO,dat:$("i_dat").value||heute(),code:CODE,sorte:$("i_sorte").value.trim(),
       bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,
+      verarb:$("i_verarb")&&$("i_verarb").checked?1:"",
       h:MARKT?(MARKT+(stand?" Stand "+stand:"")):stand,
       duft:duft||"",des:des.slice(),feh:feh.slice(),note:note||"",bem:$("i_bem").value.trim()};
     if(!e.bx&&!e.pr&&!e.sorte&&!e.duft){alert(t("alert_min"));return}
@@ -650,10 +693,10 @@ function bindForm(){
 
 /* CSV mit BOM, damit Excel die Umlaute und das Thai richtig anzeigt */
 function csvText(){
-  return "﻿Wer;Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;Haendler;Bemerkung;Lat;Lon;GPSm\n"
+  return "﻿Wer;Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;verarbeitet;Haendler;Bemerkung;Lat;Lon;GPSm\n"
     +D.map(e=>[e.who,e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.duft,
       (e.des||[]).map(k=>lbl(DUFT,k)).join(" / "),(e.feh||[]).map(k=>lbl(FEHL,k)).join(" / "),
-      e.note,e.kg,e.pr,e.h,e.bem,e.lat,e.lon,e.acc]
+      e.note,e.kg,e.pr,e.verarb?"ja":"",e.h,e.bem,e.lat,e.lon,e.acc]
       .map(x=>String(x==null?"":x).replace(/;/g,",")).join(";")).join("\n");
 }
 
