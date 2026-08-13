@@ -191,6 +191,11 @@ const TK_HAENDLER="GO Wholesale";
 /* Händler = Markt (antippen) + Standnummer (Peter-Wunsch 13.08.: Namen eintippen ist
    am Markt unzumutbar — Thai/Khmer-Namen; die Standnummer reicht zum Wiederfinden) */
 const MAERKTE=["Ratanakorn","Theprasit","GO Wholesale","Makro","Villa Market","SuperSave","Central"];
+/* Frischfrucht belegt automatisch einen Frischmarkt vor (Standard Ratanakorn),
+   TK einen Wholesale-Markt (Standard GO). Innerhalb der richtigen Kategorie wird
+   eine manuelle Wahl (z. B. Theprasit) NIE überschrieben. */
+const FRISCH_MAERKTE=["Ratanakorn","Theprasit"];
+const TK_MAERKTE=["GO Wholesale","Makro","Villa Market","SuperSave","Central"];
 
 /* Duft-Charakter — was die Nase meldet. [key, deutsch, thai] */
 const DUFT=[
@@ -221,6 +226,21 @@ const save=()=>localStorage.setItem(KEY,JSON.stringify(D));
 const fr=c=>FRUCHT.find(f=>f[0]===c)||["XX","?","","",null,false,null,null,"?"];
 let CODE=localStorage.getItem("bl_code")||"MG";   // zuletzt gewählte Frucht
 let MARKT=localStorage.getItem("bl_markt")||"";   // zuletzt gewählter Markt — bleibt den ganzen Markttag stehen
+
+/* GPS: läuft still im Hintergrund mit (funktioniert offline, GPS braucht kein Netz).
+   Beim Speichern wandert die letzte Position in die Charge — als Gedächtnisstütze
+   für Stände ohne Nummer. Genauigkeit unter Marktdächern: eher 10–30 m als 5 m,
+   deshalb ist die Standnummer/das Kürzel weiterhin die Hauptreferenz. */
+let GEO=null;
+function geoStart(){
+  if(!("geolocation" in navigator))return;
+  navigator.geolocation.watchPosition(p=>{
+    GEO={lat:p.coords.latitude,lon:p.coords.longitude,acc:Math.round(p.coords.accuracy),t:Date.now()};
+    const el=document.getElementById("i_geo");
+    if(el)el.textContent="📍 GPS ±"+GEO.acc+" m";
+  },()=>{ const el=document.getElementById("i_geo"); if(el)el.textContent="📍 kein GPS (Berechtigung?)"; },
+  {enableHighAccuracy:true,maximumAge:30000});
+}
 
 /* Frucht-Suche: Teiltreffer über Englisch + Thai + Deutsch + Code + Hinweis */
 const norm=s=>String(s||"").toLowerCase();
@@ -315,7 +335,8 @@ function formular(){
     <div class="f"><label>Markt <i>— antippen, bleibt stehen</i></label>
       <div class="chips" id="i_markt">${MAERKTE.map(m=>`<button type="button" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
     <div class="f"><label>Stand-Nr. <i>— reicht statt Name; kein Schild → eigenes Kürzel (z. B. „Ecke links")</i></label>
-      <input id="i_stand" placeholder="z. B. 12 · leer ok"></div>
+      <input id="i_stand" placeholder="z. B. 12 · leer ok">
+      <div class="meta"><span id="i_geo">📍 GPS wird gesucht …</span> — wird beim Speichern automatisch mit abgelegt</div></div>
     <div class="f"><label>Bemerkung</label><input id="i_bem" placeholder="faserig / Reduziert-Kiste / Stielansatz trocken …"></div>
     <div class="bar" style="margin:4px 0 0">
       <button class="b p" id="add" style="flex:1">Charge speichern</button>
@@ -340,7 +361,7 @@ function liste(){
         ${e.note?` · Gesamt <b>${e.note}/5</b>`:""}
       </div>
       ${tags?`<div class="tags">${tags}</div>`:""}
-      <div class="meta">${e.h?esc(e.h):"Händler –"}${btxt?` · ${esc(btxt)}`:""}${ptxt?` · <b class="bx ${pcls}">${esc(ptxt)}</b>`:""}${e.bem?` · <i>${esc(e.bem)}</i>`:""}</div>
+      <div class="meta">${e.h?esc(e.h):"Händler –"}${e.lat?` · 📍±${e.acc} m`:""}${btxt?` · ${esc(btxt)}`:""}${ptxt?` · <b class="bx ${pcls}">${esc(ptxt)}</b>`:""}${e.bem?` · <i>${esc(e.bem)}</i>`:""}</div>
       <div class="bar" style="margin:8px 0 0"><button class="b del" data-i="${i}" style="padding:6px 11px;font-size:12.5px">löschen</button></div>
     </div>`;
   }).join("");
@@ -460,7 +481,8 @@ function bindForm(){
   };
   const vorbelegen=()=>{
     const f=fr(CODE), tk=TK_CODES.includes(CODE);
-    if(tk)setMarkt(TK_HAENDLER);
+    if(tk){ if(!TK_MAERKTE.includes(MARKT))setMarkt(TK_HAENDLER); }
+    else  { if(!FRISCH_MAERKTE.includes(MARKT))setMarkt("Ratanakorn"); }
     setAuto("i_kg",tk?1:null);
     setAuto("i_pr",tk?f[6]:null);
   };
@@ -507,6 +529,7 @@ function bindForm(){
       bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,
       h:MARKT?(MARKT+(stand?" Stand "+stand:"")):stand,
       duft:duft||"",des:des.slice(),feh:feh.slice(),note:note||"",bem:$("i_bem").value.trim()};
+    if(GEO&&Date.now()-GEO.t<5*60*1000){e.lat=GEO.lat.toFixed(6);e.lon=GEO.lon.toFixed(6);e.acc=GEO.acc}
     if(!e.bx&&!e.pr&&!e.sorte&&!e.duft){alert("Mindestens Sorte, Brix, Duft oder Preis eintragen.");return}
     D.push(e);save();note=0;duft=0;des=[];feh=[];view="liste";render();
   };
@@ -514,10 +537,10 @@ function bindForm(){
 
 /* CSV mit BOM, damit Excel die Umlaute und das Thai richtig anzeigt */
 function csvText(){
-  return "﻿Wer;Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;Haendler;Bemerkung\n"
+  return "﻿Wer;Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;Haendler;Bemerkung;Lat;Lon;GPSm\n"
     +D.map(e=>[e.who,e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.duft,
       (e.des||[]).map(k=>lbl(DUFT,k)).join(" / "),(e.feh||[]).map(k=>lbl(FEHL,k)).join(" / "),
-      e.note,e.kg,e.pr,e.h,e.bem]
+      e.note,e.kg,e.pr,e.h,e.bem,e.lat,e.lon,e.acc]
       .map(x=>String(x==null?"":x).replace(/;/g,",")).join(";")).join("\n");
 }
 
@@ -549,6 +572,7 @@ function bindList(){
 
 document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{view=b.dataset.v;render()});
 render();
+geoStart();
 
 /* ---- Smartphone: offline lauffähig + auf den Startbildschirm ---- */
 if("serviceWorker" in navigator)
