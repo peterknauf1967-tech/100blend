@@ -227,7 +227,7 @@ de:{
  nix:"Nichts gefunden → unter „Other / new fruit“ erfassen",
  reife_t:f=>`🍈 So erkennst du die perfekte ${f}:`,
  sorte:"Sorte",sorte_i:"— Thai-Name, wie der Händler sie nennt (Lexi fragt)",sorte_ph:"z. B. น้ำดอกไม้ / Nam Dok Mai",
- preis:"Preis ฿/kg",menge:"Menge kg",
+ preis:"Bezahlt gesamt ฿",menge:"Menge kg / Stück",
  stand:"Stand-Nr.",stand_i:"— reicht statt Name; kein Schild → eigenes Kürzel",stand_ph:"z. B. 12 · leer ok",
  geo_such:"📍 GPS wird gesucht …",geo_kein:"📍 kein GPS (Berechtigung?)",geo_note:" — Geodaten werden beim Speichern automatisch mit abgelegt",
  markt:"Markt",markt_i:"— antippen, bleibt stehen",
@@ -244,7 +244,7 @@ de:{
  tip2:`<b>👃 Die Nase ist die andere Hälfte:</b> am <b>Stielansatz</b> riechen, Frucht <b>handwarm</b> — kalte Frucht riecht nach fast nichts.`,
  s_krit:"🔴 <b>Sorte ist hier entscheidend.</b>",s_egal:"🟢 Sorte zweitrangig — <b>reif und billig</b> schlägt hier den Namen.",
  s_ziel:z=>` · Ziel ab <b>${z} °Bx</b>`,
- pr_keine:"💰 <b>Preis noch nicht erfasst</b> — deiner wird der erste Referenzwert.",pr_ref:s=>`💰 Referenz <b>${s} ฿/kg</b>`,
+ pr_keine:"💰 <b>Preis noch nicht erfasst</b> — deiner wird der erste Referenzwert.",pr_ref:s=>`💰 Referenz <b>${s} ฿/kg</b> <span style="opacity:.7">(Kleinmenge — bei Mengeneinkauf verhandeln)</span>`,
  pr_ueber:s=>`⚠ über Referenz ${s} ฿`,pr_leicht:s=>`leicht über Referenz ${s} ฿`,pr_gut:s=>`✓ auf/unter Referenz ${s} ฿`,pr_ok:s=>`im Rahmen ${s} ฿`,
  tk_info:`🧊 <b>1-kg-Beutel · GO Wholesale</b> — Menge und Preis sind vorausgefüllt.`,
  nachtragen:"🏠 nachtragen",loeschen:"löschen",
@@ -265,7 +265,7 @@ th:{
  nix:"ไม่พบ → บันทึกเป็น «อื่น ๆ»",
  reife_t:f=>`🍈 วิธีเลือก${f}ที่สมบูรณ์แบบ:`,
  sorte:"พันธุ์",sorte_i:"— ชื่อพันธุ์ตามที่แม่ค้าเรียก",sorte_ph:"เช่น น้ำดอกไม้",
- preis:"ราคา ฿/กก.",menge:"จำนวน กก.",
+ preis:"จ่ายจริงรวม ฿",menge:"จำนวน กก./ลูก",
  stand:"เบอร์แผง",stand_i:"— ไม่มีป้าย → เขียนจุดสังเกตเอง",stand_ph:"เช่น 12 · เว้นว่างได้",
  geo_such:"📍 กำลังหาสัญญาณ GPS …",geo_kein:"📍 ไม่มี GPS (ต้องอนุญาตตำแหน่ง)",geo_note:" — ระบบบันทึกพิกัดให้อัตโนมัติตอนกดบันทึก",
  markt:"ตลาด",markt_i:"— แตะเลือก ค้างไว้ทั้งวัน",
@@ -282,7 +282,7 @@ th:{
  tip2:`<b>👃 กลิ่นสำคัญเท่าความหวาน:</b> ดมที่<b>ขั้วผล</b> ผลไม้ต้อง<b>อุณหภูมิห้อง</b> — ผลไม้เย็นแทบไม่มีกลิ่น`,
  s_krit:"🔴 <b>พันธุ์สำคัญมาก — ถามชื่อพันธุ์</b>",s_egal:"🟢 พันธุ์ไม่สำคัญ — เอาลูกที่<b>สุกและถูก</b>",
  s_ziel:z=>` · เป้าหมาย ≥ <b>${z} °Bx</b>`,
- pr_keine:"💰 <b>ยังไม่มีราคาอ้างอิง</b> — ราคานี้จะเป็นค่าแรก",pr_ref:s=>`💰 ราคาอ้างอิง <b>${s} ฿/กก.</b>`,
+ pr_keine:"💰 <b>ยังไม่มีราคาอ้างอิง</b> — ราคานี้จะเป็นค่าแรก",pr_ref:s=>`💰 ราคาอ้างอิง <b>${s} ฿/กก.</b> <span style="opacity:.7">(ซื้อปลีก — ซื้อเยอะต้องต่อราคา)</span>`,
  pr_ueber:s=>`⚠ แพงกว่าอ้างอิง ${s} ฿`,pr_leicht:s=>`แพงกว่าอ้างอิงนิดหน่อย ${s} ฿`,pr_gut:s=>`✓ เท่า/ถูกกว่าอ้างอิง ${s} ฿`,pr_ok:s=>`อยู่ในเกณฑ์ ${s} ฿`,
  tk_info:`🧊 <b>ถุง 1 กก. · GO Wholesale</b> — ใส่จำนวนและราคาให้แล้ว`,
  nachtragen:"🏠 กรอกเพิ่ม",loeschen:"ลบ",
@@ -324,6 +324,15 @@ const t=k=>{const v=T[lang()][k]??T.de[k];return v===undefined?k:v};
 let view="neu", note=0, duft=0, des=[], feh=[];
 let EDIT=-1;   // Index der Charge, die gerade zuhause nachgetragen wird (-1 = neue Charge)
 const $=id=>document.getElementById(id);
+
+/* Eingetippt wird, was man wirklich bezahlt hat (Gesamtbetrag) + die Menge.
+   Den ฿/kg-Preis rechnet die App — so kann niemand mehr Gesamtpreis und kg-Preis
+   verwechseln (Vorfall 13.08.), und Peters Punkt bleibt erhalten: der kg-Preis bei
+   1 kg ist ein anderer als bei 30 kg, deshalb steht die Menge immer daneben. */
+const kgPreis=()=>{
+  const kg=parseFloat($("i_kg")?.value), ges=parseFloat($("i_ges")?.value);
+  return (kg>0&&ges>0)?Math.round(ges/kg*10)/10:"";
+};
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const save=()=>localStorage.setItem(KEY,JSON.stringify(D));
 const fr=c=>FRUCHT.find(f=>f[0]===c)||["XX","?","","",null,false,null,null,"?"];
@@ -408,8 +417,8 @@ function formular(){
       <div class="meta" id="i_hint"></div></div>
     <div class="tip" id="i_reife" style="margin-bottom:11px"></div>
     <div class="f2">
-      <div class="f"><label>${t("preis")}</label><input type="number" inputmode="decimal" step="0.5" id="i_pr" placeholder="54"></div>
-      <div class="f"><label>${t("menge")}</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="3"></div>
+      <div class="f"><label>${t("menge")}</label><input type="number" inputmode="decimal" step="0.1" id="i_kg" placeholder="1,5"></div>
+      <div class="f"><label>${t("preis")}</label><input type="number" inputmode="decimal" step="1" id="i_ges" placeholder="90"></div>
     </div>
     <label style="display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:0;
       font-size:14px;font-weight:600;color:var(--ink);margin:-4px 0 8px">
@@ -554,7 +563,7 @@ function bindForm(){
   };
   const prCheck=()=>{
     const el=$("i_prchk"); if(!el)return;
-    const [c,t]=prUrteil(CODE,$("i_pr").value);
+    const [c,t]=prUrteil(CODE,kgPreis());
     el.innerHTML=t?` · <b class="bx ${c}">${esc(t)}</b>`:"";
     sumCheck();
   };
@@ -564,13 +573,13 @@ function bindForm(){
      den GESAMTPREIS ins Feld "pro kg" getippt hat (Vorfall 13.08., Drachenfrucht). */
   const sumCheck=()=>{
     const el=$("i_sum"); if(!el)return;
-    const kg=parseFloat($("i_kg").value), pr=parseFloat($("i_pr").value);
-    if(!(kg>0)||!(pr>0)){ el.innerHTML=""; return; }
-    const g=Math.round(kg*pr*10)/10, stk=STUECK_CODES.includes(CODE), th=lang()==="th";
+    const kg=parseFloat($("i_kg").value), ges=parseFloat($("i_ges").value), pr=kgPreis();
+    if(!(kg>0)||!(ges>0)){ el.innerHTML=""; return; }
+    const stk=STUECK_CODES.includes(CODE), th=lang()==="th";
     const einheit=stk?(th?"ลูก":"Stück"):"kg";
     let s = th
-      ? `🧾 ${kg} ${einheit} × ${pr} ฿ = <b>${g} ฿</b> รวม — ตรงกับที่จ่ายจริงไหม?`
-      : `🧾 ${kg} ${einheit} × ${pr} ฿ = <b>${g} ฿</b> gesamt — stimmt das mit dem Bezahlten überein?`;
+      ? `🧾 ${ges} ฿ ÷ ${kg} ${einheit} = <b>${pr} ฿/${einheit}</b>`
+      : `🧾 ${ges} ฿ ÷ ${kg} ${einheit} = <b>${pr} ฿/${einheit}</b> — daraus rechnet die App weiter`;
     /* Was kostet das, was wirklich in den Becher kommt? */
     const a=$("i_verarb")&&$("i_verarb").checked?100:AUSBEUTE[CODE];
     if(a&&a<100&&!stk){
@@ -594,7 +603,7 @@ function bindForm(){
   /* TK-Beutel von GO Wholesale: Markt, 1 kg und aktueller Preis stehen schon fest.
      Nur füllen, was leer ist oder noch aus der letzten Vorbelegung stammt —
      was Peter selbst eingetippt hat, bleibt unangetastet. */
-  const auto={i_kg:null,i_pr:null};
+  const auto={i_kg:null,i_ges:null};
   const setAuto=(id,val)=>{
     const el=$(id); if(!el)return;
     if(el.value===""||el.value===String(auto[id]??"")){ el.value=val==null?"":val; auto[id]=val; }
@@ -605,7 +614,7 @@ function bindForm(){
     const f=fr(CODE), tk=TK_CODES.includes(CODE);
     if(!MARKT)setMarkt(tk?TK_HAENDLER:"Ratanakorn");
     setAuto("i_kg",tk?1:null);
-    setAuto("i_pr",tk?f[6]:null);
+    setAuto("i_ges",tk?f[6]:null);   /* TK = 1-kg-Beutel, also Gesamtbetrag = ฿/kg */
   };
 
   /* Frucht-Suchfeld: tippen filtert über EN/TH/DE, antippen wählt aus */
@@ -633,8 +642,8 @@ function bindForm(){
   such.oninput=zeigen;
   such.onfocus=zeigen;
   list.onclick=e=>{const b=e.target.closest("button.frow");if(b)waehlen(b.dataset.c)};
-  $("i_pr").oninput=prCheck;
-  $("i_kg").oninput=sumCheck;
+  $("i_ges").oninput=prCheck;
+  $("i_kg").oninput=prCheck;
   if($("i_verarb"))$("i_verarb").onchange=sumCheck;
   sumCheck();
 
@@ -646,7 +655,8 @@ function bindForm(){
     const m=MAERKTE.find(x=>e.h&&e.h.indexOf(x)===0)||"";
     setMarkt(m);
     $("i_stand").value=e.h?e.h.slice(m.length).replace(/^ Stand /,"").trim():"";
-    $("i_sorte").value=e.sorte||"";$("i_pr").value=e.pr||"";$("i_kg").value=e.kg||"";
+    $("i_sorte").value=e.sorte||"";$("i_kg").value=e.kg||"";
+    $("i_ges").value=e.ges||((e.pr&&e.kg)?Math.round(e.pr*e.kg*10)/10:"");
     if($("i_verarb"))$("i_verarb").checked=!!e.verarb;
     $("i_who").value=e.who||WHO;$("i_dat").value=e.dat||heute();
     $("i_bx").value=e.bx||"";$("i_bem").value=e.bem||"";
@@ -673,11 +683,11 @@ function bindForm(){
     WHO=$("i_who").value.trim(); localStorage.setItem("bl_who",WHO);
     const stand=$("i_stand").value.trim();
     const e={who:WHO,dat:$("i_dat").value||heute(),code:CODE,sorte:$("i_sorte").value.trim(),
-      bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,
+      bx:$("i_bx").value,kg:$("i_kg").value,ges:$("i_ges").value,pr:kgPreis(),
       verarb:$("i_verarb")&&$("i_verarb").checked?1:"",
       h:MARKT?(MARKT+(stand?" Stand "+stand:"")):stand,
       duft:duft||"",des:des.slice(),feh:feh.slice(),note:note||"",bem:$("i_bem").value.trim()};
-    if(!e.bx&&!e.pr&&!e.sorte&&!e.duft){alert(t("alert_min"));return}
+    if(!e.bx&&!e.ges&&!e.sorte&&!e.duft){alert(t("alert_min"));return}
     if(EDIT>=0){
       /* beim Nachtragen die Markt-GPS-Position behalten — die Heim-Position wäre falsch */
       const alt=D[EDIT];
@@ -693,10 +703,10 @@ function bindForm(){
 
 /* CSV mit BOM, damit Excel die Umlaute und das Thai richtig anzeigt */
 function csvText(){
-  return "﻿Wer;Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;THB/kg;verarbeitet;Haendler;Bemerkung;Lat;Lon;GPSm\n"
+  return "﻿Wer;Datum;Code;Frucht;Sorte;Brix;Duft;Duftnoten;Fehlnoten;Gesamtnote;kg;bezahlt_gesamt_THB;THB/kg;verarbeitet;Haendler;Bemerkung;Lat;Lon;GPSm\n"
     +D.map(e=>[e.who,e.dat,e.code,fr(e.code)[1],e.sorte,e.bx,e.duft,
       (e.des||[]).map(k=>lbl(DUFT,k)).join(" / "),(e.feh||[]).map(k=>lbl(FEHL,k)).join(" / "),
-      e.note,e.kg,e.pr,e.verarb?"ja":"",e.h,e.bem,e.lat,e.lon,e.acc]
+      e.note,e.kg,e.ges,e.pr,e.verarb?"ja":"",e.h,e.bem,e.lat,e.lon,e.acc]
       .map(x=>String(x==null?"":x).replace(/;/g,",")).join(";")).join("\n");
 }
 
