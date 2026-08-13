@@ -188,6 +188,9 @@ const FRUCHT=GRUPPEN.flatMap(g=>g[1]);
 /* TK-Codes: 1-kg-Beutel von GO Wholesale → Händler, Menge und Preis werden vorausgefüllt */
 const TK_CODES=GRUPPEN[1][1].map(f=>f[0]);
 const TK_HAENDLER="GO Wholesale";
+/* Händler = Markt (antippen) + Standnummer (Peter-Wunsch 13.08.: Namen eintippen ist
+   am Markt unzumutbar — Thai/Khmer-Namen; die Standnummer reicht zum Wiederfinden) */
+const MAERKTE=["Ratanakorn","Theprasit","GO Wholesale","Makro","Villa Market","SuperSave","Central"];
 
 /* Duft-Charakter — was die Nase meldet. [key, deutsch, thai] */
 const DUFT=[
@@ -217,6 +220,7 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 const save=()=>localStorage.setItem(KEY,JSON.stringify(D));
 const fr=c=>FRUCHT.find(f=>f[0]===c)||["XX","?","","",null,false,null,null,"?"];
 let CODE=localStorage.getItem("bl_code")||"MG";   // zuletzt gewählte Frucht
+let MARKT=localStorage.getItem("bl_markt")||"";   // zuletzt gewählter Markt — bleibt den ganzen Markttag stehen
 
 /* Frucht-Suche: Teiltreffer über Englisch + Thai + Deutsch + Code + Hinweis */
 const norm=s=>String(s||"").toLowerCase();
@@ -308,8 +312,10 @@ function formular(){
 
     <div class="f"><label>Gesamt-Note 1–5 <i>— nach dem Probieren</i></label>
       <div class="stars" id="i_note">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
-    <div class="f"><label>Händler / Markt</label><input id="i_h" placeholder="z. B. Ratanakorn, Stand 12 – Khun Noi" list="haendler">
-      <datalist id="haendler">${[...new Set(D.map(e=>e.h).filter(Boolean))].map(h=>`<option value="${esc(h)}">`).join("")}</datalist></div>
+    <div class="f"><label>Markt <i>— antippen, bleibt stehen</i></label>
+      <div class="chips" id="i_markt">${MAERKTE.map(m=>`<button type="button" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div></div>
+    <div class="f"><label>Stand-Nr. <i>— reicht statt Name; kein Schild → eigenes Kürzel (z. B. „Ecke links")</i></label>
+      <input id="i_stand" placeholder="z. B. 12 · leer ok"></div>
     <div class="f"><label>Bemerkung</label><input id="i_bem" placeholder="faserig / Reduziert-Kiste / Stielansatz trocken …"></div>
     <div class="bar" style="margin:4px 0 0">
       <button class="b p" id="add" style="flex:1">Charge speichern</button>
@@ -435,17 +441,26 @@ function bindForm(){
     el.innerHTML=t?` · <b class="bx ${c}">${esc(t)}</b>`:"";
   };
 
-  /* TK-Beutel von GO Wholesale: Händler, 1 kg und aktueller Preis stehen schon fest.
+  /* Markt-Chips: einmal antippen, bleibt für den ganzen Markttag stehen */
+  const setMarkt=m=>{
+    MARKT=m; localStorage.setItem("bl_markt",m);
+    $("i_markt").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.m===m));
+  };
+  $("i_markt").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    setMarkt(b.dataset.m===MARKT?"":b.dataset.m)};
+  setMarkt(MARKT);
+
+  /* TK-Beutel von GO Wholesale: Markt, 1 kg und aktueller Preis stehen schon fest.
      Nur füllen, was leer ist oder noch aus der letzten Vorbelegung stammt —
      was Peter selbst eingetippt hat, bleibt unangetastet. */
-  const auto={i_h:null,i_kg:null,i_pr:null};
+  const auto={i_kg:null,i_pr:null};
   const setAuto=(id,val)=>{
     const el=$(id); if(!el)return;
     if(el.value===""||el.value===String(auto[id]??"")){ el.value=val==null?"":val; auto[id]=val; }
   };
   const vorbelegen=()=>{
     const f=fr(CODE), tk=TK_CODES.includes(CODE);
-    setAuto("i_h", tk?TK_HAENDLER:null);
+    if(tk)setMarkt(TK_HAENDLER);
     setAuto("i_kg",tk?1:null);
     setAuto("i_pr",tk?f[6]:null);
   };
@@ -487,8 +502,10 @@ function bindForm(){
 
   $("add").onclick=()=>{
     WHO=$("i_who").value.trim(); localStorage.setItem("bl_who",WHO);
+    const stand=$("i_stand").value.trim();
     const e={who:WHO,dat:$("i_dat").value||heute(),code:CODE,sorte:$("i_sorte").value.trim(),
-      bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,h:$("i_h").value.trim(),
+      bx:$("i_bx").value,kg:$("i_kg").value,pr:$("i_pr").value,
+      h:MARKT?(MARKT+(stand?" Stand "+stand:"")):stand,
       duft:duft||"",des:des.slice(),feh:feh.slice(),note:note||"",bem:$("i_bem").value.trim()};
     if(!e.bx&&!e.pr&&!e.sorte&&!e.duft){alert("Mindestens Sorte, Brix, Duft oder Preis eintragen.");return}
     D.push(e);save();note=0;duft=0;des=[];feh=[];view="liste";render();
