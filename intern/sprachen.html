@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>100blend · Sprach-Vorschau</title>
+<style>
+:root{--bg:#faf8f5;--card:#fff;--ink:#1a1a1a;--muted:#6b6b6b;--line:#e6e2dc;
+ --accent:#e2543f;--ok:#2f8f5b;--okbg:#f4faf6;--okln:#c4e2d0;--miss:#c0392b;--missbg:#fdf4f3;--missln:#f0cdc8;
+ --warn:#b8860b;--th:#5b6cb8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif;
+ padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 14px}
+.top{display:flex;align-items:center;gap:9px}
+.brand{font-weight:800;font-size:17px;letter-spacing:-.02em}
+.brand span{color:var(--accent)}
+.user{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:20px;
+ padding:6px 12px;font:700 12.5px inherit;cursor:pointer;display:flex;align-items:center;gap:6px}
+main{padding:14px;max-width:520px;margin:0 auto}
+h1{font-size:19px;margin:0 0 2px}
+h1 .en{display:block;font-size:13px;color:var(--muted);font-weight:600}
+h1 .th{display:block;font-size:13px;color:var(--th);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:11px}
+label{display:block;margin:0 0 5px}
+label .de{font:700 12px inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+label .en{display:block;font:600 12px inherit;color:#a09a92;text-transform:none;letter-spacing:0}
+input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:16px inherit;background:#fff}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.f{margin-bottom:11px}
+.f2{display:flex;gap:9px}.f2>div{flex:1}
+.b{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:11px 14px;
+ border-radius:10px;font:700 14px inherit;cursor:pointer}
+.b.p{background:var(--ink);color:#fff;border-color:var(--ink)}
+.b.g{background:var(--ok);color:#fff;border-color:var(--ok)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.tipp{background:#fffdf5;border:1px solid #ecdfae;border-radius:10px;margin-bottom:12px;overflow:hidden}
+.tipp summary{padding:10px 12px;cursor:pointer;font:700 13.5px inherit;list-style:none;display:flex;gap:8px;align-items:flex-start}
+.tipp summary::-webkit-details-marker{display:none}
+.tipp summary .txt{flex:1}
+.tipp summary .txt i{display:block;font-style:normal;font-weight:600;font-size:12px;color:var(--muted)}
+.tipp .inhalt{padding:0 12px 11px;font-size:13.5px;line-height:1.55}
+.tipp .inhalt .en{display:block;color:var(--muted);font-size:12.5px;margin-top:3px}
+.zrow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;
+ display:flex;align-items:center;gap:10px}
+.zrow.sel{border-color:var(--okln);background:var(--okbg)}
+.code{font:800 12px/1 ui-monospace,Menlo,monospace;background:#f0ede8;border-radius:6px;padding:7px 8px;flex:0 0 auto}
+.zn{flex:1;min-width:0}
+.zn .haupt{font-weight:600;font-size:15.5px;line-height:1.25}
+.zn .zweit{font-size:12.5px;color:var(--muted);font-weight:600}
+.zn .dritt{font-size:12.5px;color:var(--th);font-weight:600;margin-top:1px}
+.zn .laut{font-size:12.5px;color:#8a7a55;font-style:italic}
+.hoer{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 10px;font-size:16px;cursor:pointer;flex:0 0 auto}
+.hoer:active{background:#f0ede8}
+.mini{font-size:12.5px;color:var(--muted)}
+.rechnung{background:#f6f9f6;border:1px solid var(--okln);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:11px}
+.rechnung b{font-size:15px}
+.warn{background:var(--missbg);border:1px solid var(--missln);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.frage{background:#eef1fb;border:1px solid #ccd4ee;border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.6;margin-top:18px}
+.frage b{display:block;margin-bottom:6px}
+.frage ol{margin:6px 0 0 18px;padding:0}
+.frage li{margin-bottom:5px}
+dialog{border:none;border-radius:14px;padding:0;max-width:340px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+.dlg{padding:16px}
+.dlg h3{margin:0 0 12px;font-size:16px}
+.wahl{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;
+ padding:11px 13px;margin-bottom:8px;font:15px inherit;cursor:pointer}
+.wahl.on{border-color:var(--ink);background:#f1ede8;font-weight:700}
+.wahl small{display:block;color:var(--muted);font-size:12px}
+.schalter{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;margin-top:10px}
+.status{font-size:12px;padding:7px 10px;border-radius:8px;margin-top:10px}
+.status.ok{background:var(--okbg);color:#22694a;border:1px solid var(--okln)}
+.status.no{background:var(--missbg);color:var(--miss);border:1px solid var(--missln)}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">100<span>blend</span> · Vorschau</div>
+    <button class="user" id="userbtn"></button>
+  </div>
+</header>
+<main id="app"></main>
+
+<dialog id="dlg"><div class="dlg">
+  <h3 id="dlgtitel">Wer arbeitet gerade? · Who is working?</h3>
+  <button class="wahl" data-u="peter">🇩🇪 Peter<small>Deutsch + English</small></button>
+  <button class="wahl" data-u="lexi">🇹🇭 Lexi<small>ไทย + English</small></button>
+  <label class="schalter"><input type="checkbox" id="enaus"> <span id="enaustxt">Englisch ausblenden</span></label>
+  <div class="status" id="stimmen"></div>
+  <div class="bar"><button class="b p" id="dlgok" style="flex:1">OK</button></div>
+</div></dialog>
+
+<script>
+/* ===========================================================================
+   SPRACH-VORSCHAU — zeigt, wie die 100blend-App zweisprachig aussieht.
+   Peter: Deutsch groß + English klein · Lexi: ไทย groß + English klein.
+   Zutaten zusätzlich in der jeweils anderen Sprache MIT LAUTSCHRIFT,
+   damit Peter Thai sprechen und Lexi Deutsch sprechen lernt.
+   🔊 spricht das Wort über die eingebaute Handy-Stimme.
+   ⚠ Alle Thai-Texte und alle Lautschriften sind KI-erzeugt und UNGEPRÜFT.
+   =========================================================================== */
+
+let USER=localStorage.getItem("bl_user")||"", EN_AUS=localStorage.getItem("bl_enaus")==="1";
+
+/* --- Texte: Schlüssel -> {de, en, th, thLaut} ---------------------------- */
+const T={
+ titel:{de:"Rüsten",en:"Trim & freeze",th:"จัดเตรียมและแช่แข็ง",thLaut:"jàt-triam láe chae-khäng"},
+ untertitel:{de:"Aus Einkauf wird Verkaufsware",en:"Turning purchase into sellable goods",
+             th:"เปลี่ยนของที่ซื้อมาให้เป็นของที่ขายได้",thLaut:"plìan khǒng thîi sʉ́ʉ maa hâi pen khǒng thîi khǎai dâai"},
+ tippKurz:{de:"Warum dieser Schritt?",en:"Why this step?",th:"ทำไมต้องมีขั้นตอนนี้?",thLaut:"tham-mai tông mii khân-ton níi"},
+ tippLang:{de:"4 kg Wassermelone ergeben vielleicht nur 2,5 kg Gefriergut — Schale, Kerne und Verschnitt fallen weg. Erst nach diesem Schritt weißt du, was wirklich in den Becher kann und was es dort kostet.",
+           en:"4 kg of watermelon may yield only 2.5 kg of frozen goods — rind, seeds and trimmings are lost. Only after this step do you know what really goes into the cup and what it costs.",
+           th:"แตงโม 4 กก. อาจได้ของแช่แข็งเพียง 2.5 กก. เพราะเปลือก เมล็ด และเศษที่ตัดทิ้ง หลังขั้นตอนนี้เท่านั้นจึงจะรู้ว่าใช้ได้จริงเท่าไรและต้นทุนเท่าไร",
+           thLaut:""},
+ was:{de:"Was wird gerüstet?",en:"What are you trimming?",th:"จะเตรียมวัตถุดิบอะไร?",thLaut:"jà triam wát-thù-dìp à-rai"},
+ roh:{de:"Roh eingesetzt (kg)",en:"Raw input (kg)",th:"วัตถุดิบดิบที่ใช้ (กก.)",thLaut:"wát-thù-dìp dìp thîi chái"},
+ fertig:{de:"Fertig gefroren (kg)",en:"Frozen result (kg)",th:"ที่แช่แข็งได้ (กก.)",thLaut:"thîi chae-khäng dâai"},
+ bem:{de:"Bemerkung",en:"Note",th:"หมายเหตุ",thLaut:"mǎai-hèet"},
+ buchen:{de:"Rüsten buchen",en:"Save trimming",th:"บันทึกการเตรียม",thLaut:"ban-thʉ́k gaan triam"},
+ ausbeute:{de:"Ausbeute",en:"Yield",th:"อัตราที่ใช้ได้",thLaut:"àt-traa thîi chái dâai"},
+ kosten:{de:"je kg Verkaufsware",en:"per kg sellable",th:"ต่อ กก. ที่ขายได้",thLaut:"tòr gì-loo thîi khǎai dâai"},
+ verschnitt:{de:"durch Verschnitt",en:"due to trim loss",th:"จากเศษที่ตัดทิ้ง",thLaut:"jàak sèet thîi tàt thíng"},
+ rohda:{de:"Roh vorhanden",en:"Raw in stock",th:"วัตถุดิบดิบคงเหลือ",thLaut:"wát-thù-dìp dìp khong-lʉ̌a"},
+ warnung:{de:"Fertig größer als roh — Zahlendreher?",en:"Result larger than input — typo?",
+          th:"ได้มากกว่าที่ใส่ — พิมพ์ผิดหรือเปล่า?",thLaut:""},
+ wer:{de:"Wer arbeitet gerade?",en:"Who is working?",th:"ตอนนี้ใครทำงาน?",thLaut:"ton-níi khrai tham-ngaan"},
+ enaus:{de:"Englisch ausblenden",en:"Hide English",th:"ซ่อนภาษาอังกฤษ",thLaut:""}
+};
+
+/* --- Zutaten: DE / EN / TH + Lautschrift in beide Richtungen ------------- */
+const Z=[
+ {c:"WM",de:"Wassermelone",deLaut:"วัสเซอร์เมโลเนอ",en:"Watermelon",th:"แตงโม",thLaut:"tääng-moo"},
+ {c:"MG",de:"Mango",deLaut:"มังโก้",en:"Mango",th:"มะม่วง",thLaut:"má-mûang"},
+ {c:"BA",de:"Banane",deLaut:"บานาเนอ",en:"Banana",th:"กล้วย",thLaut:"glûai"},
+ {c:"AN",de:"Ananas",deLaut:"อานานัส",en:"Pineapple",th:"สับปะรด",thLaut:"sàp-pà-rót"},
+ {c:"DR",de:"Drachenfrucht",deLaut:"ดราเคินฟรุคท์",en:"Dragon fruit",th:"แก้วมังกร",thLaut:"gâeo-mang-gorn"},
+ {c:"ER",de:"Erdbeere",deLaut:"แอร์ดแบเรอ",en:"Strawberry",th:"สตรอว์เบอร์รี",thLaut:"sà-tror-ber-rîi"}
+];
+let ZSEL="WM";
+
+/* --- Sprachhelfer -------------------------------------------------------- */
+const istLexi=()=>USER==="lexi";
+const haupt=k=>istLexi()?T[k].th:T[k].de;
+const zweit=k=>T[k].en;
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* Beschriftung: Hauptsprache groß, Englisch klein darunter */
+function lbl(k){
+  return `<span class="de">${esc(haupt(k))}</span>${EN_AUS?"":`<span class="en">${esc(zweit(k))}</span>`}`;
+}
+/* Fließtext */
+function txt(k){
+  return `${esc(haupt(k))}${EN_AUS?"":`<span class="en">${esc(zweit(k))}</span>`}`;
+}
+
+/* 🔊 spricht einen Text in der angegebenen Sprache */
+function sprich(text,lang){
+  if(!window.speechSynthesis){alert("Dieses Handy kann nicht vorlesen.");return}
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=lang; u.rate=.85;
+  const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith(lang.slice(0,2)));
+  if(v)u.voice=v;
+  speechSynthesis.speak(u);
+}
+
+/* Zutaten-Zeile: Muttersprache groß · Englisch · Fremdsprache mit Lautschrift + 🔊 */
+function zutat(z){
+  const sel=z.c===ZSEL;
+  if(istLexi()){
+    return `<div class="zrow ${sel?"sel":""}" data-z="${z.c}">
+      <span class="code">${z.c}</span>
+      <span class="zn">
+        <span class="haupt">${esc(z.th)}</span>
+        ${EN_AUS?"":`<span class="zweit">${esc(z.en)}</span>`}
+        <span class="dritt">🇩🇪 ${esc(z.de)}</span>
+        <span class="laut">${esc(z.deLaut)}</span>
+      </span>
+      <button class="hoer" data-say="${esc(z.de)}" data-lang="de-DE">🔊</button></div>`;
+  }
+  return `<div class="zrow ${sel?"sel":""}" data-z="${z.c}">
+    <span class="code">${z.c}</span>
+    <span class="zn">
+      <span class="haupt">${esc(z.de)}</span>
+      ${EN_AUS?"":`<span class="zweit">${esc(z.en)}</span>`}
+      <span class="dritt">🇹🇭 ${esc(z.th)}</span>
+      <span class="laut">${esc(z.thLaut)}</span>
+    </span>
+    <button class="hoer" data-say="${esc(z.th)}" data-lang="th-TH">🔊</button></div>`;
+}
+
+/* --- Seite --------------------------------------------------------------- */
+function render(){
+  document.getElementById("userbtn").innerHTML =
+    USER ? `👤 ${istLexi()?"Lexi · TH·EN":"Peter · DE·EN"} ▾` : "👤 wählen ▾";
+  document.documentElement.lang = istLexi()?"th":"de";
+
+  const z=Z.find(x=>x.c===ZSEL);
+  document.getElementById("app").innerHTML=`
+  <h1>🧊 ${esc(haupt("titel"))}
+    ${EN_AUS?"":`<span class="en">${esc(zweit("titel"))}</span>`}
+    ${istLexi()?"":`<span class="th">${esc(T.titel.th)} · <i>${esc(T.titel.thLaut)}</i></span>`}</h1>
+  <div class="mini" style="margin-bottom:12px">${esc(haupt("untertitel"))}${EN_AUS?"":` · ${esc(zweit("untertitel"))}`}</div>
+
+  <details class="tipp">
+    <summary>💡 <span class="txt">${esc(haupt("tippKurz"))}${EN_AUS?"":`<i>${esc(zweit("tippKurz"))}</i>`}</span> ▾</summary>
+    <div class="inhalt">${esc(haupt("tippLang"))}${EN_AUS?"":`<span class="en">${esc(zweit("tippLang"))}</span>`}</div>
+  </details>
+
+  <div class="f"><label>${lbl("was")}</label></div>
+  ${Z.map(zutat).join("")}
+
+  <div class="card" style="margin-top:12px">
+    <div class="mini" style="margin-bottom:10px">📦 ${esc(haupt("rohda"))}: <b>4.000 g</b></div>
+    <div class="f2">
+      <div class="f"><label>${lbl("roh")}</label><input type="number" id="i_roh" value="4" step="0.1"></div>
+      <div class="f"><label>${lbl("fertig")}</label><input type="number" id="i_fertig" value="2.5" step="0.1"></div>
+    </div>
+    <div class="rechnung" id="rechnung"></div>
+    <div class="f"><label>${lbl("bem")}</label><input placeholder="${esc(istLexi()?"เปลือกเยอะ":"viel Schale")}"></div>
+    <div class="bar" style="margin:2px 0 0"><button class="b g" style="flex:1">${esc(haupt("buchen"))}${EN_AUS?"":` · ${esc(zweit("buchen"))}`}</button></div>
+  </div>
+
+  <div class="frage">
+    <b>${istLexi()?"3 คำถามสำหรับพวกเรา · 3 questions for us":"3 Fragen an euch beide · 3 questions for both of you"}</b>
+    <ol>
+      <li>${istLexi()?"ตัวหนังสือเยอะเกินไปไหม? · Too much text?":"Ist es zu voll oder geht es? · Too much text?"}</li>
+      <li>${istLexi()?"ปุ่ม 🔊 ทำงานไหม? · Does 🔊 work?":"Funktioniert 🔊 auf deinem Handy? · Does 🔊 work?"}</li>
+      <li>${istLexi()?"ภาษาไทยถูกต้องไหม? · Is the Thai correct?":"Sagt Lexi, dass das Thai stimmt? · Is the Thai correct?"}</li>
+    </ol>
+    <div class="mini" style="margin-top:9px">⚠ ${istLexi()?"ข้อความภาษาไทยทั้งหมดสร้างโดย AI ยังไม่ได้ตรวจสอบ":"Alle Thai-Texte und Lautschriften sind KI-erzeugt und ungeprüft."}</div>
+  </div>`;
+
+  rechne();
+  document.querySelectorAll(".zrow").forEach(r=>r.onclick=e=>{
+    if(e.target.closest(".hoer"))return;
+    ZSEL=r.dataset.z; render();
+  });
+  document.querySelectorAll(".hoer").forEach(b=>b.onclick=()=>sprich(b.dataset.say,b.dataset.lang));
+  document.getElementById("i_roh").oninput=rechne;
+  document.getElementById("i_fertig").oninput=rechne;
+}
+
+function rechne(){
+  const roh=parseFloat(document.getElementById("i_roh").value),
+        fertig=parseFloat(document.getElementById("i_fertig").value);
+  const el=document.getElementById("rechnung");
+  if(!(roh>0)||!(fertig>0)){el.innerHTML="";return}
+  const proz=Math.round(fertig/roh*1000)/10, preisRoh=16, kosten=Math.round(preisRoh*roh/fertig*10)/10;
+  let s=`📊 ${esc(haupt("ausbeute"))}${EN_AUS?"":` · ${esc(zweit("ausbeute"))}`}: <b>${proz} %</b>`;
+  s+=`<br>💰 ${roh} kg × ${preisRoh} ฿ = ${Math.round(roh*preisRoh)} ฿ → <b>${kosten} ฿</b> ${esc(haupt("kosten"))}`;
+  s+=` <span class="mini">(+${Math.round((kosten/preisRoh-1)*100)} % ${esc(haupt("verschnitt"))})</span>`;
+  if(fertig>roh)s=`<div class="warn">⚠ ${esc(haupt("warnung"))}</div>`+s;
+  el.innerHTML=s;
+}
+
+/* --- Benutzer-Dialog: jederzeit erreichbar ------------------------------- */
+const dlg=document.getElementById("dlg");
+function dialogAuf(){
+  document.getElementById("dlgtitel").textContent=T.wer.de+" · "+T.wer.en+" · "+T.wer.th;
+  document.getElementById("enaustxt").textContent=T.enaus.de+" · "+T.enaus.en;
+  document.getElementById("enaus").checked=EN_AUS;
+  document.querySelectorAll(".wahl").forEach(b=>b.classList.toggle("on",b.dataset.u===USER));
+  stimmenPruefen();
+  dlg.showModal();
+}
+document.getElementById("userbtn").onclick=dialogAuf;
+document.querySelectorAll(".wahl").forEach(b=>b.onclick=()=>{
+  USER=b.dataset.u; localStorage.setItem("bl_user",USER);
+  document.querySelectorAll(".wahl").forEach(x=>x.classList.toggle("on",x===b));
+});
+document.getElementById("enaus").onchange=e=>{
+  EN_AUS=e.target.checked; localStorage.setItem("bl_enaus",EN_AUS?"1":"0");
+};
+document.getElementById("dlgok").onclick=()=>{ if(!USER)USER="peter"; dlg.close(); render(); };
+
+/* Prüfen, ob das Handy Thai und Deutsch sprechen kann */
+function stimmenPruefen(){
+  const el=document.getElementById("stimmen");
+  const zeig=()=>{
+    const v=speechSynthesis.getVoices();
+    const th=v.some(x=>x.lang&&x.lang.toLowerCase().startsWith("th"));
+    const de=v.some(x=>x.lang&&x.lang.toLowerCase().startsWith("de"));
+    el.className="status "+(th&&de?"ok":"no");
+    el.innerHTML=`🔊 Stimmen · Voices: ไทย ${th?"✓":"✗"} · Deutsch ${de?"✓":"✗"} `
+      +(th&&de?"":"<br>Fehlende Stimme in den Android-Einstellungen nachladen (Sprachausgabe).");
+  };
+  if(!window.speechSynthesis){el.className="status no";el.textContent="Dieses Gerät kann nicht vorlesen.";return}
+  zeig(); speechSynthesis.onvoiceschanged=zeig;
+}
+
+if(!USER)dialogAuf(); else render();
+</script>
+</body>
+</html>
