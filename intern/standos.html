@@ -101,9 +101,11 @@ button.b.g{background:var(--ok);color:#fff;border-color:var(--ok)}
 .rez .ampel{margin-left:auto;font:700 12px inherit;padding:4px 9px;border-radius:20px}
 .rez .ampel.gr{background:var(--okbg);color:var(--ok);border:1px solid var(--okln)}
 .rez .ampel.rt{background:var(--missbg);color:var(--miss);border:1px solid var(--missln)}
+.rez .ampel.ge{background:#fffaf0;color:var(--warn);border:1px solid #ecdfae}
 .rez .zut{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px}
 .rez .zut span{font:600 11.5px inherit;padding:4px 8px;border-radius:6px;background:var(--okbg);color:#2c6b4a;border:1px solid var(--okln)}
 .rez .zut span.f{background:var(--missbg);color:var(--miss);border-color:var(--missln)}
+.rez .zut span.g{background:#fffaf0;color:#8a6d1f;border-color:#ecdfae}
 .del{border:none;background:none;color:var(--miss);font:700 18px/1 inherit;cursor:pointer;padding:4px 6px;flex:0 0 auto}
 .empty{color:var(--muted);text-align:center;padding:36px 20px;font-size:15px}
 textarea#out{height:210px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:12px}
@@ -121,6 +123,7 @@ textarea#out{height:210px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:
 <nav>
   <button data-v="start" class="on"><b>🏠</b>Start</button>
   <button data-v="einkauf"><b>🛒</b>Einkauf</button>
+  <button data-v="ruesten"><b>🧊</b>Rüsten</button>
   <button data-v="bestand"><b>📦</b>Bestand</button>
   <button data-v="rezepte"><b>📖</b>Rezepte</button>
 </nav>
@@ -140,7 +143,9 @@ const REZEPTE  = [{"n":"01","de":"Bangkok Wake-Up","th":"บางกอก เ�
 
 /* ---- Speicher: EIN Namensraum für alles -------------------------------- */
 const SKEY="blend_os_v1";
-const leer={bestand:{},chargen:[],eigen:[],cfg:{who:"",markt:""}};
+/* bestand = ROHWARE wie gekauft · tk = gerüstet/gefroren = das, was verkauft werden kann
+   verarb  = jede Rüst-Buchung (4 kg Melone rein → 2,5 kg Gefriergut raus) */
+const leer={bestand:{},tk:{},verarb:[],chargen:[],eigen:[],cfg:{who:"",markt:""}};
 let S=Object.assign({},leer,JSON.parse(localStorage.getItem(SKEY)||"{}"));
 const save=()=>localStorage.setItem(SKEY,JSON.stringify(S));
 
@@ -152,8 +157,18 @@ const MAERKTE=["Ratanakorn","Theprasit","GO Wholesale","Makro","Villa Market","C
 /* Katalog + eigene Zutaten in einer Liste */
 const alleZutaten=()=>KATALOG.concat(S.eigen);
 const findeCode=c=>alleZutaten().find(k=>k.code===c);
-const bestandVon=c=>+(S.bestand[c]||0);
-const daIst=c=>bestandVon(c)>0;
+const bestandVon=c=>+(S.bestand[c]||0);          // Rohware
+const tkVon=c=>+(S.tk[c]||0);                     // gerüstet, verkaufsfähig
+const daIst=c=>tkVon(c)>0||bestandVon(c)>0;       // überhaupt vorhanden
+const verkaufsfaehig=c=>tkVon(c)>0;               // ohne Rüsten geht es nicht in den Becher
+
+/* Gemessene Ausbeute aus den eigenen Rüst-Buchungen — schlägt die Katalog-Schätzung */
+function ausbeuteReal(code){
+  const v=S.verarb.filter(x=>x.code===code&&+x.roh>0&&+x.fertig>0);
+  if(!v.length)return null;
+  const roh=v.reduce((a,x)=>a+ +x.roh,0), fertig=v.reduce((a,x)=>a+ +x.fertig,0);
+  return {proz:Math.round(fertig/roh*1000)/10, n:v.length};
+}
 
 /* Welche Rezepte brauchen diese Zutat? ("*" = alle) */
 const brauchtRezepte=k=>k.rezepte||[];
@@ -187,16 +202,22 @@ function vStart(){
   const defizite=zut.filter(fehlt);
   const daZahl=zut.filter(k=>daIst(k.code)).length;
   const offenePreise=zut.filter(k=>k.pmin==null&&letzterPreis(k.code)==null&&brauchtRezepte(k).length).length;
-  const mixbar=REZEPTE.filter(r=>r.zut&&r.zut.length&&r.zut.every(z=>daIst(z[0]))).length;
+  const mixbar=REZEPTE.filter(r=>r.zut&&r.zut.length&&r.zut.every(z=>verkaufsfaehig(z[0]))).length;
+  const kgTk=Math.round(Object.values(S.tk).reduce((a,b)=>a+ +b,0)/100)/10;
+  const zuRuesten=zut.filter(k=>bestandVon(k.code)>0&&!tkVon(k.code));
   const letzte=S.chargen.slice(-3).reverse();
 
   return `
   <div class="kpi">
     <div class="ok"><b>${mixbar}</b><span>Rezepte mixbar</span></div>
     <div class="miss"><b>${defizite.length}</b><span>Zutaten fehlen</span></div>
-    <div><b>${daZahl}</b><span>auf Lager</span></div>
-    <div><b>${S.chargen.length}</b><span>Messungen</span></div>
+    <div class="ok"><b>${kgTk}</b><span>kg verkaufsfähig</span></div>
+    <div><b>${daZahl}</b><span>Positionen da</span></div>
   </div>
+
+  ${zuRuesten.length?`<div class="tip">🧊 <b>${zuRuesten.length} Position${zuRuesten.length>1?"en":""} liegen als Rohware da und sind noch nicht gerüstet</b>
+    — ${zuRuesten.slice(0,6).map(k=>esc(k.de)).join(", ")}${zuRuesten.length>6?" …":""}.
+    Erst nach dem Rüsten zählen sie als Verkaufsware.</div>`:""}
 
   ${defizite.length?`<h2>Fehlt für die Rezepte <em>· ${defizite.length} Positionen</em></h2>
     ${defizite.slice(0,8).map(k=>`<div class="row miss">
@@ -243,7 +264,7 @@ function vBestand(){
         <span class="code">${k.code}</span>
         <span class="nm"><b>${esc(k.de)}</b><i>${esc(k.th||"")}</i>
           ${brauchtRezepte(k).length?`<span class="rz">${brauchtRezepte(k).map(r=>`<span>${r==="*"?"alle":r}</span>`).join("")}</span>`:""}
-          <span class="pr">${preisText(k)}</span></span>
+          <span class="pr">${preisText(k)}${tkVon(k.code)?` · 🧊 <b>${tkVon(k.code)} g gerüstet</b>`:""}</span></span>
         <input class="qty" type="number" inputmode="decimal" step="any" min="0" data-c="${k.code}" value="${v}" placeholder="0">
         <span class="u">${esc(k.einheit||"g")}</span>
         ${own?`<button class="del" data-del="${k.code}">✕</button>`:""}</div>`;
@@ -315,21 +336,88 @@ function vEinkauf(){
   <textarea id="out" style="display:none" readonly></textarea>`;
 }
 
+/* ---- 🧊 RÜSTEN — der Schritt zwischen Einkauf und Becher ---------------- */
+let rCode="";
+function vRuesten(){
+  const zut=alleZutaten();
+  const mitRoh=zut.filter(k=>bestandVon(k.code)>0);
+  if(!rCode)rCode=(mitRoh[0]||zut[0]).code;
+  const k=findeCode(rCode)||zut[0];
+  const stk=(k.einheit==="Stk");
+  const real=ausbeuteReal(k.code), schaetz=k.ausbeute;
+  const rohDa=bestandVon(k.code), tkDa=tkVon(k.code);
+
+  return `
+  <div class="tip">🧊 <b>Aus Einkauf wird Verkaufsware.</b> 4 kg Wassermelone gekauft ergeben vielleicht
+    2,5 kg Gefriergut — Schale, Kerne und Verschnitt gehen weg. Hier wird das gebucht: Rohware runter,
+    Gefriergut rauf. Und die App merkt sich deine <b>echte</b> Ausbeute statt einer Schätzung.</div>
+
+  <div class="card">
+    <div class="f"><label>Was wird gerüstet?</label>
+      <select id="r_code">${zut.map(z=>`<option value="${z.code}"${z.code===rCode?" selected":""}>${esc(z.de)}${bestandVon(z.code)>0?`  ·  ${bestandVon(z.code)} ${z.einheit||"g"} roh da`:""}</option>`).join("")}</select></div>
+
+    <div class="mini" style="margin:-4px 0 12px">
+      📦 Roh vorhanden: <b>${rohDa?rohDa+" "+(k.einheit||"g"):"nichts"}</b> ·
+      🧊 gerüstet: <b>${tkDa?tkDa+" g":"nichts"}</b>
+      ${real?`<br>📊 deine gemessene Ausbeute: <b>${real.proz} %</b> aus ${real.n} Vorgang${real.n>1?"en":""}${schaetz?` <span style="opacity:.65">(Schätzung im Katalog: ${schaetz} %)</span>`:""}`
+            :(schaetz?`<br>📊 Ausbeute bisher nur geschätzt: <b>~${schaetz} %</b> — dein erster Vorgang ersetzt die Schätzung`:"")}
+    </div>
+
+    <div class="f2">
+      <div class="f"><label>Roh eingesetzt ${stk?"(Stück)":"(kg)"}</label>
+        <input type="number" inputmode="decimal" step="0.01" id="r_roh" placeholder="${stk?"4":"4"}"></div>
+      <div class="f"><label>Fertig gefroren (kg)</label>
+        <input type="number" inputmode="decimal" step="0.01" id="r_fertig" placeholder="2,5"></div>
+    </div>
+    <div class="mini" id="r_rechnung" style="margin-bottom:11px"></div>
+    <div class="f"><label>Bemerkung <i>— optional</i></label>
+      <input id="r_bem" placeholder="z. B. viel Schale, sehr reif, Alu-Blech −30 °C"></div>
+    <div class="bar" style="margin:2px 0 0"><button class="b g" id="r_ok" style="flex:1">Rüsten buchen</button></div>
+  </div>
+
+  ${S.verarb.length?`<h2>Rüst-Historie <em>· ${S.verarb.length}</em></h2>${S.verarb.slice().reverse().slice(0,15).map((v,i)=>{
+    const kk=findeCode(v.code)||{de:v.code,einheit:"g"};
+    return `<div class="row">
+      <span class="code">${v.code}</span>
+      <span class="nm"><b>${esc(kk.de)}</b><i>${esc(v.dat)}${v.who?` · ${esc(v.who)}`:""}</i>
+        <span class="pr">${v.roh} ${kk.einheit==="Stk"?"Stk":"g"} roh → <b>${v.fertig} g</b> gefroren ·
+          Ausbeute <b>${v.proz} %</b>${v.kosten?` · <b>${v.kosten} ฿/kg</b> verkaufsfähig`:""}</span>
+        ${v.bem?`<i>${esc(v.bem)}</i>`:""}</span>
+      <button class="del" data-verarb="${S.verarb.length-1-i}">✕</button></div>`;
+  }).join("")}`:""}
+
+  ${(()=>{ /* Übersicht: was ist wirklich verkaufsfähig? */
+    const mitTk=alleZutaten().filter(k=>tkVon(k.code)>0);
+    if(!mitTk.length)return "";
+    return `<h2>Verkaufsfähig in der Truhe</h2>`+mitTk.map(k=>{
+      const r=ausbeuteReal(k.code);
+      return `<div class="row has"><span class="code">${k.code}</span>
+        <span class="nm"><b>${esc(k.de)}</b>
+          <span class="pr">${tkVon(k.code)} g gerüstet${r?` · Ausbeute ${r.proz} %`:""}</span></span></div>`;
+    }).join("");
+  })()}`;
+}
+
 /* ---- 📖 REZEPTE --------------------------------------------------------- */
 function vRezepte(){
   const mit=REZEPTE.filter(r=>r.zut&&r.zut.length), ohne=REZEPTE.filter(r=>!r.zut||!r.zut.length);
   const karte=r=>{
     const fehlen=r.zut.filter(z=>!daIst(z[0]));
+    const ruesten=r.zut.filter(z=>daIst(z[0])&&!verkaufsfaehig(z[0]));
+    const status=fehlen.length?["rt",`${fehlen.length} fehlt`]
+                : ruesten.length?["ge",`${ruesten.length}× rüsten`]
+                : ["gr","mixbar"];
     return `<div class="rez">
       <div class="kopf"><span class="no">${r.n}</span><b>${esc(r.de)}</b>
-        <span class="ampel ${fehlen.length?"rt":"gr"}">${fehlen.length?`${fehlen.length} fehlt`:"mixbar"}</span></div>
+        <span class="ampel ${status[0]}">${status[1]}</span></div>
       <div class="mini">${esc(r.th||"")}</div>
       <div class="zut">${r.zut.map(z=>{
-        const da=daIst(z[0]);
-        return `<span class="${da?"":"f"}">${z[0]} ${esc(z[2])}${typeof z[1]==="number"?` ${z[1]} g`:` ${esc(z[1])}`}</span>`;
+        const cls=!daIst(z[0])?"f":(verkaufsfaehig(z[0])?"":"g");
+        return `<span class="${cls}">${z[0]} ${esc(z[2])}${typeof z[1]==="number"?` ${z[1]} g`:` ${esc(z[1])}`}</span>`;
       }).join("")}</div></div>`;
   };
-  return `<div class="tip">Grün = Zutat liegt im Bestand · Rot = fehlt. Die Ampel sagt, was du <b>jetzt sofort</b> mixen kannst.</div>
+  return `<div class="tip">🟢 gerüstet und einsatzbereit · 🟡 nur Rohware da, muss erst unter 🧊 <b>Rüsten</b> ·
+    🔴 fehlt ganz. Die Ampel sagt, was du <b>jetzt sofort</b> mixen kannst.</div>
     <h2>Ausgearbeitet <em>· ${mit.length}</em></h2>${mit.map(karte).join("")}
     ${ohne.length?`<h2>Noch ohne Gramm <em>· ${ohne.length}</em></h2>${ohne.map(r=>`<div class="rez">
       <div class="kopf"><span class="no">${r.n}</span><b>${esc(r.de)}</b>
@@ -339,7 +427,7 @@ function vRezepte(){
 /* ---- Rendern + Ereignisse ---------------------------------------------- */
 function render(){
   $("who").innerHTML=(S.cfg.who?esc(S.cfg.who):"—")+(S.cfg.markt?`<br>${esc(S.cfg.markt)}`:"");
-  $("view").innerHTML={start:vStart,bestand:vBestand,einkauf:vEinkauf,rezepte:vRezepte}[V]();
+  $("view").innerHTML={start:vStart,bestand:vBestand,einkauf:vEinkauf,ruesten:vRuesten,rezepte:vRezepte}[V]();
   binde();
 }
 
@@ -361,6 +449,10 @@ function csvText(){
   let t="﻿Typ;Datum;Wer;Code;Zutat;Thai;Gruppe;Sorte;Menge;Einheit;bezahlt_THB;THB_pro_Einheit;Brix;Duft;Duftnoten;Fehlnoten;Note;Markt;Bemerkung\n";
   alleZutaten().forEach(k=>{ if(S.bestand[k.code])
     t+=["Bestand",heute(),S.cfg.who||"",k.code,k.de,k.th||"",k.gruppe,"",S.bestand[k.code],k.einheit||"g","","","","","","","","",""].join(";")+"\n"; });
+  alleZutaten().forEach(k=>{ if(S.tk[k.code])
+    t+=["Gerüstet",heute(),S.cfg.who||"",k.code,k.de,k.th||"",k.gruppe,"",S.tk[k.code],"g","","","","","","","","",""].join(";")+"\n"; });
+  S.verarb.forEach(v=>{ const k=findeCode(v.code)||{de:v.code,th:"",gruppe:""};
+    t+=["Ruesten",v.dat,v.who||"",v.code,k.de,k.th||"",k.gruppe,"",v.roh+" roh -> "+v.fertig+" fertig","g","",v.kosten||"","","","","",v.proz+"% Ausbeute","",(v.bem||"").replace(/;/g,",")].join(";")+"\n"; });
   S.chargen.forEach(c=>{ const k=findeCode(c.code)||{de:c.code,th:"",gruppe:"",einheit:""};
     t+=["Charge",c.dat,c.who||"",c.code,k.de,k.th||"",k.gruppe,c.sorte||"",c.kg||"",k.einheit||"",c.ges||"",c.pr||"",
         c.bx||"",c.duft||"",(c.des||[]).join("/"),(c.feh||[]).join("/"),c.note||"",c.markt||"",(c.bem||"").replace(/;/g,",")].join(";")+"\n"; });
@@ -490,6 +582,55 @@ function binde(){
       render();
     };
   }
+  /* Rüsten */
+  const rc=$("r_code");
+  if(rc){
+    rc.onchange=()=>{rCode=rc.value;render()};
+    const rechnung=()=>{
+      const k=findeCode(rCode), stk=(k.einheit==="Stk");
+      const roh=parseFloat($("r_roh").value), fertig=parseFloat($("r_fertig").value);
+      const el=$("r_rechnung"); if(!el)return;
+      if(!(roh>0)||!(fertig>0)){el.innerHTML="";return}
+      const rohG=stk?roh:roh*1000, fertigG=fertig*1000;
+      const proz=Math.round(fertigG/rohG*1000)/10;
+      let s=`📊 Ausbeute <b>${stk?Math.round(fertigG/roh)+" g je Stück":proz+" %"}</b>`;
+      /* echter Preis der Verkaufsware: was die Rohware kostete, geteilt durch das, was übrig blieb */
+      const pr=letzterPreis(k.code);
+      if(pr){
+        const kosten=Math.round(pr*roh/fertig*10)/10;
+        s+=`<br>💰 Rohware ${pr} ฿/${stk?"Stück":"kg"} → <b>${kosten} ฿ je kg Verkaufsware</b>`;
+        if(!stk&&pr)s+=` <span style="opacity:.7">(+${Math.round((kosten/pr-1)*100)} % durch Verschnitt)</span>`;
+      }
+      const rohDa=bestandVon(k.code);
+      if(rohG>rohDa)s+=`<br><b style="color:var(--warn)">⚠ Im Bestand stehen nur ${rohDa} ${k.einheit||"g"} — wird auf 0 gesetzt.</b>`;
+      if(fertigG>rohG)s+=`<br><b style="color:var(--miss)">⚠ Fertig größer als roh — Zahlendreher?</b>`;
+      el.innerHTML=s;
+    };
+    $("r_roh").oninput=rechnung; $("r_fertig").oninput=rechnung;
+    $("r_ok").onclick=()=>{
+      const k=findeCode(rCode), stk=(k.einheit==="Stk");
+      const roh=parseFloat($("r_roh").value), fertig=parseFloat($("r_fertig").value);
+      if(!(roh>0)||!(fertig>0)){alert("Roh eingesetzt und fertig gefroren eintragen.");return}
+      const rohG=Math.round(stk?roh:roh*1000), fertigG=Math.round(fertig*1000);
+      const pr=letzterPreis(k.code);
+      S.verarb.push({dat:heute(),who:S.cfg.who||"",code:rCode,roh:rohG,fertig:fertigG,
+        proz:Math.round(fertigG/rohG*1000)/10,
+        kosten:pr?Math.round(pr*roh/fertig*10)/10:"",bem:$("r_bem").value.trim()});
+      S.bestand[rCode]=Math.max(0,(+(S.bestand[rCode]||0))-rohG);
+      if(!S.bestand[rCode])delete S.bestand[rCode];
+      S.tk[rCode]=(+(S.tk[rCode]||0))+fertigG;
+      save(); render();
+    };
+  }
+  document.querySelectorAll("[data-verarb]").forEach(b=>b.onclick=()=>{
+    if(!confirm("Rüst-Buchung zurücknehmen? Mengen werden zurückgebucht."))return;
+    const v=S.verarb[+b.dataset.verarb];
+    S.bestand[v.code]=(+(S.bestand[v.code]||0))+ +v.roh;
+    S.tk[v.code]=Math.max(0,(+(S.tk[v.code]||0))- +v.fertig);
+    if(!S.tk[v.code])delete S.tk[v.code];
+    S.verarb.splice(+b.dataset.verarb,1); save(); render();
+  });
+
   document.querySelectorAll("[data-charge]").forEach(b=>b.onclick=()=>{
     if(!confirm("Charge löschen?"))return;
     S.chargen.splice(+b.dataset.charge,1); save(); render();

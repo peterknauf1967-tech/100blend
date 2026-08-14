@@ -1,5 +1,5 @@
 /* Stand-OS offline: alles beim Installieren cachen, danach Cache zuerst. */
-const CACHE="blend-os-v1";
+const CACHE="blend-os-v2";
 const FILES=["./standos.html","./standos.webmanifest","./icon-192.png","./icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys()
