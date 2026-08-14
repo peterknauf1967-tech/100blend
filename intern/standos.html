@@ -913,7 +913,24 @@ function stimmenPruefen(){
 }
 
 if(!USER)dialogAuf(); else render();
-if("serviceWorker" in navigator){ navigator.serviceWorker.register("./sw-os.js").then(function(r){r.update()}).catch(function(){}); }
+/* Offline-Speicher: auf iPhone/iPad ABGESCHALTET.
+   Dort hat er zweimal dazu gefuehrt, dass die App gar nicht mehr startete
+   (14.08.). Android bekommt ihn weiterhin — dort laeuft er zuverlaessig.
+   Mit ?nosw=1 laesst er sich auf jedem Geraet abschalten. */
+(function(){
+  var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+         || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  var aus = location.search.indexOf("nosw=1")>=0;
+  if(iOS || aus){
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations)
+      navigator.serviceWorker.getRegistrations().then(function(rs){
+        rs.forEach(function(r){r.unregister()});
+      }).catch(function(){});
+    return;
+  }
+  if("serviceWorker" in navigator)
+    navigator.serviceWorker.register("./sw-os.js").then(function(r){r.update()}).catch(function(){});
+})();
 </script>
 </body>
 </html>
