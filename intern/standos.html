@@ -110,22 +110,59 @@ button.b.g{background:var(--ok);color:#fff;border-color:var(--ok)}
 .empty{color:var(--muted);text-align:center;padding:36px 20px;font-size:15px}
 textarea#out{height:210px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:12px}
 .mini{font-size:12.5px;color:var(--muted)}
+.user{border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 11px;
+ font:700 12px inherit;cursor:pointer;margin-left:auto;white-space:nowrap}
+label i.en{display:block;font-style:normal;font-weight:600;font-size:11.5px;color:#a09a92;
+ text-transform:none;letter-spacing:0}
+.en{color:#a09a92;font-weight:600;font-size:12px}
+.nm .haupt{display:block;font-weight:600;font-size:15px;line-height:1.25}
+.nm .zweit{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.nm .dritt{display:block;font-size:12.5px;color:var(--nose);font-weight:600}
+.nm .dritt i.laut{font-style:italic;color:#8a7a55;font-weight:600;margin-left:5px}
+.hoer{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;
+ font-size:15px;cursor:pointer;flex:0 0 auto}
+.hoer:active{background:#f0ede8}
+dialog{border:none;border-radius:14px;padding:0;max-width:340px;width:calc(100% - 32px)}
+dialog::backdrop{background:rgba(0,0,0,.35)}
+.dlg{padding:16px}
+.dlg h3{margin:0 0 12px;font-size:15.5px;line-height:1.4}
+.wahl{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;
+ border-radius:10px;padding:11px 13px;margin-bottom:8px;font:15px inherit;cursor:pointer}
+.wahl.on{border-color:var(--ink);background:#f1ede8;font-weight:700}
+.wahl small{display:block;color:var(--muted);font-size:12px}
+.schalter{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;margin-top:10px}
+.stimmen{font-size:11.5px;padding:7px 10px;border-radius:8px;margin-top:10px}
+.stimmen.ok{background:var(--okbg);color:#22694a;border:1px solid var(--okln)}
+.stimmen.no{background:var(--missbg);color:var(--miss);border:1px solid var(--missln)}
+details.tipp{background:#fffdf5;border:1px solid #ecdfae;border-radius:10px;margin-bottom:13px;overflow:hidden}
+details.tipp summary{padding:10px 12px;cursor:pointer;font:700 13.5px inherit;list-style:none}
+details.tipp summary::-webkit-details-marker{display:none}
+details.tipp .inhalt{padding:0 12px 11px;font-size:13.5px;line-height:1.55}
+details.tipp .inhalt .en{display:block;margin-top:4px}
 </style>
 </head>
 <body>
 <header>
   <div class="top">
     <div class="brand">100<span>blend</span> · Stand-OS</div>
-    <div class="who" id="who"></div>
+    <button class="user" id="userbtn">👤</button>
   </div>
 </header>
 <main id="view"></main>
+<dialog id="dlg"><div class="dlg">
+  <h3 id="dlgtitel"></h3>
+  <button class="wahl" data-u="peter">🇩🇪 Peter<small>Deutsch + English</small></button>
+  <button class="wahl" data-u="lexi">🇹🇭 Lexi<small>ไทย + English</small></button>
+  <label class="schalter"><input type="checkbox" id="enaus"> <span id="enaustxt"></span></label>
+  <div class="stimmen" id="stimmen"></div>
+  <div class="bar"><button class="b p" id="dlgok" style="flex:1">OK</button></div>
+</div></dialog>
 <nav>
-  <button data-v="start" class="on"><b>🏠</b>Start</button>
-  <button data-v="einkauf"><b>🛒</b>Einkauf</button>
-  <button data-v="ruesten"><b>🧊</b>Rüsten</button>
-  <button data-v="bestand"><b>📦</b>Bestand</button>
-  <button data-v="rezepte"><b>📖</b>Rezepte</button>
+  <button data-v="start" class="on"><b>🏠</b><span id="nv_start"></span></button>
+  <button data-v="einkauf"><b>🛒</b><span id="nv_einkauf"></span></button>
+  <button data-v="ruesten"><b>🧊</b><span id="nv_ruesten"></span></button>
+  <button data-v="bestand"><b>📦</b><span id="nv_bestand"></span></button>
+  <button data-v="rezepte"><b>📖</b><span id="nv_rezepte"></span></button>
 </nav>
 <script>
 /* ============================================================================
@@ -137,7 +174,7 @@ textarea#out{height:210px;font:12px/1.5 ui-monospace,Menlo,monospace;margin-top:
    Katalog + Rezepte werden aus den Quelldateien erzeugt: node _build-app.js
    ============================================================================ */
 
-const KATALOG  = [{"code":"BA","de":"Banane","th":"กล้วย","en":"Banana","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["02","03","05","06","07","08","09","10","11"],"preistext":"10–15 ฿/kg · überreif = ideal (20 °Bx gemessen)","einheit":"g","pmin":10,"pmax":15,"brixZiel":null,"sortenkritisch":true,"sorten":"Kluai Nam Wa · Kluai Hom · 15 ฿/Staude","reife":"gelb mit braunen Zuckerflecken · gibt leicht nach · süßer Duft — grün = stärkig/fad","reifeTh":"เปลือกเหลืองมีจุดน้ำตาล นิ่มเล็กน้อย หอมหวาน — เขียว = ฝาด/จืด","ausbeute":null},{"code":"MG","de":"Mango","th":"มะม่วง","en":"Mango","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["08","09"],"preistext":"Chok Anan 20 · Nam Dok Mai 30 (SAISON!) · Morakot 35","einheit":"g","pmin":30,"pmax":60,"brixZiel":15,"sortenkritisch":true,"sorten":"Chok Anan ⭐ 20 · Nam Dok Mai 30 (Saison!) · Morakot 35 · R2E2 45","reife":"goldgelb · gibt auf sanften Druck nach · duftet am Stielansatz — grün-hart = sauer, nicht fürs Mixen","reifeTh":"เหลืองทอง กดเบา ๆ แล้วนิ่ม หอมที่ขั้ว — ลูกเขียวแข็ง = เปรี้ยว ไม่เอา","ausbeute":null},{"code":"WM","de":"Wassermelone","th":"แตงโม","en":"Watermelon","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["12"],"preistext":"10–18 ฿/kg · frisch, nie TK","einheit":"g","pmin":10,"pmax":18,"brixZiel":null,"sortenkritisch":false,"sorten":"Reife zählt · verhandeln lohnt","reife":"matte (nicht glänzende) Schale · gelber Bodenfleck · klingt hohl beim Klopfen · schwer","reifeTh":"ผิวด้าน (ไม่มัน) ก้นเหลือง เคาะเสียงกลวง ลูกหนัก","ausbeute":60},{"code":"AN","de":"Ananas","th":"สับปะรด","en":"Pineapple","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["01"],"preistext":"20–25 ฿/kg roh · 68 ฿/kg geschält (Ausbeute ~50 %)","einheit":"g","pmin":20,"pmax":25,"brixZiel":null,"sortenkritisch":true,"sorten":"Nang Lae · Phuket · 8 ฿/Stück à ~400 g","reife":"Boden goldgelb · süßer Duft · ein Blatt löst sich mit leichtem Zug","reifeTh":"ก้นเหลืองทอง หอมหวาน ดึงใบหลุดง่าย","ausbeute":50},{"code":"DR","de":"Drachenfrucht rot","th":"แก้วมังกรแดง","en":"Dragon fruit red","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["10"],"preistext":"45–70 ฿/kg · nur rotfleischig","einheit":"g","pmin":45,"pmax":70,"brixZiel":null,"sortenkritisch":true,"sorten":"rotfleischig = Farbgeber","reife":"gleichmäßig kräftig pink · Flügel leicht trocken (nicht welk) · schwer für die Größe","reifeTh":"สีชมพูเข้มสม่ำเสมอ กลีบแห้งเล็กน้อย (ไม่เหี่ยว) หนักมือ","ausbeute":60},{"code":"PF","de":"Passionsfrucht","th":"เสาวรส","en":"Passion fruit","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["01"],"preistext":"65 ฿/kg (rot) · 99 ฿/kg (grün) · Note 5 im Test!","einheit":"g","pmin":65,"pmax":99,"brixZiel":null,"sortenkritisch":false,"sorten":"rot 65 · grün 99 (gemessen 14.08.) · TK-Püree 179","reife":"schrumpelige Schale = reif + süß! glatt-prall = noch sauer","reifeTh":"เปลือกเหี่ยวย่น = สุกหวาน! ผิวเรียบตึง = ยังเปรี้ยว","ausbeute":40},{"code":"AV","de":"Avocado","th":"อะโวคาโด","en":"Avocado","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["11"],"preistext":"59 ฿/kg grün lokal (Fleisch ≈91)","einheit":"g","pmin":59,"pmax":120,"brixZiel":null,"sortenkritisch":false,"sorten":"grün lokal 59 · Hass-Typ 120 · Fleisch ≈91","reife":"gibt auf sanften Druck gleichmäßig nach · Stielansatz grün-gelb, nicht braun","reifeTh":"กดเบา ๆ นิ่มทั่วลูก ขั้วเขียวอมเหลือง ไม่ดำ","ausbeute":65},{"code":"GU","de":"Guave","th":"ฝรั่ง","en":"Guava","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["05","08"],"preistext":"~35 ฿/kg · Vitamin-C-Träger statt Acerola","einheit":"g","pmin":35,"pmax":35,"brixZiel":null,"sortenkritisch":false,"sorten":"Vitamin-C-Held, ersetzt Acerola","reife":"gelblich-grün · duftet · gibt minimal nach — steinhart = unreif","reifeTh":"เขียวอมเหลือง มีกลิ่นหอม กดนิ่มนิดหน่อย — แข็งมาก = ดิบ","ausbeute":null},{"code":"KN","de":"Kokosnuss jung","th":"มะพร้าวอ่อน","en":"Young coconut","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"10 ฿ klein · 26 ฿ XXL — pro STÜCK","einheit":"Stk","pmin":10,"pmax":26,"brixZiel":null,"sortenkritisch":false,"sorten":"pro STÜCK: klein 10 ฿ · XXL 26 ฿ (gemessen 13.08.)","reife":"schwer · beim Schütteln hörbar viel Wasser · Schale hell ohne Schimmel","reifeTh":"หนัก เขย่าได้ยินน้ำเยอะ เปลือกขาวสะอาด ไม่มีรา","ausbeute":25},{"code":"TM","de":"Thai-Melone","th":"แตงไทย","en":"Thai melon (muskmelon)","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"25 ฿/kg · zuckerarm","einheit":"g","pmin":25,"pmax":25,"brixZiel":null,"sortenkritisch":false,"sorten":"zuckerarm → Ampel-grün-Basis","reife":"duftet süß am Blütenende · gibt dort leicht nach","reifeTh":"หอมหวานที่ก้น กดก้นนิ่มเล็กน้อย","ausbeute":60},{"code":"OR","de":"Orange","th":"ส้ม","en":"Orange","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["08"],"preistext":"30–70 ฿/kg · stark standabhängig","einheit":"g","pmin":30,"pmax":70,"brixZiel":null,"sortenkritisch":true,"sorten":"Som Sai Nam Phueng · stark standabhängig","reife":"schwer = saftig · leicht weich · duftet an der Schale","reifeTh":"หนัก = น้ำเยอะ นิ่มเล็กน้อย มีกลิ่นหอม","ausbeute":60},{"code":"AB","de":"Apfel/Birne B-Ware","th":"แอปเปิล/สาลี่","en":"Apple / Pear (B-grade)","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"15 ฿/kg · 2. Wahl, sofort verarbeiten","einheit":"g","pmin":15,"pmax":15,"brixZiel":null,"sortenkritisch":false,"sorten":"2. Wahl, sofort verarbeiten + frosten","reife":"Druckstellen sind ok (wird gemixt) · kein Schimmel, kein Gärgeruch","reifeTh":"รอยช้ำไม่เป็นไร (เอาไปปั่น) ห้ามมีรา/กลิ่นหมัก","ausbeute":null},{"code":"DW","de":"Drachenfrucht weiß","th":"แก้วมังกรขาว","en":"Dragon fruit white","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["04"],"preistext":"25–35 ฿/kg","einheit":"g","pmin":25,"pmax":35,"brixZiel":null,"sortenkritisch":false,"sorten":"milder, billiger","reife":"gleichmäßige Farbe · Flügel frisch · schwer für die Größe · gibt minimal nach","reifeTh":"สีสม่ำเสมอ กลีบสด หนักมือ กดนิ่มเล็กน้อย","ausbeute":60},{"code":"PY","de":"Papaya","th":"มะละกอ","en":"Papaya","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["08"],"preistext":"⚠ Preis noch nicht erfasst","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"Reife zählt","reife":"Schale großflächig gelb-orange · gibt auf Druck nach — grün = unreif","reifeTh":"เปลือกเหลืองส้มเกือบทั้งลูก กดแล้วนิ่ม — เขียว = ดิบ","ausbeute":65},{"code":"RO","de":"Roselle (Krachiap)","th":"กระเจี๊ยบแดง","en":"Roselle (hibiscus)","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["05"],"preistext":"⚠ Preis noch nicht erfasst","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"Thai-Ersatz für Granatapfel","reife":"Kelche prall + kräftig rot, nicht welk","reifeTh":"กลีบเต่งตึง แดงสด ไม่เหี่ยว","ausbeute":null},{"code":"LS","de":"Limette","th":"มะนาว","en":"Lime","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["04","09","12","13"],"preistext":"⚠ Marktpreis offen · TK-Saft 150 ฿/l","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"schwer = saftig · TK-Saft 150 ฿/l","reife":"schwer für die Größe · dünne glatte Schale · leicht weich = viel Saft","reifeTh":"หนักมือ เปลือกบางเรียบ นิ่มเล็กน้อย = น้ำเยอะ","ausbeute":null},{"code":"MG","de":"Mango TK Nam Dok Mai","th":"มะม่วงแช่แข็ง","en":"","gruppe":"B · Früchte TK — nur die brauchbaren","gi":1,"rezepte":["08","09"],"preistext":"20 °Bx · Note 4 ✅ — Backup außerhalb der Saison","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"JB","de":"Schwarze Johannisbeere TK","th":"ลูกเกดดำ","en":"Blackcurrant frozen","gruppe":"B · Früchte TK — nur die brauchbaren","gi":1,"rezepte":["05","06"],"preistext":"179 ฿/kg · Note 4 ✅ — neuer Beeren-Träger","einheit":"g","pmin":179,"pmax":179,"brixZiel":null,"sortenkritisch":false,"sorten":"⭐ Note 4 am 13.08. — Beeren-Träger","reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","ausbeute":null},{"code":"HF","de":"Haferflocken → Hafermilch","th":"ข้าวโอ๊ต","en":"","gruppe":"C · Rohstoffe für Eigen-Milch","gi":2,"rezepte":["*"],"preistext":"🏆 ergibt ~13 ฿/L ⚠ Flockenpreis noch nicht belegt","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"MA","de":"Mandeln → Mandelmilch 🥜","th":"อัลมอนด์","en":"","gruppe":"C · Rohstoffe für Eigen-Milch","gi":2,"rezepte":[],"preistext":"⚠ Preis offen (gekauft 75 ฿/L)","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"SJ","de":"Sojabohnen → Sojamilch 🌱","th":"ถั่วเหลือง","en":"","gruppe":"C · Rohstoffe für Eigen-Milch","gi":2,"rezepte":[],"preistext":"⚠ Preis offen (gekauft 50 ฿/L)","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"HM","de":"Hafermilch (selbst gemacht)","th":"นมข้าวโอ๊ต","en":"","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["*"],"preistext":"🏆 ~13 ฿/L — STANDARD-BASIS","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"KM","de":"Kuhmilch 🥛 (Meiji, 2 L)","th":"นมวัว","en":"","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["09","11"],"preistext":"50 ฿/L ✅ belegt","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"SM","de":"Sojamilch fertig 🌱 (1 L)","th":"นมถั่วเหลือง","en":"","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["07"],"preistext":"50 ฿/L ✅ belegt","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"MM","de":"Mandelmilch fertig 🥜 (V-Soy 1 L)","th":"นมอัลมอนด์","en":"","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":[],"preistext":"75 ฿/L ✅ belegt","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"JO","de":"Joghurt natur 🥛 (2 L)","th":"โยเกิร์ต","en":"","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["06","08","13"],"preistext":"75 ฿/L ≈ 73 ฿/kg ✅ belegt","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"KO","de":"Kokosmilch","th":"กะทิ","en":"","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["07","10"],"preistext":"60 ฿/L","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"KW","de":"Kokoswasser","th":"น้ำมะพร้าว","en":"","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["02","05","06","08","12"],"preistext":"30 ฿/L · pur schmeckt es nicht (Heimtest)","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"WA","de":"Wasser (kalt/abgekocht)","th":"น้ำเย็น","en":"","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["03","04","13"],"preistext":"—","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"TE","de":"Grüner Tee / Jasmintee","th":"ชาเขียว/ชามะลิ","en":"","gruppe":"E · Tee, Aufgüsse & Kaffee","gi":4,"rezepte":["01"],"preistext":"⚠ Preis offen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"PD","de":"Pandanblätter","th":"ใบเตย","en":"","gruppe":"E · Tee, Aufgüsse & Kaffee","gi":4,"rezepte":["03"],"preistext":"⚠ Preis offen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"KF","de":"Kaffee, Espresso ganze Bohne","th":"กาแฟเอสเปรสโซ","en":"","gruppe":"E · Tee, Aufgüsse & Kaffee","gi":4,"rezepte":[],"preistext":"720 ฿/kg (Endkunde) → Gastro-1-kg suchen · 15–20 g = 11–14 ฿/Becher","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"SP","de":"Spinat TK gehackt","th":"ผักโขม","en":"Spinach frozen chopped","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["08"],"preistext":"59 ฿/kg · Green Detox 40 g = 2,40 ฿","einheit":"g","pmin":59,"pmax":59,"brixZiel":null,"sortenkritisch":false,"sorten":"Aktion (statt 99) · Green Detox 40 g = 2,40 ฿","reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","ausbeute":null},{"code":"BK","de":"Brokkoli TK","th":"บรอกโคลี","en":"Broccoli frozen","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["13"],"preistext":"69 ฿/kg","einheit":"g","pmin":69,"pmax":69,"brixZiel":null,"sortenkritisch":false,"sorten":"Aktion (statt 79)","reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","ausbeute":null},{"code":"WS","de":"Wasserspinat (Phak Bung)","th":"ผักบุ้ง","en":"","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["04"],"preistext":"⚠ Preis offen · nur zarte Blätter","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"RB","de":"Rote Beete","th":"บีทรูท","en":"","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["08"],"preistext":"⚠ Preis offen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"GK","de":"Gurke","th":"แตงกวา","en":"","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["13"],"preistext":"⚠ Preis offen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"TO","de":"Seidentofu 🌱","th":"เต้าหู้นิ่ม","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["01","02","03","04","08"],"preistext":"⚠ Preis offen — Basis der Gourmet-Linie","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"ST","de":"Süßtamarinde (Makham Wan)","th":"มะขามหวาน","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["07","08","11"],"preistext":"⚠ Preis offen — ersetzt Zucker","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"KK","de":"Kakao (roh, Thai/Chumphon)","th":"ผงโกโก้ดิบ","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["07","08"],"preistext":"400 ฿/kg (Modell)","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"SK","de":"Sonnenblumenkerne","th":"เมล็ดทานตะวัน","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["01","03","04"],"preistext":"⚠ Preis offen · vor dem Frosten einweichen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"KE","de":"Kürbiskerne","th":"เมล็ดฟักทอง","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["02","07","08"],"preistext":"⚠ Preis offen · einweichen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"IG","de":"Ingwer","th":"ขิง","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["04","08","13"],"preistext":"~70 ฿/kg · 3 g je 100 ml","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"MI","de":"Minze","th":"ใบสะระแหน่","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["02","12"],"preistext":"frisch, nie TK","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"ZG","de":"Zitronengras","th":"ตะไคร้","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["01"],"preistext":"⚠ Preis offen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"GA","de":"Galgant (Kha)","th":"ข่า","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["01"],"preistext":"⚠ Preis offen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"ZI","de":"Ceylon-Zimt","th":"อบเชยซีลอน","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["03"],"preistext":"⚠ Preis offen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"SB","de":"Basilikumsamen (Sabja)","th":"เม็ดแมงลัก","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["08"],"preistext":"200 ฿/kg (Chia-Modellwert)","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"KU","de":"Kurkuma","th":"ขมิ้น","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["13"],"preistext":"nur mit Pfeffer wirksam","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"PP","de":"Schwarzer Pfeffer","th":"พริกไทยดำ","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["13"],"preistext":"—","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"VA","de":"Vanille","th":"วานิลลา","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":[],"preistext":"⚠ Preis offen · Aroma-Retter für fade Frucht","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"SA","de":"Salz","th":"เกลือ","en":"","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":[],"preistext":"—","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"KL","de":"Marine-Kollagen (Halal)","th":"คอลลาเจนทะเล","en":"","gruppe":"H · Supplements","gi":7,"rezepte":["06"],"preistext":"2.000 ฿/kg · vorhanden · Thai-Verkaufsargument","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"PR","de":"Proteinpulver","th":"เวย์โปรตีน","en":"","gruppe":"H · Supplements","gi":7,"rezepte":["08"],"preistext":"600 ฿/kg · Upsell „Power+\"","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"AX","de":"Astaxanthin (nur Booster)","th":"แอสตาแซนทิน","en":"","gruppe":"H · Supplements","gi":7,"rezepte":[],"preistext":"nur auf Bestellung mit Aufpreis","einheit":"mg","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"BE","de":"Becher PET 22 oz (650 ml)","th":"แก้ว PET 22 oz","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"2,10 ฿/Stück (50er = 105 ฿)","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"B2","de":"Becher 7 oz GPPS klar","th":"ถ้วย 7 OZ ใส","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":[],"preistext":"60 ฿/Packung · Verkostungsbecher","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"DE","de":"Dome-Deckel 98 mm gelocht","th":"ฝาโดม 98 มม.","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"0,59 ฿/Stück (100er = 59 ฿)","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"HA","de":"Halme","th":"หลอด","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"⚠ Preis offen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"SR","de":"Becher-Sticker","th":"สติกเกอร์","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"⚠ Preis offen · Name + Allergen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"SG","de":"Shotgläser rot (Verkostung)","th":"แก้วช็อตสีแดง","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":[],"preistext":"99 ฿/Packung","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"TR","de":"Trichter / Lebensmittelsieb","th":"กรวยกรองอาหาร","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":[],"preistext":"80 ฿ · für Kernmilch + Brix-Saft","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"FL","de":"Flasche + Deckel 1.100 ml","th":"ขวดน้ำ+ฝา","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":[],"preistext":"109 ฿ · Hafermilch-Vorrat","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"MU","de":"Müllbeutel 28×36","th":"ถุงขยะ","en":"","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"79 ฿/kg-Packung","einheit":"Pack","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null},{"code":"ME","de":"Cantaloupe / Honigmelone","th":"แคนตาลูป","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":55,"en":"Cantaloupe / Honeydew melon","sorten":"—","brixZiel":null,"sortenkritisch":false,"pmin":40,"pmax":55,"reife":"duftet am Blütenende · gibt dort leicht nach · schwer für die Größe","reifeTh":"หอมที่ก้น กดก้นนิ่มเล็กน้อย หนักมือ"},{"code":"LI","de":"Litschi","th":"ลิ้นจี่","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":55,"en":"Lychee","sorten":"Saison · Mengenrabatt 3 kg=100","brixZiel":null,"sortenkritisch":false,"pmin":35,"pmax":60,"reife":"Schale kräftig rot + prall · duftet blumig — braun/trocken = alt","reifeTh":"เปลือกแดงสด เต่งตึง หอม — น้ำตาล/แห้ง = เก่า"},{"code":"LG","de":"Longan (Lamyai)","th":"ลำไย","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":60,"en":"Longan","sorten":"sehr süß","brixZiel":null,"sortenkritisch":false,"pmin":80,"pmax":80,"reife":"Schale glatt hellbraun + prall · Probierfrucht: saftig-süß","reifeTh":"เปลือกเรียบสีน้ำตาลอ่อน เต่งตึง ลองชิม: หวานฉ่ำ"},{"code":"LK","de":"Longkong","th":"ลองกอง","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Longkong (langsat)","sorten":"—","brixZiel":null,"sortenkritisch":false,"pmin":30,"pmax":30,"reife":"hellgelb + prall · löst sich leicht vom Zweig · Probe kosten","reifeTh":"เหลืองอ่อน เต่งตึง หลุดจากช่อง่าย ลองชิม"},{"code":"RM","de":"Rambutan","th":"เงาะ","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":40,"en":"Rambutan","sorten":"❌ nur ~40 % Ausbeute → ~110 ฿/kg Fleisch","brixZiel":null,"sortenkritisch":false,"pmin":45,"pmax":45,"reife":"leuchtend rot · Haare frisch grün-rot, nicht schwarz/trocken","reifeTh":"แดงสด ขนเขียว-แดงสด ไม่ดำ/ไม่แห้ง"},{"code":"MS","de":"Mangostan","th":"มังคุด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":30,"en":"Mangosteen","sorten":"❌ nur ~30 % Ausbeute → ~130 ฿/kg Fleisch","brixZiel":null,"sortenkritisch":false,"pmin":39,"pmax":39,"reife":"Schale gibt auf Daumendruck leicht nach — steinhart = innen verdorben","reifeTh":"เปลือกกดด้วยนิ้วแล้วยุบเล็กน้อย — แข็งมาก = ข้างในเสีย"},{"code":"PL","de":"Pflaume XXL (Import)","th":"พลัม","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Plum","sorten":"Purple-Farbgeber · SALE-Fenster nutzen","brixZiel":null,"sortenkritisch":false,"pmin":65,"pmax":65,"reife":"satte dunkle Farbe · duftet · gibt auf Druck leicht nach","reifeTh":"สีเข้ม หอม กดนิ่มเล็กน้อย"},{"code":"WT","de":"Weintrauben","th":"องุ่น","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Grapes","sorten":"rot/schwarz 100–140 · Shine Muscat 160","brixZiel":null,"sortenkritisch":false,"pmin":100,"pmax":160,"reife":"Beeren prall am festen grünen Stiel · weißer Duftfilm ist gut · eine probieren","reifeTh":"ลูกเต่งติดก้านเขียวแน่น ผิวมีนวลขาว = ดี ลองชิมหนึ่งลูก"},{"code":"DU","de":"Durian","th":"ทุเรียน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":35,"en":"Durian","sorten":"Mon Thong 149 · Premium 179","brixZiel":null,"sortenkritisch":false,"pmin":149,"pmax":179,"reife":"duftet stark am Stiel · klingt beim Klopfen dumpf-hohl · Händler öffnen lassen","reifeTh":"หอมแรงที่ขั้ว เคาะเสียงทึบ ให้แม่ค้าแกะให้"},{"code":"SN","de":"Santol (Krathon)","th":"กระท้อน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Santol","sorten":"3 kg = 100","brixZiel":null,"sortenkritisch":false,"pmin":35,"pmax":35,"reife":"gelb-bräunlich · duftet · gibt leicht nach","reifeTh":"เหลืองอมน้ำตาล หอม กดนิ่มเล็กน้อย"},{"code":"CH","de":"Rose Apple (Chomphu)","th":"ชมพู่","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Rose apple","sorten":"wasserreich, mild","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"kräftige Farbe · prall-glänzend · keine braunen Stellen","reifeTh":"สีสด เต่งตึงเป็นมัน ไม่มีจุดน้ำตาล"},{"code":"JF","de":"Jackfruit","th":"ขนุน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":35,"en":"Jackfruit","sorten":"sehr süß, intensiv","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"duftet süß · Stacheln flach + weit auseinander · klingt dumpf — meist fertig geschält kaufen","reifeTh":"หอมหวาน หนามแบนห่าง เคาะเสียงทึบ — ซื้อแบบแกะแล้วสะดวกกว่า"},{"code":"SD","de":"Sapodilla (Lamut)","th":"ละมุด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Sapodilla","sorten":"karamellig-süß","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"gibt deutlich nach wie reife Kiwi — hart = herb-ungenießbar","reifeTh":"กดแล้วนิ่มเหมือนกีวีสุก — แข็ง = ฝาด กินไม่ได้"},{"code":"NN","de":"Zuckerapfel (Noi Na)","th":"น้อยหน่า","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Sugar apple (custard apple)","sorten":"cremig-süß","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"Schuppen weit auseinander · gibt leicht nach · duftet süß","reifeTh":"ร่องตาห่าง กดนิ่มเล็กน้อย หอมหวาน"},{"code":"SF","de":"Sternfrucht (Carambola)","th":"มะเฟือง","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Star fruit (carambola)","sorten":"sauer-frisch","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"Kanten gelb-orange (nicht grün) · glänzend","reifeTh":"สันสีเหลืองส้ม (ไม่เขียว) ผิวมัน"},{"code":"PO","de":"Pomelo","th":"ส้มโอ","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":50,"en":"Pomelo","sorten":"⚠ für Peter privat tabu (Eliquis)","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"schwer für die Größe · duftet an der Schale","reifeTh":"หนักมือ เปลือกมีกลิ่นหอม"},{"code":"MB","de":"Maulbeere TK","th":"หม่อน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Mulberry frozen","sorten":"❌ Note 1 am 13.08. (kein Duft/Geschmack)","brixZiel":null,"sortenkritisch":false,"pmin":69,"pmax":69,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"ER","de":"Erdbeere TK","th":"สตรอว์เบอร์รี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Strawberry frozen","sorten":"SuperSave 69 · A-Choice 79 (beide China)","brixZiel":null,"sortenkritisch":true,"pmin":69,"pmax":79,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"KI","de":"Kiwi TK geschnitten","th":"กีวี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Kiwi frozen sliced","sorten":"Aktion (statt 85)","brixZiel":null,"sortenkritisch":false,"pmin":69,"pmax":69,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"PS","de":"Pfirsich TK","th":"พีช","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Peach frozen","sorten":"frisch 100 → TK vorziehen","brixZiel":null,"sortenkritisch":false,"pmin":79,"pmax":79,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"MD","de":"Mandarine TK","th":"ส้มแมนดาริน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Mandarin frozen","sorten":"Aktion (statt 119)","brixZiel":null,"sortenkritisch":false,"pmin":99,"pmax":99,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"BR","de":"Brombeere TK","th":"แบล็กเบอร์รี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Blackberry frozen","sorten":"Aktion (statt 149)","brixZiel":null,"sortenkritisch":false,"pmin":109,"pmax":109,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"BM","de":"Beeren-Mix TK fertig","th":"เบอร์รีรวม","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Berry mix frozen","sorten":"Eigen-Mix ~130 ist billiger","brixZiel":null,"sortenkritisch":false,"pmin":149,"pmax":149,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"BB","de":"Blaubeere TK","th":"บลูเบอร์รี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Blueberry frozen","sorten":"im Purple-Mix strecken · frisch 658 ❌","brixZiel":null,"sortenkritisch":false,"pmin":209,"pmax":209,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"HB","de":"Himbeere TK","th":"ราสป์เบอร์รี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Raspberry frozen","sorten":"teuerste — nur Premium","brixZiel":null,"sortenkritisch":false,"pmin":285,"pmax":285,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"MY","de":"Marian Plum TK (Mayongchid)","th":"มะยงชิด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Marian plum frozen","sorten":"500 g = 153 → Saison-Special","brixZiel":null,"sortenkritisch":false,"pmin":306,"pmax":306,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"MP","de":"Mango-Püree Namdokmai TK","th":"มะม่วงบด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Mango puree frozen","sorten":"nur Backup — Eigen-Frost gewinnt","brixZiel":null,"sortenkritisch":false,"pmin":131,"pmax":131,"reife":"Becher/Beutel unbeschädigt · kein Eisreif · MHD prüfen","reifeTh":"ถ้วย/ถุงต้องไม่บุบ ไม่มีเกล็ดน้ำแข็ง · ดูวันหมดอายุ"},{"code":"PP2","de":"Passionsfrucht-Püree TK","th":"เสาวรสบด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Passion fruit puree frozen","sorten":"kernlos · 30 g/Becher ≈ 5,4 ฿","brixZiel":null,"sortenkritisch":false,"pmin":179,"pmax":189,"reife":"Becher/Beutel unbeschädigt · kein Eisreif · MHD prüfen","reifeTh":"ถ้วย/ถุงต้องไม่บุบ ไม่มีเกล็ดน้ำแข็ง · ดูวันหมดอายุ"},{"code":"AT","de":"Avocado TK / Püree","th":"อะโวคาโดแช่แข็ง","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Avocado frozen / puree","sorten":"❌ frisch gewinnt Faktor 3","brixZiel":null,"sortenkritisch":false,"pmin":278,"pmax":318,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ"},{"code":"XX","de":"Andere / neue Frucht","th":"อื่น ๆ","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Other / new fruit","sorten":"in der Bemerkung benennen","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"Merksatz: reif + duftend schlägt schön + fest · am Stielansatz riechen","reifeTh":"จำไว้: สุก + หอม ดีกว่า สวย + แข็ง · ดมที่ขั้ว"}];
+const KATALOG  = [{"code":"BA","de":"Banane","th":"กล้วย","en":"Banana","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["02","03","05","06","07","08","09","10","11"],"preistext":"10–15 ฿/kg · überreif = ideal (20 °Bx gemessen)","einheit":"g","pmin":10,"pmax":15,"brixZiel":null,"sortenkritisch":true,"sorten":"Kluai Nam Wa · Kluai Hom · 15 ฿/Staude","reife":"gelb mit braunen Zuckerflecken · gibt leicht nach · süßer Duft — grün = stärkig/fad","reifeTh":"เปลือกเหลืองมีจุดน้ำตาล นิ่มเล็กน้อย หอมหวาน — เขียว = ฝาด/จืด","ausbeute":null,"laut":"glûai","deLaut":"บานาเนอ"},{"code":"MG","de":"Mango","th":"มะม่วง","en":"Mango","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["08","09"],"preistext":"Chok Anan 20 · Nam Dok Mai 30 (SAISON!) · Morakot 35","einheit":"g","pmin":30,"pmax":60,"brixZiel":15,"sortenkritisch":true,"sorten":"Chok Anan ⭐ 20 · Nam Dok Mai 30 (Saison!) · Morakot 35 · R2E2 45","reife":"goldgelb · gibt auf sanften Druck nach · duftet am Stielansatz — grün-hart = sauer, nicht fürs Mixen","reifeTh":"เหลืองทอง กดเบา ๆ แล้วนิ่ม หอมที่ขั้ว — ลูกเขียวแข็ง = เปรี้ยว ไม่เอา","ausbeute":null,"laut":"má-mûang","deLaut":"มังโก้"},{"code":"WM","de":"Wassermelone","th":"แตงโม","en":"Watermelon","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["12"],"preistext":"10–18 ฿/kg · frisch, nie TK","einheit":"g","pmin":10,"pmax":18,"brixZiel":null,"sortenkritisch":false,"sorten":"Reife zählt · verhandeln lohnt","reife":"matte (nicht glänzende) Schale · gelber Bodenfleck · klingt hohl beim Klopfen · schwer","reifeTh":"ผิวด้าน (ไม่มัน) ก้นเหลือง เคาะเสียงกลวง ลูกหนัก","ausbeute":60,"laut":"taeng-moo","deLaut":"วัสเซอร์เมโลเนอ"},{"code":"AN","de":"Ananas","th":"สับปะรด","en":"Pineapple","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["01"],"preistext":"20–25 ฿/kg roh · 68 ฿/kg geschält (Ausbeute ~50 %)","einheit":"g","pmin":20,"pmax":25,"brixZiel":null,"sortenkritisch":true,"sorten":"Nang Lae · Phuket · 8 ฿/Stück à ~400 g","reife":"Boden goldgelb · süßer Duft · ein Blatt löst sich mit leichtem Zug","reifeTh":"ก้นเหลืองทอง หอมหวาน ดึงใบหลุดง่าย","ausbeute":50,"laut":"sàp-pà-rót","deLaut":"อานานัส"},{"code":"DR","de":"Drachenfrucht rot","th":"แก้วมังกรแดง","en":"Dragon fruit red","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["10"],"preistext":"45–70 ฿/kg · nur rotfleischig","einheit":"g","pmin":45,"pmax":70,"brixZiel":null,"sortenkritisch":true,"sorten":"rotfleischig = Farbgeber","reife":"gleichmäßig kräftig pink · Flügel leicht trocken (nicht welk) · schwer für die Größe","reifeTh":"สีชมพูเข้มสม่ำเสมอ กลีบแห้งเล็กน้อย (ไม่เหี่ยว) หนักมือ","ausbeute":60,"laut":"gâeo-mang-gorn daeng","deLaut":"ดราเคินฟรุคท์ โรท"},{"code":"PF","de":"Passionsfrucht","th":"เสาวรส","en":"Passion fruit","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["01"],"preistext":"65 ฿/kg (rot) · 99 ฿/kg (grün) · Note 5 im Test!","einheit":"g","pmin":65,"pmax":99,"brixZiel":null,"sortenkritisch":false,"sorten":"rot 65 · grün 99 (gemessen 14.08.) · TK-Püree 179","reife":"schrumpelige Schale = reif + süß! glatt-prall = noch sauer","reifeTh":"เปลือกเหี่ยวย่น = สุกหวาน! ผิวเรียบตึง = ยังเปรี้ยว","ausbeute":40,"laut":"sǎo-wá-rót","deLaut":"พัสซิโอนส์ฟรุคท์"},{"code":"AV","de":"Avocado","th":"อะโวคาโด","en":"Avocado","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["11"],"preistext":"59 ฿/kg grün lokal (Fleisch ≈91)","einheit":"g","pmin":59,"pmax":120,"brixZiel":null,"sortenkritisch":false,"sorten":"grün lokal 59 · Hass-Typ 120 · Fleisch ≈91","reife":"gibt auf sanften Druck gleichmäßig nach · Stielansatz grün-gelb, nicht braun","reifeTh":"กดเบา ๆ นิ่มทั่วลูก ขั้วเขียวอมเหลือง ไม่ดำ","ausbeute":65,"laut":"à-wo-kaa-dô","deLaut":"อาโวคาโด"},{"code":"GU","de":"Guave","th":"ฝรั่ง","en":"Guava","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["05","08"],"preistext":"~35 ฿/kg · Vitamin-C-Träger statt Acerola","einheit":"g","pmin":35,"pmax":35,"brixZiel":null,"sortenkritisch":false,"sorten":"Vitamin-C-Held, ersetzt Acerola","reife":"gelblich-grün · duftet · gibt minimal nach — steinhart = unreif","reifeTh":"เขียวอมเหลือง มีกลิ่นหอม กดนิ่มนิดหน่อย — แข็งมาก = ดิบ","ausbeute":null,"laut":"fà-ràng","deLaut":"กัวเฟ่อ"},{"code":"KN","de":"Kokosnuss jung","th":"มะพร้าวอ่อน","en":"Young coconut","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"10 ฿ klein · 26 ฿ XXL — pro STÜCK","einheit":"Stk","pmin":10,"pmax":26,"brixZiel":null,"sortenkritisch":false,"sorten":"pro STÜCK: klein 10 ฿ · XXL 26 ฿ (gemessen 13.08.)","reife":"schwer · beim Schütteln hörbar viel Wasser · Schale hell ohne Schimmel","reifeTh":"หนัก เขย่าได้ยินน้ำเยอะ เปลือกขาวสะอาด ไม่มีรา","ausbeute":25,"laut":"má-phráao òon","deLaut":"โคโคสนุส"},{"code":"TM","de":"Thai-Melone","th":"แตงไทย","en":"Thai melon (muskmelon)","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"25 ฿/kg · zuckerarm","einheit":"g","pmin":25,"pmax":25,"brixZiel":null,"sortenkritisch":false,"sorten":"zuckerarm → Ampel-grün-Basis","reife":"duftet süß am Blütenende · gibt dort leicht nach","reifeTh":"หอมหวานที่ก้น กดก้นนิ่มเล็กน้อย","ausbeute":60,"laut":"taeng-thai","deLaut":"ไทย-เมโลเนอ"},{"code":"OR","de":"Orange","th":"ส้ม","en":"Orange","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["08"],"preistext":"30–70 ฿/kg · stark standabhängig","einheit":"g","pmin":30,"pmax":70,"brixZiel":null,"sortenkritisch":true,"sorten":"Som Sai Nam Phueng · stark standabhängig","reife":"schwer = saftig · leicht weich · duftet an der Schale","reifeTh":"หนัก = น้ำเยอะ นิ่มเล็กน้อย มีกลิ่นหอม","ausbeute":60,"laut":"sôm","deLaut":"โอรังเงอ"},{"code":"AB","de":"Apfel/Birne B-Ware","th":"แอปเปิล/สาลี่","en":"Apple / Pear (B-grade)","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"15 ฿/kg · 2. Wahl, sofort verarbeiten","einheit":"g","pmin":15,"pmax":15,"brixZiel":null,"sortenkritisch":false,"sorten":"2. Wahl, sofort verarbeiten + frosten","reife":"Druckstellen sind ok (wird gemixt) · kein Schimmel, kein Gärgeruch","reifeTh":"รอยช้ำไม่เป็นไร (เอาไปปั่น) ห้ามมีรา/กลิ่นหมัก","ausbeute":null,"laut":"áep-pêrn / sǎa-lîi","deLaut":"อัพเฟิล / เบียร์เนอ"},{"code":"DW","de":"Drachenfrucht weiß","th":"แก้วมังกรขาว","en":"Dragon fruit white","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["04"],"preistext":"25–35 ฿/kg","einheit":"g","pmin":25,"pmax":35,"brixZiel":null,"sortenkritisch":false,"sorten":"milder, billiger","reife":"gleichmäßige Farbe · Flügel frisch · schwer für die Größe · gibt minimal nach","reifeTh":"สีสม่ำเสมอ กลีบสด หนักมือ กดนิ่มเล็กน้อย","ausbeute":60,"laut":"gâeo-mang-gorn khǎao","deLaut":"ดราเคินฟรุคท์ ไวส์"},{"code":"PY","de":"Papaya","th":"มะละกอ","en":"Papaya","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["08"],"preistext":"⚠ Preis noch nicht erfasst","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"Reife zählt","reife":"Schale großflächig gelb-orange · gibt auf Druck nach — grün = unreif","reifeTh":"เปลือกเหลืองส้มเกือบทั้งลูก กดแล้วนิ่ม — เขียว = ดิบ","ausbeute":65,"laut":"má-lá-gor","deLaut":"ปาปายา"},{"code":"RO","de":"Roselle (Krachiap)","th":"กระเจี๊ยบแดง","en":"Roselle (hibiscus)","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["05"],"preistext":"⚠ Preis noch nicht erfasst","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"Thai-Ersatz für Granatapfel","reife":"Kelche prall + kräftig rot, nicht welk","reifeTh":"กลีบเต่งตึง แดงสด ไม่เหี่ยว","ausbeute":null,"laut":"grà-jíap daeng","deLaut":"โรเซลเลอ"},{"code":"LS","de":"Limette","th":"มะนาว","en":"Lime","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":["04","09","12","13"],"preistext":"⚠ Marktpreis offen · TK-Saft 150 ฿/l","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"schwer = saftig · TK-Saft 150 ฿/l","reife":"schwer für die Größe · dünne glatte Schale · leicht weich = viel Saft","reifeTh":"หนักมือ เปลือกบางเรียบ นิ่มเล็กน้อย = น้ำเยอะ","ausbeute":null,"laut":"má-naao","deLaut":"ลิเมทเทอ"},{"code":"MG","de":"Mango TK Nam Dok Mai","th":"มะม่วงแช่แข็ง","en":"","gruppe":"B · Früchte TK — nur die brauchbaren","gi":1,"rezepte":["08","09"],"preistext":"20 °Bx · Note 4 ✅ — Backup außerhalb der Saison","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"má-mûang","deLaut":"มังโก้"},{"code":"JB","de":"Schwarze Johannisbeere TK","th":"ลูกเกดดำ","en":"Blackcurrant frozen","gruppe":"B · Früchte TK — nur die brauchbaren","gi":1,"rezepte":["05","06"],"preistext":"179 ฿/kg · Note 4 ✅ — neuer Beeren-Träger","einheit":"g","pmin":179,"pmax":179,"brixZiel":null,"sortenkritisch":false,"sorten":"⭐ Note 4 am 13.08. — Beeren-Träger","reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","ausbeute":null,"laut":"lûuk-gèet dam","deLaut":"โยฮันนิสแบเรอ"},{"code":"HF","de":"Haferflocken → Hafermilch","th":"ข้าวโอ๊ต","en":"Rolled oats → oat milk","gruppe":"C · Rohstoffe für Eigen-Milch","gi":2,"rezepte":["*"],"preistext":"🏆 ergibt ~13 ฿/L ⚠ Flockenpreis noch nicht belegt","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"khâao-óot","deLaut":"ฮาเฟอร์ฟลอคเคิน"},{"code":"MA","de":"Mandeln → Mandelmilch 🥜","th":"อัลมอนด์","en":"Almonds → almond milk","gruppe":"C · Rohstoffe für Eigen-Milch","gi":2,"rezepte":[],"preistext":"⚠ Preis offen (gekauft 75 ฿/L)","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"an-mon","deLaut":"มันเดิลน์"},{"code":"SJ","de":"Sojabohnen → Sojamilch 🌱","th":"ถั่วเหลือง","en":"Soy beans → soy milk","gruppe":"C · Rohstoffe für Eigen-Milch","gi":2,"rezepte":[],"preistext":"⚠ Preis offen (gekauft 50 ฿/L)","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"thùa-lʉ̌ang","deLaut":"โซยาโบเนิน"},{"code":"HM","de":"Hafermilch (selbst gemacht)","th":"นมข้าวโอ๊ต","en":"Oat milk (homemade)","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["*"],"preistext":"🏆 ~13 ฿/L — STANDARD-BASIS","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"nom khâao-óot","deLaut":"ฮาเฟอร์มิลช์"},{"code":"KM","de":"Kuhmilch 🥛 (Meiji, 2 L)","th":"นมวัว","en":"Cow milk (Meiji, 2 L)","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["09","11"],"preistext":"50 ฿/L ✅ belegt","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"nom wua","deLaut":"คูมิลช์"},{"code":"SM","de":"Sojamilch fertig 🌱 (1 L)","th":"นมถั่วเหลือง","en":"Soy milk ready-made (1 L)","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["07"],"preistext":"50 ฿/L ✅ belegt","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"nom thùa-lʉ̌ang","deLaut":"โซยามิลช์"},{"code":"MM","de":"Mandelmilch fertig 🥜 (V-Soy 1 L)","th":"นมอัลมอนด์","en":"Almond milk ready-made (1 L)","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":[],"preistext":"75 ฿/L ✅ belegt","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"nom an-mon","deLaut":"มันเดิลมิลช์"},{"code":"JO","de":"Joghurt natur 🥛 (2 L)","th":"โยเกิร์ต","en":"Plain yogurt (2 L)","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["06","08","13"],"preistext":"75 ฿/L ≈ 73 ฿/kg ✅ belegt","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"yoo-gèet","deLaut":"โยกวร์ท"},{"code":"KO","de":"Kokosmilch","th":"กะทิ","en":"Coconut milk","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["07","10"],"preistext":"60 ฿/L","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"gà-thí","deLaut":"โคโคสมิลช์"},{"code":"KW","de":"Kokoswasser","th":"น้ำมะพร้าว","en":"Coconut water","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["02","05","06","08","12"],"preistext":"30 ฿/L · pur schmeckt es nicht (Heimtest)","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"nám má-phráao","deLaut":"โคโคสวัสเซอร์"},{"code":"WA","de":"Wasser (kalt/abgekocht)","th":"น้ำเย็น","en":"Water (cold / boiled)","gruppe":"D · Milch & Flüssigkeiten","gi":3,"rezepte":["03","04","13"],"preistext":"—","einheit":"ml","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"nám yen","deLaut":"วัสเซอร์"},{"code":"TE","de":"Grüner Tee / Jasmintee","th":"ชาเขียว/ชามะลิ","en":"Green tea / jasmine tea","gruppe":"E · Tee, Aufgüsse & Kaffee","gi":4,"rezepte":["01"],"preistext":"⚠ Preis offen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"chaa khǐao / chaa má-lí","deLaut":"กรือเนอร์ เท"},{"code":"PD","de":"Pandanblätter","th":"ใบเตย","en":"Pandan leaves","gruppe":"E · Tee, Aufgüsse & Kaffee","gi":4,"rezepte":["03"],"preistext":"⚠ Preis offen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"bai-toei","deLaut":"พันดานแบลทเทอร์"},{"code":"KF","de":"Kaffee, Espresso ganze Bohne","th":"กาแฟเอสเปรสโซ","en":"Coffee, espresso whole bean","gruppe":"E · Tee, Aufgüsse & Kaffee","gi":4,"rezepte":[],"preistext":"720 ฿/kg (Endkunde) → Gastro-1-kg suchen · 15–20 g = 11–14 ฿/Becher","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"gaa-fae èet-sà-prét-sôo","deLaut":"คัฟเฟ่"},{"code":"SP","de":"Spinat TK gehackt","th":"ผักโขม","en":"Spinach frozen chopped","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["08"],"preistext":"59 ฿/kg · Green Detox 40 g = 2,40 ฿","einheit":"g","pmin":59,"pmax":59,"brixZiel":null,"sortenkritisch":false,"sorten":"Aktion (statt 99) · Green Detox 40 g = 2,40 ฿","reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","ausbeute":null},{"code":"BK","de":"Brokkoli TK","th":"บรอกโคลี","en":"Broccoli frozen","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["13"],"preistext":"69 ฿/kg","einheit":"g","pmin":69,"pmax":69,"brixZiel":null,"sortenkritisch":false,"sorten":"Aktion (statt 79)","reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","ausbeute":null},{"code":"WS","de":"Wasserspinat (Phak Bung)","th":"ผักบุ้ง","en":"Water spinach (morning glory)","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["04"],"preistext":"⚠ Preis offen · nur zarte Blätter","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"phàk-bûng","deLaut":"วัสเซอร์ชปีนัท"},{"code":"RB","de":"Rote Beete","th":"บีทรูท","en":"Beetroot","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["08"],"preistext":"⚠ Preis offen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"bìit-rûut","deLaut":"โรเทอ เบเทอ"},{"code":"GK","de":"Gurke","th":"แตงกวา","en":"Cucumber","gruppe":"F · Grün & Gemüse","gi":5,"rezepte":["13"],"preistext":"⚠ Preis offen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"taeng-gwaa","deLaut":"กูร์เคอ"},{"code":"TO","de":"Seidentofu 🌱","th":"เต้าหู้นิ่ม","en":"Silken tofu","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["01","02","03","04","08"],"preistext":"⚠ Preis offen — Basis der Gourmet-Linie","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"tâo-hûu nîm","deLaut":"ไซเดินโทฟู"},{"code":"ST","de":"Süßtamarinde (Makham Wan)","th":"มะขามหวาน","en":"Sweet tamarind","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["07","08","11"],"preistext":"⚠ Preis offen — ersetzt Zucker","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"má-khǎam wǎan","deLaut":"ซึสทามารินเดอ"},{"code":"KK","de":"Kakao (roh, Thai/Chumphon)","th":"ผงโกโก้ดิบ","en":"Raw cacao (Thai/Chumphon)","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["07","08"],"preistext":"400 ฿/kg (Modell)","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"phǒng go-gôo dìp","deLaut":"คาเคา"},{"code":"SK","de":"Sonnenblumenkerne","th":"เมล็ดทานตะวัน","en":"Sunflower seeds","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["01","03","04"],"preistext":"⚠ Preis offen · vor dem Frosten einweichen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"mét thaan-tà-wan","deLaut":"ซอนเนินบลูเมินเคอร์เนอ"},{"code":"KE","de":"Kürbiskerne","th":"เมล็ดฟักทอง","en":"Pumpkin seeds","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["02","07","08"],"preistext":"⚠ Preis offen · einweichen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"mét fák-thorng","deLaut":"เคือร์บิสเคอร์เนอ"},{"code":"IG","de":"Ingwer","th":"ขิง","en":"Ginger","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["04","08","13"],"preistext":"~70 ฿/kg · 3 g je 100 ml","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"khǐng","deLaut":"อิงเวอร์"},{"code":"MI","de":"Minze","th":"ใบสะระแหน่","en":"Mint","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["02","12"],"preistext":"frisch, nie TK","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"bai sà-rà-nàe","deLaut":"มินเซอ"},{"code":"ZG","de":"Zitronengras","th":"ตะไคร้","en":"Lemongrass","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["01"],"preistext":"⚠ Preis offen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"tà-khrái","deLaut":"ซิโตรเนินกราส"},{"code":"GA","de":"Galgant (Kha)","th":"ข่า","en":"Galangal","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["01"],"preistext":"⚠ Preis offen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"khàa","deLaut":"กัลกันท์"},{"code":"ZI","de":"Ceylon-Zimt","th":"อบเชยซีลอน","en":"Ceylon cinnamon","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["03"],"preistext":"⚠ Preis offen","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"òp-choei sii-lorn","deLaut":"ซิมท์"},{"code":"SB","de":"Basilikumsamen (Sabja)","th":"เม็ดแมงลัก","en":"Basil seeds (sabja)","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["08"],"preistext":"200 ฿/kg (Chia-Modellwert)","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"mét maeng-lák","deLaut":"บาซิลิคุมซาเมิน"},{"code":"KU","de":"Kurkuma","th":"ขมิ้น","en":"Turmeric","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["13"],"preistext":"nur mit Pfeffer wirksam","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"khà-mîn","deLaut":"คูร์คูมา"},{"code":"PP","de":"Schwarzer Pfeffer","th":"พริกไทยดำ","en":"Black pepper","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":["13"],"preistext":"—","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"phrík-thai dam","deLaut":"ชวาร์เซอร์ เฟฟเฟอร์"},{"code":"VA","de":"Vanille","th":"วานิลลา","en":"Vanilla","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":[],"preistext":"⚠ Preis offen · Aroma-Retter für fade Frucht","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"waa-ni-laa","deLaut":"วานิลเลอ"},{"code":"SA","de":"Salz","th":"เกลือ","en":"Salt","gruppe":"G · Aroma, Gewürz, Kerne","gi":6,"rezepte":[],"preistext":"—","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"gluea","deLaut":"ซัลทซ์"},{"code":"KL","de":"Marine-Kollagen (Halal)","th":"คอลลาเจนทะเล","en":"Marine collagen (halal)","gruppe":"H · Supplements","gi":7,"rezepte":["06"],"preistext":"2.000 ฿/kg · vorhanden · Thai-Verkaufsargument","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"kor-laa-jen thá-lee","deLaut":"คอลลาเกน"},{"code":"PR","de":"Proteinpulver","th":"เวย์โปรตีน","en":"Protein powder","gruppe":"H · Supplements","gi":7,"rezepte":["08"],"preistext":"600 ฿/kg · Upsell „Power+\"","einheit":"g","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"wee-proo-tiin","deLaut":"โปรทีนพุลเวอร์"},{"code":"AX","de":"Astaxanthin (nur Booster)","th":"แอสตาแซนทิน","en":"Astaxanthin (booster only)","gruppe":"H · Supplements","gi":7,"rezepte":[],"preistext":"nur auf Bestellung mit Aufpreis","einheit":"mg","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"áet-sà-taa-saen-thin","deLaut":"แอสตาแซนธิน"},{"code":"BE","de":"Becher PET 22 oz (650 ml)","th":"แก้ว PET 22 oz","en":"PET cup 22 oz (650 ml)","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"2,10 ฿/Stück (50er = 105 ฿)","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"gâeo PET","deLaut":"เบเชอร์"},{"code":"B2","de":"Becher 7 oz GPPS klar","th":"ถ้วย 7 OZ ใส","en":"Cup 7 oz GPPS clear","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":[],"preistext":"60 ฿/Packung · Verkostungsbecher","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"thûai jèt on","deLaut":"เบเชอร์ 7 ออนซ์"},{"code":"DE","de":"Dome-Deckel 98 mm gelocht","th":"ฝาโดม 98 มม.","en":"Dome lid 98 mm with hole","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"0,59 ฿/Stück (100er = 59 ฿)","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"fǎa dohm","deLaut":"เดคเคิล"},{"code":"HA","de":"Halme","th":"หลอด","en":"Straws","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"⚠ Preis offen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"lòrt","deLaut":"ฮาล์เมอ"},{"code":"SR","de":"Becher-Sticker","th":"สติกเกอร์","en":"Cup stickers","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"⚠ Preis offen · Name + Allergen","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"sà-tík-gêr","deLaut":"สติกเกอร์"},{"code":"SG","de":"Shotgläser rot (Verkostung)","th":"แก้วช็อตสีแดง","en":"Shot glasses red (tasting)","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":[],"preistext":"99 ฿/Packung","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"gâeo chórt sǐi daeng","deLaut":"ชอทเกลเซอร์"},{"code":"TR","de":"Trichter / Lebensmittelsieb","th":"กรวยกรองอาหาร","en":"Funnel / food sieve","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":[],"preistext":"80 ฿ · für Kernmilch + Brix-Saft","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"gruai grong aa-hǎan","deLaut":"ทริชเทอร์"},{"code":"FL","de":"Flasche + Deckel 1.100 ml","th":"ขวดน้ำ+ฝา","en":"Bottle + cap 1,100 ml","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":[],"preistext":"109 ฿ · Hafermilch-Vorrat","einheit":"Stk","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"khùat nám + fǎa","deLaut":"ฟลาเชอ"},{"code":"MU","de":"Müllbeutel 28×36","th":"ถุงขยะ","en":"Bin bags 28×36","gruppe":"I · Verpackung & Verbrauch","gi":8,"rezepte":["*"],"preistext":"79 ฿/kg-Packung","einheit":"Pack","pmin":null,"pmax":null,"brixZiel":null,"sortenkritisch":false,"sorten":"","reife":"","reifeTh":"","ausbeute":null,"laut":"thǔng khà-yà","deLaut":"มืลไบเทิล"},{"code":"ME","de":"Cantaloupe / Honigmelone","th":"แคนตาลูป","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":55,"en":"Cantaloupe / Honeydew melon","sorten":"—","brixZiel":null,"sortenkritisch":false,"pmin":40,"pmax":55,"reife":"duftet am Blütenende · gibt dort leicht nach · schwer für die Größe","reifeTh":"หอมที่ก้น กดก้นนิ่มเล็กน้อย หนักมือ","laut":"khaen-taa-lúup","deLaut":"คันทาลูป"},{"code":"LI","de":"Litschi","th":"ลิ้นจี่","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":55,"en":"Lychee","sorten":"Saison · Mengenrabatt 3 kg=100","brixZiel":null,"sortenkritisch":false,"pmin":35,"pmax":60,"reife":"Schale kräftig rot + prall · duftet blumig — braun/trocken = alt","reifeTh":"เปลือกแดงสด เต่งตึง หอม — น้ำตาล/แห้ง = เก่า","laut":"lín-jìi","deLaut":"ลิทชี่"},{"code":"LG","de":"Longan (Lamyai)","th":"ลำไย","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":60,"en":"Longan","sorten":"sehr süß","brixZiel":null,"sortenkritisch":false,"pmin":80,"pmax":80,"reife":"Schale glatt hellbraun + prall · Probierfrucht: saftig-süß","reifeTh":"เปลือกเรียบสีน้ำตาลอ่อน เต่งตึง ลองชิม: หวานฉ่ำ","laut":"lam-yai","deLaut":"ลองกัน"},{"code":"LK","de":"Longkong","th":"ลองกอง","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Longkong (langsat)","sorten":"—","brixZiel":null,"sortenkritisch":false,"pmin":30,"pmax":30,"reife":"hellgelb + prall · löst sich leicht vom Zweig · Probe kosten","reifeTh":"เหลืองอ่อน เต่งตึง หลุดจากช่อง่าย ลองชิม","laut":"long-gorng","deLaut":"ลองกอง"},{"code":"RM","de":"Rambutan","th":"เงาะ","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":40,"en":"Rambutan","sorten":"❌ nur ~40 % Ausbeute → ~110 ฿/kg Fleisch","brixZiel":null,"sortenkritisch":false,"pmin":45,"pmax":45,"reife":"leuchtend rot · Haare frisch grün-rot, nicht schwarz/trocken","reifeTh":"แดงสด ขนเขียว-แดงสด ไม่ดำ/ไม่แห้ง","laut":"ngó","deLaut":"รัมบูทัน"},{"code":"MS","de":"Mangostan","th":"มังคุด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":30,"en":"Mangosteen","sorten":"❌ nur ~30 % Ausbeute → ~130 ฿/kg Fleisch","brixZiel":null,"sortenkritisch":false,"pmin":39,"pmax":39,"reife":"Schale gibt auf Daumendruck leicht nach — steinhart = innen verdorben","reifeTh":"เปลือกกดด้วยนิ้วแล้วยุบเล็กน้อย — แข็งมาก = ข้างในเสีย","laut":"mang-khút","deLaut":"มังโกสทาน"},{"code":"PL","de":"Pflaume XXL (Import)","th":"พลัม","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Plum","sorten":"Purple-Farbgeber · SALE-Fenster nutzen","brixZiel":null,"sortenkritisch":false,"pmin":65,"pmax":65,"reife":"satte dunkle Farbe · duftet · gibt auf Druck leicht nach","reifeTh":"สีเข้ม หอม กดนิ่มเล็กน้อย","laut":"phlam","deLaut":"ฟลาวเมอ"},{"code":"WT","de":"Weintrauben","th":"องุ่น","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Grapes","sorten":"rot/schwarz 100–140 · Shine Muscat 160","brixZiel":null,"sortenkritisch":false,"pmin":100,"pmax":160,"reife":"Beeren prall am festen grünen Stiel · weißer Duftfilm ist gut · eine probieren","reifeTh":"ลูกเต่งติดก้านเขียวแน่น ผิวมีนวลขาว = ดี ลองชิมหนึ่งลูก","laut":"à-ngùn","deLaut":"ไวน์เทราเบอ"},{"code":"DU","de":"Durian","th":"ทุเรียน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":35,"en":"Durian","sorten":"Mon Thong 149 · Premium 179","brixZiel":null,"sortenkritisch":false,"pmin":149,"pmax":179,"reife":"duftet stark am Stiel · klingt beim Klopfen dumpf-hohl · Händler öffnen lassen","reifeTh":"หอมแรงที่ขั้ว เคาะเสียงทึบ ให้แม่ค้าแกะให้","laut":"thú-rian","deLaut":"ดูเรียน"},{"code":"SN","de":"Santol (Krathon)","th":"กระท้อน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Santol","sorten":"3 kg = 100","brixZiel":null,"sortenkritisch":false,"pmin":35,"pmax":35,"reife":"gelb-bräunlich · duftet · gibt leicht nach","reifeTh":"เหลืองอมน้ำตาล หอม กดนิ่มเล็กน้อย","laut":"grà-thórn","deLaut":"ซานทอล"},{"code":"CH","de":"Rose Apple (Chomphu)","th":"ชมพู่","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Rose apple","sorten":"wasserreich, mild","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"kräftige Farbe · prall-glänzend · keine braunen Stellen","reifeTh":"สีสด เต่งตึงเป็นมัน ไม่มีจุดน้ำตาล","laut":"chom-phûu","deLaut":"โรเซินอัพเฟิล"},{"code":"JF","de":"Jackfruit","th":"ขนุน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":35,"en":"Jackfruit","sorten":"sehr süß, intensiv","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"duftet süß · Stacheln flach + weit auseinander · klingt dumpf — meist fertig geschält kaufen","reifeTh":"หอมหวาน หนามแบนห่าง เคาะเสียงทึบ — ซื้อแบบแกะแล้วสะดวกกว่า","laut":"khà-nǔn","deLaut":"ยัคฟรุคท์"},{"code":"SD","de":"Sapodilla (Lamut)","th":"ละมุด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Sapodilla","sorten":"karamellig-süß","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"gibt deutlich nach wie reife Kiwi — hart = herb-ungenießbar","reifeTh":"กดแล้วนิ่มเหมือนกีวีสุก — แข็ง = ฝาด กินไม่ได้","laut":"lá-mút","deLaut":"ซาโปดิลลา"},{"code":"NN","de":"Zuckerapfel (Noi Na)","th":"น้อยหน่า","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Sugar apple (custard apple)","sorten":"cremig-süß","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"Schuppen weit auseinander · gibt leicht nach · duftet süß","reifeTh":"ร่องตาห่าง กดนิ่มเล็กน้อย หอมหวาน","laut":"nói-nàa","deLaut":"ซุคเคอร์อัพเฟิล"},{"code":"SF","de":"Sternfrucht (Carambola)","th":"มะเฟือง","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Star fruit (carambola)","sorten":"sauer-frisch","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"Kanten gelb-orange (nicht grün) · glänzend","reifeTh":"สันสีเหลืองส้ม (ไม่เขียว) ผิวมัน","laut":"má-fʉang","deLaut":"ชแตร์นฟรุคท์"},{"code":"PO","de":"Pomelo","th":"ส้มโอ","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":50,"en":"Pomelo","sorten":"⚠ für Peter privat tabu (Eliquis)","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"schwer für die Größe · duftet an der Schale","reifeTh":"หนักมือ เปลือกมีกลิ่นหอม","laut":"sôm-oo","deLaut":"โปเมโล"},{"code":"MB","de":"Maulbeere TK","th":"หม่อน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Mulberry frozen","sorten":"❌ Note 1 am 13.08. (kein Duft/Geschmack)","brixZiel":null,"sortenkritisch":false,"pmin":69,"pmax":69,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"mòn","deLaut":"เมาล์แบเรอ"},{"code":"ER","de":"Erdbeere TK","th":"สตรอว์เบอร์รี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Strawberry frozen","sorten":"SuperSave 69 · A-Choice 79 (beide China)","brixZiel":null,"sortenkritisch":true,"pmin":69,"pmax":79,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"sà-tror-ber-rîi","deLaut":"แอร์ดแบเรอ"},{"code":"KI","de":"Kiwi TK geschnitten","th":"กีวี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Kiwi frozen sliced","sorten":"Aktion (statt 85)","brixZiel":null,"sortenkritisch":false,"pmin":69,"pmax":69,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"gii-wîi","deLaut":"กีวี"},{"code":"PS","de":"Pfirsich TK","th":"พีช","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Peach frozen","sorten":"frisch 100 → TK vorziehen","brixZiel":null,"sortenkritisch":false,"pmin":79,"pmax":79,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"phîit","deLaut":"ฟีร์ซิช"},{"code":"MD","de":"Mandarine TK","th":"ส้มแมนดาริน","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Mandarin frozen","sorten":"Aktion (statt 119)","brixZiel":null,"sortenkritisch":false,"pmin":99,"pmax":99,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"sôm maen-daa-rin","deLaut":"มันดารีเนอ"},{"code":"BR","de":"Brombeere TK","th":"แบล็กเบอร์รี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Blackberry frozen","sorten":"Aktion (statt 149)","brixZiel":null,"sortenkritisch":false,"pmin":109,"pmax":109,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"bláek-ber-rîi","deLaut":"บรอมแบเรอ"},{"code":"BM","de":"Beeren-Mix TK fertig","th":"เบอร์รีรวม","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Berry mix frozen","sorten":"Eigen-Mix ~130 ist billiger","brixZiel":null,"sortenkritisch":false,"pmin":149,"pmax":149,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"ber-rîi ruam","deLaut":"แบเริน-มิกซ์"},{"code":"BB","de":"Blaubeere TK","th":"บลูเบอร์รี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Blueberry frozen","sorten":"im Purple-Mix strecken · frisch 658 ❌","brixZiel":null,"sortenkritisch":false,"pmin":209,"pmax":209,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"bluu-ber-rîi","deLaut":"เบลาแบเรอ"},{"code":"HB","de":"Himbeere TK","th":"ราสป์เบอร์รี","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Raspberry frozen","sorten":"teuerste — nur Premium","brixZiel":null,"sortenkritisch":false,"pmin":285,"pmax":285,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"râat-ber-rîi","deLaut":"ฮิมแบเรอ"},{"code":"MY","de":"Marian Plum TK (Mayongchid)","th":"มะยงชิด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Marian plum frozen","sorten":"500 g = 153 → Saison-Special","brixZiel":null,"sortenkritisch":false,"pmin":306,"pmax":306,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"má-yong-chít","deLaut":"มาเรียนพฟลาวเมอ"},{"code":"MP","de":"Mango-Püree Namdokmai TK","th":"มะม่วงบด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Mango puree frozen","sorten":"nur Backup — Eigen-Frost gewinnt","brixZiel":null,"sortenkritisch":false,"pmin":131,"pmax":131,"reife":"Becher/Beutel unbeschädigt · kein Eisreif · MHD prüfen","reifeTh":"ถ้วย/ถุงต้องไม่บุบ ไม่มีเกล็ดน้ำแข็ง · ดูวันหมดอายุ","laut":"má-mûang bòt","deLaut":"มังโก้-พูเร่"},{"code":"PP2","de":"Passionsfrucht-Püree TK","th":"เสาวรสบด","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Passion fruit puree frozen","sorten":"kernlos · 30 g/Becher ≈ 5,4 ฿","brixZiel":null,"sortenkritisch":false,"pmin":179,"pmax":189,"reife":"Becher/Beutel unbeschädigt · kein Eisreif · MHD prüfen","reifeTh":"ถ้วย/ถุงต้องไม่บุบ ไม่มีเกล็ดน้ำแข็ง · ดูวันหมดอายุ","laut":"sǎo-wá-rót bòt","deLaut":"พัสซิโอนส์ฟรุคท์-พูเร่"},{"code":"AT","de":"Avocado TK / Püree","th":"อะโวคาโดแช่แข็ง","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Avocado frozen / puree","sorten":"❌ frisch gewinnt Faktor 3","brixZiel":null,"sortenkritisch":false,"pmin":278,"pmax":318,"reife":"Beutel: Stücke lose & einzeln — Eisblock/Reif im Beutel = Kühlkette gebrochen, nicht kaufen · MHD prüfen","reifeTh":"ถุงต้องเป็นชิ้นหลวม ๆ — ถ้าเป็นก้อนน้ำแข็งติดกัน = เคยละลายมาแล้ว อย่าซื้อ · ดูวันหมดอายุ","laut":"à-wo-kaa-dô chae-khǎeng","deLaut":"อาโวคาโด แช่แข็ง"},{"code":"XX","de":"Andere / neue Frucht","th":"อื่น ๆ","gruppe":"A · Früchte frisch — Markt","gi":0,"rezepte":[],"preistext":"","einheit":"g","ausbeute":null,"en":"Other / new fruit","sorten":"in der Bemerkung benennen","brixZiel":null,"sortenkritisch":false,"pmin":null,"pmax":null,"reife":"Merksatz: reif + duftend schlägt schön + fest · am Stielansatz riechen","reifeTh":"จำไว้: สุก + หอม ดีกว่า สวย + แข็ง · ดมที่ขั้ว","laut":"ʉ̀ʉn-ʉ̀ʉn","deLaut":"อันเดอเรส"}];
 const ENTSORGT = [["ER","Erdbeere TK","A-Choice (China)","69","7","2","Kühlhaus-flach, matschig"],["ER","Erdbeere TK","SuperSave (China)","69","8","1","absolut kein Duft, kein Geschmack"],["MB","Maulbeere TK","A-Choice","69","14","1","kein Duft, kein Geschmack — trotz 2. höchstem Brix"],["LI","Litschi TK","A-Choice (China)","—","11","1","riecht alt/schlecht, „no fruit, nothing\""],["MD","Mandarine TK","China-Import","99","6","1","unreif, geschmacklos"],["PS","Pfirsich TK","Central","79","7","1","Fasern, schlechter Geschmack, Kühlhaus-flach"],["KI","Kiwi TK geschnitten","A-Choice","69","11","2","unreif/geruchlos, innen flüssig + hart"],["BB","Blaubeere TK","GO Wholesale","209","7","2","riecht/schmeckt schwach — kein Gegenwert für 209 ฿"]];
 const REZEPTE  = [{"n":"01","de":"Bangkok Wake-Up","th":"บางกอก เวค-อัพ","en":"Bangkok Wake-Up","stufe":"X","alg":"🌱","zut":[["TE",150,"Grüner Tee / Jasmintee (kalt)"],["SK",40,"Sonnenblumenkerne (roh)"],["TO",120,"Seidentofu (2×2 cm Würfel)"],["PF",60,"Passionsfrucht (gefroren)"],["AN",50,"Ananas (gefroren)"],["ZG","1 Stängel","Zitronengras (weiches Inneres)"],["GA","1 Scheibe","Galgant (Kha), dünn"]]},{"n":"02","de":"Muay Thai Power","th":"มวยไทย พาวเวอร์","en":"Muay Thai Power","stufe":"X","alg":"🌱","zut":[["KW",150,"Kokoswasser (Nam Hom)"],["KE",40,"Kürbiskerne (roh, eingeweicht)"],["MI","5 Blätter","Minzblätter (Bai Sarane)"],["TO",120,"Seidentofu"],["MS",60,"Mangostan (gefroren)"],["BA",50,"Banane (gefroren)"]]},{"n":"03","de":"Siam Serenity","th":"สยาม เซเรนิตี้","en":"Siam Serenity","stufe":"X","alg":"🌱","zut":[["PD","3 Blätter","Pandanblätter (für Pandan-Wasser)"],["WA",150,"Wasser (für Pandan-Wasser)"],["SK",40,"Sonnenblumenkerne (roh)"],["ZI","1 Prise","Ceylon-Zimt"],["TO",120,"Seidentofu"],["BA",50,"Banane, reif (gefroren)"]]},{"n":"04","de":"Pure Thai Cleanse","th":"เพียว ไทย คลีนส์","en":"Pure Thai Cleanse","stufe":"X","alg":"🌱","zut":[["WA",150,"Wasser (kalt)"],["SK",40,"Sonnenblumenkerne (roh)"],["LS",10,"Limettensaft (1 Limette)"],["TO",120,"Seidentofu"],["DW",80,"Drachenfrucht weiß (gefroren)"],["WS",40,"Wasserspinat, zarte Blätter"],["IG",3,"Ingwer (≈1 cm)"]]},{"n":"05","de":"Anti-Age Roselle-Beere","th":"แอนตี้เอจ กระเจี๊ยบ-เบอร์รี","en":"Anti-Age Roselle-Berry","stufe":"C","alg":"","zut":[["KW",120,"Kokoswasser"],["RO",60,"Roselle / Krachiap (gefroren)"],["ER",60,"Erdbeere (gefroren)"],["MB",40,"Maulbeere (gefroren)"],["BA",50,"Banane (gefroren)"],["GU",60,"Guave — Vitamin C (statt Acerola-Pulver)"],["AX","6 mg · BOOSTER","Astaxanthin — NUR auf Bestellung, Aufpreis"]]},{"n":"06","de":"Anti-Age Beeren-Kollagen","th":"แอนตี้เอจ เบอร์รี-คอลลาเจน","en":"Anti-Age Berry-Collagen","stufe":"C","alg":"🥛","zut":[["KW",80,"Kokoswasser"],["JO",80,"Joghurt (natur)"],["BM",150,"Beeren-Mix (gefroren)"],["BA",50,"Banane (gefroren)"],["KL",10,"Marine-Kollagen (Halal)"]]},{"n":"07","de":"Anti-Age Kakao-Magnesium","th":"แอนตี้เอจ โกโก้-แมกนีเซียม","en":"Anti-Age Cacao-Magnesium","stufe":"C","alg":"","zut":[["KO",200,"Kokosmilch (oder Thai-Sojamilch SM 🌱)"],["KK",10,"Kakao (roh, Thai/Chumphon)"],["ST",15,"Süßtamarinde (Makham Wan)"],["BA",80,"Banane (gefroren)"],["KE",12,"Kürbiskerne (Magnesium, eingeweicht)"]]},{"n":"08","de":"Blutwert-Bespoke","th":"สูตรเฉพาะตามผลเลือด","en":"Blood-Value Bespoke","stufe":"C","alg":"🥛","zut":[["KW",120,"Kokoswasser ODER Joghurt 🥛"],["BA",80,"Banane (gefroren)"],["BM",80,"Beeren-Mix ODER Mango MG (gefroren)"],["ST",15,"Süßtamarinde (Makham Wan)"]]},{"n":"09","de":"Mango Tango","th":"มะม่วง แทงโก้","en":"Mango Tango","stufe":"A","alg":"🥛","zut":[["MG",150,"Mango (gefroren)"],["BA",60,"Banane (gefroren)"],["KM",150,"Kuhmilch"],["LS",5,"Limettensaft"]]},{"n":"10","de":"Dragon Fruit Pink Pitaya","th":"แก้วมังกร พิงค์ พิทายา","en":"Dragon Fruit Pink Pitaya","stufe":"B","alg":"","zut":[["KO",150,"Kokosmilch"],["BA",60,"Banane (gefroren)"],["DR",150,"Drachenfrucht rot (gefroren)"],["ER","1 Stk. optional","Erdbeere für Aroma"]]},{"n":"11","de":"Avocado Sinh Tố Bơ","th":"อะโวคาโด ซิงโต๋ บ๋อ","en":"Avocado Sinh Tố Bơ","stufe":"B","alg":"🥛","zut":[["KM",150,"Kuhmilch (oder Kokosmilch KO / Reismilch)"],["ST",15,"Süßtamarinde (Makham Wan)"],["BA",50,"Banane (gefroren)"],["AV",120,"Avocado (gefroren)"]]},{"n":"12","de":"Watermelon-Mint Cooler","th":"แตงโม-มินต์ คูลเลอร์","en":"Watermelon-Mint Cooler","stufe":"A","alg":"","zut":[["WM",140,"Wassermelone (gefroren)"],["ER",20,"Erdbeere (gefroren)"],["KW",200,"Kokoswasser"],["MI","4 Blätter","Minzblätter"],["LS",10,"Limettensaft (½ Limette)"]]},{"n":"13","de":"Leber-Morgen Vital 🔒","th":"ตับ-เช้า ไวทัล 🔒","en":"Liver-Morning Vital 🔒","stufe":"X","alg":"🥛","zut":[["WA",80,"Wasser"],["JO",100,"Naturjoghurt (ungesüßt)"],["LS",15,"Limettensaft (¾–1 Limette)"],["GK",40,"Gurke mit Schale"],["IG",5,"Ingwer (frisch)"],["BK",60,"Brokkoli (kurz gedämpft, gefroren)"],["PS",60,"Pfirsich (gefroren)"],["BM",70,"Beeren / weiße Erdbeeren (gefroren)"],["PP","1 Prise","Schwarzer Pfeffer"],["KU","¼ TL optional","Kurkuma (nur mit Pfeffer)"]]}];
 
@@ -151,6 +188,151 @@ const save=()=>localStorage.setItem(SKEY,JSON.stringify(S));
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ===========================================================================
+   ZWEISPRACHIG — Muttersprache groß, Englisch klein darunter.
+   Peter: Deutsch + English · Lexi: ไทย + English.
+   Zutaten zusätzlich in der Fremdsprache MIT LAUTSCHRIFT + 🔊, damit beide
+   die Sprache des anderen beiläufig lernen.
+   ⚠ Alle Thai-Texte sind KI-erzeugt und von Lexi zu prüfen.
+   =========================================================================== */
+const TXT={
+ /* Navigation */
+ start:{de:"Start",en:"Home",th:"หน้าแรก"},
+ einkauf:{de:"Einkauf",en:"Buying",th:"ซื้อของ"},
+ ruesten:{de:"Rüsten",en:"Trim",th:"เตรียม"},
+ bestand:{de:"Bestand",en:"Stock",th:"สต็อก"},
+ rezepte:{de:"Rezepte",en:"Recipes",th:"สูตร"},
+ /* Start */
+ mixbar:{de:"Rezepte mixbar",en:"Recipes ready",th:"สูตรที่ทำได้เลย"},
+ fehlen:{de:"Zutaten fehlen",en:"Items missing",th:"วัตถุดิบที่ขาด"},
+ kgVerk:{de:"kg verkaufsfähig",en:"kg sellable",th:"กก. ที่ขายได้"},
+ posDa:{de:"Positionen da",en:"items in stock",th:"รายการที่มี"},
+ fehltFuer:{de:"Fehlt für die Rezepte",en:"Missing for the recipes",th:"ขาดสำหรับสูตร"},
+ allesDa:{de:"Alles da, was die Rezepte brauchen.",en:"Everything the recipes need is here.",th:"มีครบทุกอย่างที่สูตรต้องการ"},
+ zuletzt:{de:"Zuletzt erfasst",en:"Recently recorded",th:"บันทึกล่าสุด"},
+ ekliste:{de:"Einkaufsliste erzeugen",en:"Create shopping list",th:"สร้างรายการซื้อของ"},
+ gesperrt:{de:"Artikel sind gesperrt",en:"items are blocked",th:"รายการถูกระงับ"},
+ anzeigen:{de:"anzeigen",en:"show",th:"แสดง"},
+ nochRuesten:{de:"liegen als Rohware da und sind noch nicht gerüstet",
+   en:"are raw and not trimmed yet",th:"ยังเป็นวัตถุดิบดิบ ยังไม่ได้เตรียม"},
+ /* Einkauf */
+ suchen:{de:"Frucht suchen",en:"Search item",th:"ค้นหาวัตถุดิบ"},
+ sorte:{de:"Sorte",en:"Variety",th:"สายพันธุ์"},
+ sorteHint:{de:"Thai-Name wie der Händler sie nennt",en:"Thai name as the vendor says it",th:"ชื่อไทยตามที่แม่ค้าเรียก"},
+ menge:{de:"Menge",en:"Quantity",th:"จำนวน"},
+ bezahlt:{de:"Bezahlt gesamt ฿",en:"Total paid ฿",th:"จ่ายจริงรวม ฿"},
+ verarb:{de:"schon geschält / verarbeitet (kein Abfall)",en:"already peeled / prepared (no waste)",th:"ปอกแล้ว/เตรียมแล้ว (ไม่มีเศษทิ้ง)"},
+ duft:{de:"Duft 1–5",en:"Smell 1–5",th:"กลิ่น 1–5"},
+ duftHint:{de:"am Stielansatz, Frucht handwarm",en:"at the stem, fruit at room temperature",th:"ดมที่ขั้ว ผลไม้อุณหภูมิห้อง"},
+ duftChar:{de:"Duft-Charakter",en:"Smell character",th:"ลักษณะกลิ่น"},
+ fehlnoten:{de:"Fehlnoten",en:"Off-notes",th:"กลิ่นเสีย"},
+ fehlHint:{de:"eine reicht zum Ablehnen",en:"one is enough to reject",th:"มีข้อเดียวก็ไม่ควรซื้อ"},
+ brix:{de:"°Brix",en:"°Brix",th:"°บริกซ์"},
+ brixHint:{de:"zuhause messen",en:"measure at home",th:"วัดที่บ้าน"},
+ note:{de:"Gesamt-Note 1–5",en:"Overall score 1–5",th:"คะแนนรวม 1–5"},
+ markt:{de:"Markt",en:"Market",th:"ตลาด"},
+ bem:{de:"Bemerkung",en:"Note",th:"หมายเหตุ"},
+ inBestand:{de:"Menge gleich in den Bestand übernehmen",en:"Add quantity to stock right away",th:"เพิ่มจำนวนเข้าสต็อกเลย"},
+ chargeSpeichern:{de:"Charge speichern",en:"Save batch",th:"บันทึกล็อต"},
+ chargen:{de:"Chargen",en:"Batches",th:"ล็อต"},
+ senden:{de:"Daten senden / sichern",en:"Send / back up data",th:"ส่ง/สำรองข้อมูล"},
+ referenz:{de:"Referenz",en:"Reference",th:"ราคาอ้างอิง"},
+ kleinmenge:{de:"Kleinmenge — bei Mengeneinkauf verhandeln",en:"small quantity — negotiate when buying more",th:"ซื้อปลีก — ซื้อเยอะต้องต่อราคา"},
+ keinPreis:{de:"Preis noch nicht erfasst",en:"No price recorded yet",th:"ยังไม่มีราคา"},
+ sorteWichtig:{de:"Sorte ist hier entscheidend",en:"Variety matters here",th:"สายพันธุ์สำคัญมาก"},
+ ueberRef:{de:"über Referenz",en:"above reference",th:"สูงกว่าราคาอ้างอิง"},
+ unterRef:{de:"auf/unter Referenz",en:"at/below reference",th:"เท่ากับ/ต่ำกว่าราคาอ้างอิง"},
+ ausbeuteTxt:{de:"Ausbeute",en:"Yield",th:"อัตราที่ใช้ได้"},
+ fruchtfleisch:{de:"฿/kg Fruchtfleisch",en:"฿/kg usable flesh",th:"฿/กก. เนื้อที่ใช้ได้"},
+ /* Rüsten */
+ ruestTitel:{de:"Aus Einkauf wird Verkaufsware",en:"Turning purchase into sellable goods",th:"เปลี่ยนของที่ซื้อให้เป็นของที่ขายได้"},
+ warumRuesten:{de:"Warum dieser Schritt?",en:"Why this step?",th:"ทำไมต้องมีขั้นตอนนี้?"},
+ ruestErklaer:{de:"4 kg Wassermelone ergeben vielleicht nur 2,5 kg Gefriergut — Schale, Kerne und Verschnitt fallen weg. Erst danach weißt du, was wirklich in den Becher kann und was es dort kostet.",
+   en:"4 kg of watermelon may yield only 2.5 kg of frozen goods — rind, seeds and trimmings are lost. Only then do you know what really goes into the cup and what it costs.",
+   th:"แตงโม 4 กก. อาจได้ของแช่แข็งเพียง 2.5 กก. เพราะเปลือก เมล็ด และเศษที่ตัดทิ้ง หลังจากนั้นจึงจะรู้ว่าใช้ได้จริงเท่าไรและต้นทุนเท่าไร"},
+ wasRuesten:{de:"Was wird gerüstet?",en:"What are you trimming?",th:"จะเตรียมวัตถุดิบอะไร?"},
+ rohEin:{de:"Roh eingesetzt",en:"Raw input",th:"วัตถุดิบดิบที่ใช้"},
+ fertigGef:{de:"Fertig gefroren (kg)",en:"Frozen result (kg)",th:"ที่แช่แข็งได้ (กก.)"},
+ ruestBuchen:{de:"Rüsten buchen",en:"Save trimming",th:"บันทึกการเตรียม"},
+ rohDa:{de:"Roh vorhanden",en:"Raw in stock",th:"วัตถุดิบดิบคงเหลือ"},
+ gerueste:{de:"gerüstet",en:"trimmed",th:"เตรียมแล้ว"},
+ verkaufsware:{de:"je kg Verkaufsware",en:"per kg sellable",th:"ต่อ กก. ที่ขายได้"},
+ durchVerschnitt:{de:"durch Verschnitt",en:"due to trim loss",th:"จากเศษที่ตัดทิ้ง"},
+ gemessen:{de:"deine gemessene Ausbeute",en:"your measured yield",th:"อัตราที่คุณวัดได้"},
+ geschaetzt:{de:"bisher nur geschätzt",en:"only estimated so far",th:"ยังเป็นแค่การประมาณ"},
+ historie:{de:"Rüst-Historie",en:"Trim history",th:"ประวัติการเตรียม"},
+ inTruhe:{de:"Verkaufsfähig in der Truhe",en:"Sellable in the freezer",th:"ที่ขายได้ในตู้แช่"},
+ zuVielRoh:{de:"Im Bestand steht weniger — wird auf 0 gesetzt.",en:"Less in stock — will be set to 0.",th:"ในสต็อกมีน้อยกว่า — จะถูกตั้งเป็น 0"},
+ dreher:{de:"Fertig größer als roh — Zahlendreher?",en:"Result larger than input — typo?",th:"ได้มากกว่าที่ใส่ — พิมพ์ผิดหรือเปล่า?"},
+ /* Bestand */
+ alle:{de:"Alle",en:"All",th:"ทั้งหมด"},
+ nurFehlt:{de:"Nur Defizite",en:"Only missing",th:"เฉพาะที่ขาด"},
+ nurDa:{de:"Nur vorhanden",en:"Only in stock",th:"เฉพาะที่มี"},
+ neueZutat:{de:"Zutat",en:"Item",th:"วัตถุดิบ"},
+ wasIstEs:{de:"Was ist es?",en:"What is it?",th:"คืออะไร?"},
+ gruppe:{de:"Gruppe",en:"Group",th:"หมวด"},
+ einheit:{de:"Einheit",en:"Unit",th:"หน่วย"},
+ uebernehmen:{de:"Übernehmen",en:"Add",th:"เพิ่ม"},
+ csvBestand:{de:"CSV Bestand",en:"CSV stock",th:"CSV สต็อก"},
+ /* Rezepte */
+ rezLegende:{de:"grün = gerüstet und einsatzbereit · gelb = nur Rohware, erst rüsten · rot = fehlt",
+   en:"green = trimmed and ready · yellow = raw only, trim first · red = missing",
+   th:"เขียว = เตรียมแล้วพร้อมใช้ · เหลือง = มีแต่ของดิบ ต้องเตรียมก่อน · แดง = ขาด"},
+ ausgearbeitet:{de:"Ausgearbeitet",en:"Complete recipes",th:"สูตรที่สมบูรณ์"},
+ ohneGramm:{de:"Noch ohne Gramm",en:"No amounts yet",th:"ยังไม่มีปริมาณ"},
+ rezFehlt:{de:"Rezept fehlt",en:"recipe missing",th:"ยังไม่มีสูตร"},
+ mixbarBtn:{de:"mixbar",en:"ready",th:"ทำได้เลย"},
+ erstRuesten:{de:"× rüsten",en:"× to trim",th:"× ต้องเตรียม"},
+ fehltBtn:{de:"fehlt",en:"missing",th:"ขาด"},
+ /* Dialog */
+ werArbeitet:{de:"Wer arbeitet gerade?",en:"Who is working?",th:"ตอนนี้ใครทำงาน?"},
+ enAus:{de:"Englisch ausblenden",en:"Hide English",th:"ซ่อนภาษาอังกฤษ"},
+ ok:{de:"OK",en:"OK",th:"ตกลง"},
+ mind:{de:"Mindestens Sorte, Menge+Preis, Brix oder Duft eintragen.",
+   en:"Enter at least variety, quantity+price, Brix or smell.",
+   th:"กรอกอย่างน้อย: สายพันธุ์ จำนวน+ราคา บริกซ์ หรือกลิ่น"},
+ rohFertig:{de:"Roh eingesetzt und fertig gefroren eintragen.",en:"Enter raw input and frozen result.",th:"กรอกวัตถุดิบที่ใช้และที่แช่แข็งได้"},
+ loeschen:{de:"löschen?",en:"delete?",th:"ลบ?"},
+ zurueck:{de:"Rüst-Buchung zurücknehmen? Mengen werden zurückgebucht.",
+   en:"Undo trimming? Quantities will be restored.",th:"ยกเลิกการเตรียม? จำนวนจะถูกคืนกลับ"}
+};
+
+let USER=localStorage.getItem("blend_user")||"";
+let EN_AUS=localStorage.getItem("blend_enaus")==="1";
+const istLexi=()=>USER==="lexi";
+/* Hauptsprache = Muttersprache, Zweitsprache = Englisch */
+const h=k=>(TXT[k]?(istLexi()?TXT[k].th:TXT[k].de):k);
+const e2=k=>(TXT[k]?TXT[k].en:"");
+/* Beschriftung mit kleiner Englisch-Zeile */
+const L=k=>`${esc(h(k))}${EN_AUS?"":`<i class="en">${esc(e2(k))}</i>`}`;
+/* Fließtext, Englisch angehängt */
+const L1=k=>`${esc(h(k))}${EN_AUS?"":` · <span class="en">${esc(e2(k))}</span>`}`;
+
+/* 🔊 spricht ein Wort in der jeweiligen Sprache */
+function sprich(text,lang){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text); u.lang=lang; u.rate=.85;
+  const v=speechSynthesis.getVoices().find(x=>x.lang&&x.lang.toLowerCase().startsWith(lang.slice(0,2)));
+  if(v)u.voice=v;
+  speechSynthesis.speak(u);
+}
+/* Zutatenname mehrsprachig: Muttersprache · Englisch · Fremdsprache + Lautschrift + 🔊 */
+function zname(k,klein){
+  const fremd = istLexi() ? {txt:k.de,laut:k.deLaut,lang:"de-DE",flag:"🇩🇪"}
+                          : {txt:k.th,laut:k.laut, lang:"th-TH",flag:"🇹🇭"};
+  const haupt = istLexi() ? (k.th||k.de) : k.de;
+  return `<span class="haupt">${esc(haupt)}</span>
+    ${EN_AUS||!k.en?"":`<span class="zweit">${esc(k.en)}</span>`}
+    ${fremd.txt?`<span class="dritt">${fremd.flag} ${esc(fremd.txt)}
+      ${fremd.laut?`<i class="laut">${esc(fremd.laut)}</i>`:""}</span>`:""}`;
+}
+function hoerBtn(k){
+  const t = istLexi() ? k.de : k.th;
+  const lang = istLexi() ? "de-DE" : "th-TH";
+  return t?`<button class="hoer" data-say="${esc(t)}" data-lang="${lang}">🔊</button>`:"";
+}
 const heute=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const MAERKTE=["Ratanakorn","Theprasit","GO Wholesale","Makro","Villa Market","Central","Doi Kham","anderer"];
 
@@ -209,38 +391,37 @@ function vStart(){
 
   return `
   <div class="kpi">
-    <div class="ok"><b>${mixbar}</b><span>Rezepte mixbar</span></div>
-    <div class="miss"><b>${defizite.length}</b><span>Zutaten fehlen</span></div>
-    <div class="ok"><b>${kgTk}</b><span>kg verkaufsfähig</span></div>
-    <div><b>${daZahl}</b><span>Positionen da</span></div>
+    <div class="ok"><b>${mixbar}</b><span>${h("mixbar")}</span></div>
+    <div class="miss"><b>${defizite.length}</b><span>${h("fehlen")}</span></div>
+    <div class="ok"><b>${kgTk}</b><span>${h("kgVerk")}</span></div>
+    <div><b>${daZahl}</b><span>${h("posDa")}</span></div>
   </div>
 
-  ${zuRuesten.length?`<div class="tip">🧊 <b>${zuRuesten.length} Position${zuRuesten.length>1?"en":""} liegen als Rohware da und sind noch nicht gerüstet</b>
+  ${zuRuesten.length?`<div class="tip">🧊 <b>${zuRuesten.length}× ${h("nochRuesten")}</b>
     — ${zuRuesten.slice(0,6).map(k=>esc(k.de)).join(", ")}${zuRuesten.length>6?" …":""}.
-    Erst nach dem Rüsten zählen sie als Verkaufsware.</div>`:""}
+    </div>`:""}
 
-  ${defizite.length?`<h2>Fehlt für die Rezepte <em>· ${defizite.length} Positionen</em></h2>
+  ${defizite.length?`<h2>${L1("fehltFuer")} <em>· ${defizite.length}</em></h2>
     ${defizite.slice(0,8).map(k=>`<div class="row miss">
       <span class="code">${k.code}</span>
-      <span class="nm"><b>${esc(k.de)}</b><i>${esc(k.th||"")}</i>
+      <span class="nm">${zname(k)}
         <span class="rz">${brauchtRezepte(k).map(r=>`<span>${r==="*"?"alle":r}</span>`).join("")}</span>
-        <span class="pr">${preisText(k)}</span></span></div>`).join("")}
+        <span class="pr">${preisText(k)}</span></span>${hoerBtn(k)}</div>`).join("")}
     ${defizite.length>8?`<div class="mini">… und ${defizite.length-8} weitere — siehe 📦 Bestand</div>`:""}
-    <div class="bar"><button class="b r" id="ekliste">🛒 Einkaufsliste erzeugen</button></div>`
-   :`<div class="tip">✅ Alles da, was die Rezepte brauchen.</div>`}
+    <div class="bar"><button class="b r" id="ekliste">🛒 ${h("ekliste")}</button></div>`
+   :`<div class="tip">✅ ${L1("allesDa")}</div>`}
 
-  ${letzte.length?`<h2>Zuletzt erfasst</h2>${letzte.map(c=>{
+  ${letzte.length?`<h2>${L1("zuletzt")}</h2>${letzte.map(c=>{
      const k=findeCode(c.code)||{de:c.code};
      return `<div class="row"><span class="code">${c.code}</span>
-       <span class="nm"><b>${esc(k.de)}</b><i>${esc(c.dat)} · ${esc(c.markt||"")}</i>
+       <span class="nm"><b>${esc(istLexi()?(k.th||k.de):k.de)}</b><i>${esc(c.dat)} · ${esc(c.markt||"")}</i>
          <span class="pr">${c.pr?`${c.pr} ฿/${k.einheit||"kg"}`:""}${c.note?` · Note ${c.note}/5`:""}${c.duft?` · 👃 ${c.duft}/5`:""}</span></span></div>`;
    }).join("")}`:""}
 
   ${offenePreise?`<div class="tip">💰 <b>${offenePreise} Zutaten ohne Preis</b>, die in Rezepten stecken —
      beim nächsten Einkauf mit erfassen, dann rechnet die Kalkulation vollständig.</div>`:""}
 
-  <div class="tip bad">🚫 <b>${ENTSORGT.length} Artikel sind gesperrt</b> (Verkostung 13.08., Note 1–2).
-    Sie tauchen nirgends mehr als kaufbar auf. <button class="b" id="zeigetot" style="padding:5px 10px;font-size:12.5px;margin-left:4px">anzeigen</button></div>
+  <div class="tip bad">🚫 <b>${ENTSORGT.length} ${h("gesperrt")}</b> (13.08., Note 1–2). <button class="b" id="zeigetot" style="padding:5px 10px;font-size:12.5px;margin-left:4px">${h("anzeigen")}</button></div>
   <div id="totbox"></div>
   <textarea id="out" style="display:none" readonly></textarea>`;
 }
@@ -252,27 +433,28 @@ function vBestand(){
   const grp={};
   zut.forEach(k=>{(grp[k.gruppe]=grp[k.gruppe]||[]).push(k)});
   let html=`<div class="bar" style="margin:0 0 12px">
-      <button class="b ${bFilter==="all"?"p":""}" data-bf="all">Alle</button>
-      <button class="b ${bFilter==="miss"?"p":""}" data-bf="miss">Nur Defizite</button>
-      <button class="b ${bFilter==="have"?"p":""}" data-bf="have">Nur vorhanden</button>
-      <button class="b" id="neuzutat">➕ Zutat</button></div>
+      <button class="b ${bFilter==="all"?"p":""}" data-bf="all">${h("alle")}</button>
+      <button class="b ${bFilter==="miss"?"p":""}" data-bf="miss">${h("nurFehlt")}</button>
+      <button class="b ${bFilter==="have"?"p":""}" data-bf="have">${h("nurDa")}</button>
+      <button class="b" id="neuzutat">➕ ${h("neueZutat")}</button></div>
     <div id="neuform"></div>`;
   Object.entries(grp).forEach(([g,items])=>{
     const rows=items.filter(k=>bFilter==="all"||(bFilter==="miss"?fehlt(k):daIst(k.code))).map(k=>{
       const v=S.bestand[k.code]||"", da=+v>0, f=fehlt(k), own=S.eigen.includes(k);
       return `<div class="row ${da?"has":(f?"miss":"")} ${own?"own":""}">
         <span class="code">${k.code}</span>
-        <span class="nm"><b>${esc(k.de)}</b><i>${esc(k.th||"")}</i>
+        <span class="nm">${zname(k)}
           ${brauchtRezepte(k).length?`<span class="rz">${brauchtRezepte(k).map(r=>`<span>${r==="*"?"alle":r}</span>`).join("")}</span>`:""}
-          <span class="pr">${preisText(k)}${tkVon(k.code)?` · 🧊 <b>${tkVon(k.code)} g gerüstet</b>`:""}</span></span>
+          <span class="pr">${preisText(k)}${tkVon(k.code)?` · 🧊 <b>${tkVon(k.code)} g ${h("gerueste")}</b>`:""}</span></span>
+        ${hoerBtn(k)}
         <input class="qty" type="number" inputmode="decimal" step="any" min="0" data-c="${k.code}" value="${v}" placeholder="0">
         <span class="u">${esc(k.einheit||"g")}</span>
         ${own?`<button class="del" data-del="${k.code}">✕</button>`:""}</div>`;
     }).join("");
     if(rows)html+=`<h2>${esc(g)}</h2>${rows}`;
   });
-  return html+`<div class="bar"><button class="b r" id="ekliste">🛒 Einkaufsliste</button>
-    <button class="b p" id="csvb">CSV Bestand</button></div>
+  return html+`<div class="bar"><button class="b r" id="ekliste">🛒 ${h("ekliste")}</button>
+    <button class="b p" id="csvb">${h("csvBestand")}</button></div>
     <textarea id="out" style="display:none" readonly></textarea>`;
 }
 
@@ -288,51 +470,51 @@ function vEinkauf(){
   const k=findeCode(eCode)||alleZutaten()[0];
   const ref=k.pmin!=null?(k.pmin===k.pmax?`${k.pmin}`:`${k.pmin}–${k.pmax}`):null;
   return `
-  <div class="such"><input id="e_such" placeholder="Frucht suchen — Deutsch / ไทย / English" value="${esc(eSuche)}"></div>
+  <div class="such"><input id="e_such" placeholder="${h('suchen')} — Deutsch / ไทย / English" value="${esc(eSuche)}"></div>
   <div class="list" id="e_liste" style="display:none"></div>
   <div class="card">
-    <div class="mini" style="margin-bottom:9px">✓ <b>${esc(k.de)}</b> ${esc(k.th||"")} <span class="code">${k.code}</span>
-      ${k.sortenkritisch?`<br>🔴 Sorte entscheidend: ${esc(k.sorten||"")}`:""}
-      ${ref?`<br>💰 Referenz ${ref} ฿/${k.einheit==="Stk"?"Stück":"kg"} <span style="opacity:.7">(Kleinmenge)</span>`:`<br>💰 Preis noch nicht erfasst`}
+    <div class="mini" style="margin-bottom:9px"><span class="nm" style="display:inline-block;vertical-align:top">${zname(k)}</span> ${hoerBtn(k)} <span class="code">${k.code}</span>
+      ${k.sortenkritisch?`<br>🔴 ${h("sorteWichtig")}: ${esc(k.sorten||"")}`:""}
+      ${ref?`<br>💰 ${h("referenz")} ${ref} ฿/${k.einheit==="Stk"?"Stk":"kg"} <span style="opacity:.7">(${h("kleinmenge")})</span>`:`<br>💰 ${h("keinPreis")}`}
       ${k.reife?`<br>🍃 ${esc(k.reife)}`:""}</div>
-    <div class="f"><label>Sorte <i>— Thai-Name wie der Händler sie nennt</i></label>
+    <div class="f"><label>${L("sorte")}</label>
       <input id="e_sorte" list="sortenliste" placeholder="z. B. น้ำดอกไม้">
       <datalist id="sortenliste">${(k.sorten||"").split("·").map(s=>`<option value="${esc(s.trim().replace(/\s*\d+.*$/,""))}">`).join("")}</datalist></div>
     <div class="f2">
-      <div class="f"><label>Menge ${k.einheit==="Stk"?"Stück":"kg"}</label><input type="number" inputmode="decimal" step="0.1" id="e_kg" placeholder="1,5"></div>
-      <div class="f"><label>Bezahlt gesamt ฿</label><input type="number" inputmode="decimal" step="1" id="e_ges" placeholder="90"></div>
+      <div class="f"><label>${L("menge")} ${k.einheit==="Stk"?"Stk":"kg"}</label><input type="number" inputmode="decimal" step="0.1" id="e_kg" placeholder="1,5"></div>
+      <div class="f"><label>${L("bezahlt")}</label><input type="number" inputmode="decimal" step="1" id="e_ges" placeholder="90"></div>
     </div>
     <label style="display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;color:var(--ink);margin:-4px 0 8px">
-      <input type="checkbox" id="e_verarb" style="width:20px;height:20px;flex:0 0 auto"> schon geschält / verarbeitet (kein Abfall)</label>
+      <input type="checkbox" id="e_verarb" style="width:20px;height:20px;flex:0 0 auto"> ${h("verarb")}</label>
     <div class="mini" id="e_sum" style="margin-bottom:11px"></div>
-    <div class="f"><label>👃 Duft 1–5 <i>— am Stielansatz, Frucht handwarm</i></label>
+    <div class="f"><label>👃 ${L("duft")}<i class="en">${esc(h("duftHint"))}</i></label>
       <div class="stars nose" id="e_duft">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
-    <div class="f"><label>Duft-Charakter</label><div class="chips" id="e_des">${DUFT.map(d=>`<button data-k="${d[0]}">${d[1]}<small>${d[2]}</small></button>`).join("")}</div></div>
-    <div class="f"><label>Fehlnoten <i>— eine reicht zum Ablehnen</i></label><div class="chips bad" id="e_feh">${FEHL.map(d=>`<button data-k="${d[0]}">${d[1]}<small>${d[2]}</small></button>`).join("")}</div></div>
+    <div class="f"><label>${L("duftChar")}</label><div class="chips" id="e_des">${DUFT.map(d=>`<button data-k="${d[0]}">${d[1]}<small>${d[2]}</small></button>`).join("")}</div></div>
+    <div class="f"><label>${L("fehlnoten")}<i class="en">${esc(h("fehlHint"))}</i></label><div class="chips bad" id="e_feh">${FEHL.map(d=>`<button data-k="${d[0]}">${d[1]}<small>${d[2]}</small></button>`).join("")}</div></div>
     <div class="f2">
-      <div class="f"><label>°Brix <i>— zuhause</i></label><input type="number" inputmode="decimal" step="0.1" id="e_bx" placeholder="16.4"></div>
-      <div class="f"><label>Gesamt-Note 1–5</label><div class="stars" id="e_note">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
+      <div class="f"><label>${L("brix")}<i class="en">${esc(h("brixHint"))}</i></label><input type="number" inputmode="decimal" step="0.1" id="e_bx" placeholder="16.4"></div>
+      <div class="f"><label>${L("note")}</label><div class="stars" id="e_note">${[1,2,3,4,5].map(n=>`<button data-n="${n}">${n}</button>`).join("")}</div></div>
     </div>
-    <div class="f"><label>Markt</label>
+    <div class="f"><label>${L("markt")}</label>
       <div class="chips" id="e_markt">${MAERKTE.map(m=>`<button data-m="${m}"${S.cfg.markt===m?' class="on"':''}>${m}</button>`).join("")}</div></div>
-    <div class="f"><label>Bemerkung</label><input id="e_bem" placeholder="Reduziert-Kiste / faserig …"></div>
+    <div class="f"><label>${L("bem")}</label><input id="e_bem" placeholder="Reduziert-Kiste / faserig …"></div>
     <label style="display:flex;align-items:center;gap:9px;text-transform:none;letter-spacing:0;font-size:14px;font-weight:600;color:var(--ink);margin:4px 0 10px">
-      <input type="checkbox" id="e_bestand" checked style="width:20px;height:20px;flex:0 0 auto"> Menge gleich in den Bestand übernehmen</label>
-    <div class="bar" style="margin:2px 0 0"><button class="b p" id="e_ok" style="flex:1">Charge speichern</button></div>
+      <input type="checkbox" id="e_bestand" checked style="width:20px;height:20px;flex:0 0 auto"> ${h("inBestand")}</label>
+    <div class="bar" style="margin:2px 0 0"><button class="b p" id="e_ok" style="flex:1">${h("chargeSpeichern")}</button></div>
   </div>
-  ${S.chargen.length?`<h2>Chargen <em>· ${S.chargen.length}</em></h2>${S.chargen.slice().reverse().slice(0,12).map((c,i)=>{
+  ${S.chargen.length?`<h2>${L1("chargen")} <em>· ${S.chargen.length}</em></h2>${S.chargen.slice().reverse().slice(0,12).map((c,i)=>{
       const kk=findeCode(c.code)||{de:c.code,einheit:"kg"};
       const bad=(c.feh&&c.feh.length)||(c.duft&&+c.duft<=2);
       return `<div class="row ${bad?"miss":(c.note>=4?"has":"")}">
         <span class="code">${c.code}</span>
-        <span class="nm"><b>${esc(kk.de)}${c.sorte?` · ${esc(c.sorte)}`:""}</b>
+        <span class="nm"><b>${esc(istLexi()?(kk.th||kk.de):kk.de)}${c.sorte?` · ${esc(c.sorte)}`:""}</b>
           <i>${esc(c.dat)} · ${esc(c.markt||"")}${c.who?` · ${esc(c.who)}`:""}</i>
           <span class="pr">${c.kg?`${c.kg} ${kk.einheit==="Stk"?"Stk":"kg"} · `:""}${c.ges?`${c.ges} ฿ = `:""}${c.pr?`<b>${c.pr} ฿/${kk.einheit==="Stk"?"Stk":"kg"}</b>`:""}
             ${c.bx?` · ${c.bx} °Bx`:""}${c.duft?` · 👃 ${c.duft}/5`:""}${c.note?` · Note ${c.note}/5`:""}
             ${c.feh&&c.feh.length?` · <span style="color:var(--miss)">⚠ ${c.feh.map(f=>(FEHL.find(x=>x[0]===f)||[,f])[1]).join(", ")}</span>`:""}</span></span>
         <button class="del" data-charge="${S.chargen.length-1-i}">✕</button></div>`;
     }).join("")}
-    <div class="bar"><button class="b p" id="senden">📤 Daten senden / sichern</button></div>`:""}
+    <div class="bar"><button class="b p" id="senden">📤 ${h("senden")}</button></div>`:""}
   <textarea id="out" style="display:none" readonly></textarea>`;
 }
 
@@ -348,40 +530,48 @@ function vRuesten(){
   const rohDa=bestandVon(k.code), tkDa=tkVon(k.code);
 
   return `
-  <div class="tip">🧊 <b>Aus Einkauf wird Verkaufsware.</b> 4 kg Wassermelone gekauft ergeben vielleicht
-    2,5 kg Gefriergut — Schale, Kerne und Verschnitt gehen weg. Hier wird das gebucht: Rohware runter,
-    Gefriergut rauf. Und die App merkt sich deine <b>echte</b> Ausbeute statt einer Schätzung.</div>
+  <div class="mini" style="margin:-2px 0 10px">🧊 ${L1("ruestTitel")}</div>
+  <details class="tipp"><summary>💡 ${L1("warumRuesten")} ▾</summary>
+    <div class="inhalt">${esc(h("ruestErklaer"))}${EN_AUS?"":`<span class="en">${esc(e2("ruestErklaer"))}</span>`}</div></details>
 
   <div class="card">
-    <div class="f"><label>Was wird gerüstet?</label>
-      <select id="r_code">${zut.map(z=>`<option value="${z.code}"${z.code===rCode?" selected":""}>${esc(z.de)}${bestandVon(z.code)>0?`  ·  ${bestandVon(z.code)} ${z.einheit||"g"} roh da`:""}</option>`).join("")}</select></div>
+    <div class="f"><label>${L("wasRuesten")}</label>
+      <select id="r_code">${zut.map(z=>{
+        const nam=istLexi()?[z.th||z.de,z.en,z.de]:[z.de,z.en,z.th];
+        return `<option value="${z.code}"${z.code===rCode?" selected":""}>${esc(nam.filter(Boolean).join(" · "))}${bestandVon(z.code)>0?`  —  ${bestandVon(z.code)} ${z.einheit||"g"}`:""}</option>`;
+      }).join("")}</select></div>
+
+    <div class="row" style="margin:0 0 11px">
+      <span class="code">${k.code}</span>
+      <span class="nm">${zname(k)}</span>
+      ${hoerBtn(k)}</div>
 
     <div class="mini" style="margin:-4px 0 12px">
-      📦 Roh vorhanden: <b>${rohDa?rohDa+" "+(k.einheit||"g"):"nichts"}</b> ·
-      🧊 gerüstet: <b>${tkDa?tkDa+" g":"nichts"}</b>
-      ${real?`<br>📊 deine gemessene Ausbeute: <b>${real.proz} %</b> aus ${real.n} Vorgang${real.n>1?"en":""}${schaetz?` <span style="opacity:.65">(Schätzung im Katalog: ${schaetz} %)</span>`:""}`
-            :(schaetz?`<br>📊 Ausbeute bisher nur geschätzt: <b>~${schaetz} %</b> — dein erster Vorgang ersetzt die Schätzung`:"")}
+      📦 ${h("rohDa")}: <b>${rohDa?rohDa+" "+(k.einheit||"g"):"–"}</b> ·
+      🧊 ${h("gerueste")}: <b>${tkDa?tkDa+" g":"–"}</b>
+      ${real?`<br>📊 ${h("gemessen")}: <b>${real.proz} %</b> (${real.n}×)${schaetz?` <span style="opacity:.65">(~${schaetz} % ${h("geschaetzt")})</span>`:""}`
+            :(schaetz?`<br>📊 ${h("ausbeuteTxt")}: <b>~${schaetz} %</b> — ${h("geschaetzt")}`:"")}
     </div>
 
     <div class="f2">
-      <div class="f"><label>Roh eingesetzt ${stk?"(Stück)":"(kg)"}</label>
+      <div class="f"><label>${L("rohEin")} ${stk?"(Stk)":"(kg)"}</label>
         <input type="number" inputmode="decimal" step="0.01" id="r_roh" placeholder="${stk?"4":"4"}"></div>
-      <div class="f"><label>Fertig gefroren (kg)</label>
+      <div class="f"><label>${L("fertigGef")}</label>
         <input type="number" inputmode="decimal" step="0.01" id="r_fertig" placeholder="2,5"></div>
     </div>
     <div class="mini" id="r_rechnung" style="margin-bottom:11px"></div>
-    <div class="f"><label>Bemerkung <i>— optional</i></label>
+    <div class="f"><label>${L("bem")}</label>
       <input id="r_bem" placeholder="z. B. viel Schale, sehr reif, Alu-Blech −30 °C"></div>
-    <div class="bar" style="margin:2px 0 0"><button class="b g" id="r_ok" style="flex:1">Rüsten buchen</button></div>
+    <div class="bar" style="margin:2px 0 0"><button class="b g" id="r_ok" style="flex:1">${h("ruestBuchen")}</button></div>
   </div>
 
-  ${S.verarb.length?`<h2>Rüst-Historie <em>· ${S.verarb.length}</em></h2>${S.verarb.slice().reverse().slice(0,15).map((v,i)=>{
+  ${S.verarb.length?`<h2>${L1("historie")} <em>· ${S.verarb.length}</em></h2>${S.verarb.slice().reverse().slice(0,15).map((v,i)=>{
     const kk=findeCode(v.code)||{de:v.code,einheit:"g"};
     return `<div class="row">
       <span class="code">${v.code}</span>
-      <span class="nm"><b>${esc(kk.de)}</b><i>${esc(v.dat)}${v.who?` · ${esc(v.who)}`:""}</i>
+      <span class="nm"><b>${esc(istLexi()?(kk.th||kk.de):kk.de)}</b><i>${esc(v.dat)}${v.who?` · ${esc(v.who)}`:""}</i>
         <span class="pr">${v.roh} ${kk.einheit==="Stk"?"Stk":"g"} roh → <b>${v.fertig} g</b> gefroren ·
-          Ausbeute <b>${v.proz} %</b>${v.kosten?` · <b>${v.kosten} ฿/kg</b> verkaufsfähig`:""}</span>
+          ${h("ausbeuteTxt")} <b>${v.proz} %</b>${v.kosten?` · <b>${v.kosten} ฿/kg</b>`:""}</span>
         ${v.bem?`<i>${esc(v.bem)}</i>`:""}</span>
       <button class="del" data-verarb="${S.verarb.length-1-i}">✕</button></div>`;
   }).join("")}`:""}
@@ -389,11 +579,12 @@ function vRuesten(){
   ${(()=>{ /* Übersicht: was ist wirklich verkaufsfähig? */
     const mitTk=alleZutaten().filter(k=>tkVon(k.code)>0);
     if(!mitTk.length)return "";
-    return `<h2>Verkaufsfähig in der Truhe</h2>`+mitTk.map(k=>{
+    return `<h2>${L1("inTruhe")}</h2>`+mitTk.map(k=>{
       const r=ausbeuteReal(k.code);
       return `<div class="row has"><span class="code">${k.code}</span>
-        <span class="nm"><b>${esc(k.de)}</b>
-          <span class="pr">${tkVon(k.code)} g gerüstet${r?` · Ausbeute ${r.proz} %`:""}</span></span></div>`;
+        <span class="nm">${zname(k)}
+          <span class="pr">${tkVon(k.code)} g ${h("gerueste")}${r?` · ${h("ausbeuteTxt")} ${r.proz} %`:""}</span></span>
+        ${hoerBtn(k)}</div>`;
     }).join("");
   })()}`;
 }
@@ -404,29 +595,35 @@ function vRezepte(){
   const karte=r=>{
     const fehlen=r.zut.filter(z=>!daIst(z[0]));
     const ruesten=r.zut.filter(z=>daIst(z[0])&&!verkaufsfaehig(z[0]));
-    const status=fehlen.length?["rt",`${fehlen.length} fehlt`]
-                : ruesten.length?["ge",`${ruesten.length}× rüsten`]
-                : ["gr","mixbar"];
+    const status=fehlen.length?["rt",`${fehlen.length} ${h("fehltBtn")}`]
+                : ruesten.length?["ge",`${ruesten.length}${h("erstRuesten")}`]
+                : ["gr",h("mixbarBtn")];
     return `<div class="rez">
-      <div class="kopf"><span class="no">${r.n}</span><b>${esc(r.de)}</b>
+      <div class="kopf"><span class="no">${r.n}</span><b>${esc(istLexi()?(r.th||r.de):r.de)}</b>
         <span class="ampel ${status[0]}">${status[1]}</span></div>
-      <div class="mini">${esc(r.th||"")}</div>
+      <div class="mini">${esc(r.en||"")}${istLexi()?"":` · ${esc(r.th||"")}`}</div>
       <div class="zut">${r.zut.map(z=>{
         const cls=!daIst(z[0])?"f":(verkaufsfaehig(z[0])?"":"g");
-        return `<span class="${cls}">${z[0]} ${esc(z[2])}${typeof z[1]==="number"?` ${z[1]} g`:` ${esc(z[1])}`}</span>`;
+        const kk=findeCode(z[0]);
+        const nam=kk?(istLexi()?(kk.th||kk.de):kk.de):z[2];
+        const zw=kk&&!EN_AUS?(istLexi()?kk.en:(kk.th||kk.en)):"";
+        return `<span class="${cls}">${z[0]} ${esc(nam)}${zw?` <i style="font-style:normal;opacity:.75">${esc(zw)}</i>`:""}${typeof z[1]==="number"?` ${z[1]} g`:` ${esc(z[1])}`}</span>`;
       }).join("")}</div></div>`;
   };
-  return `<div class="tip">🟢 gerüstet und einsatzbereit · 🟡 nur Rohware da, muss erst unter 🧊 <b>Rüsten</b> ·
-    🔴 fehlt ganz. Die Ampel sagt, was du <b>jetzt sofort</b> mixen kannst.</div>
-    <h2>Ausgearbeitet <em>· ${mit.length}</em></h2>${mit.map(karte).join("")}
-    ${ohne.length?`<h2>Noch ohne Gramm <em>· ${ohne.length}</em></h2>${ohne.map(r=>`<div class="rez">
-      <div class="kopf"><span class="no">${r.n}</span><b>${esc(r.de)}</b>
-      <span class="ampel rt">Rezept fehlt</span></div></div>`).join("")}`:""}`;
+  return `<div class="tip">${L1("rezLegende")}</div>
+    <h2>${L1("ausgearbeitet")} <em>· ${mit.length}</em></h2>${mit.map(karte).join("")}
+    ${ohne.length?`<h2>${L1("ohneGramm")} <em>· ${ohne.length}</em></h2>${ohne.map(r=>`<div class="rez">
+      <div class="kopf"><span class="no">${r.n}</span><b>${esc(istLexi()?(r.th||r.de):r.de)}</b>
+      <span class="ampel rt">${h("rezFehlt")}</span></div></div>`).join("")}`:""}`;
 }
 
 /* ---- Rendern + Ereignisse ---------------------------------------------- */
 function render(){
-  $("who").innerHTML=(S.cfg.who?esc(S.cfg.who):"—")+(S.cfg.markt?`<br>${esc(S.cfg.markt)}`:"");
+  $("userbtn").textContent = USER ? `👤 ${istLexi()?"Lexi · TH·EN":"Peter · DE·EN"}${S.cfg.markt?" · "+S.cfg.markt:""} ▾` : "👤 ▾";
+  document.documentElement.lang = istLexi()?"th":"de";
+  ["start","einkauf","ruesten","bestand","rezepte"].forEach(k=>{
+    const el=$("nv_"+k); if(el)el.textContent=h(k);
+  });
   $("view").innerHTML={start:vStart,bestand:vBestand,einkauf:vEinkauf,ruesten:vRuesten,rezepte:vRezepte}[V]();
   binde();
 }
@@ -474,6 +671,9 @@ async function senden(){
 }
 
 function binde(){
+  document.querySelectorAll(".hoer").forEach(b=>b.onclick=ev=>{
+    ev.stopPropagation(); sprich(b.dataset.say,b.dataset.lang);
+  });
   /* Bestand: Mengen + Filter + eigene Zutat */
   document.querySelectorAll("input.qty").forEach(i=>i.oninput=()=>{
     if(i.value==="")delete S.bestand[i.dataset.c]; else S.bestand[i.dataset.c]=i.value;
@@ -491,17 +691,17 @@ function binde(){
     const f=$("neuform");
     if(f.innerHTML){f.innerHTML="";return}
     f.innerHTML=`<div class="card">
-      <div class="f"><label>Was ist es?</label><input id="n_de" placeholder="z. B. Sesamöl"></div>
-      <div class="f"><label>Thai <i>optional</i></label><input id="n_th"></div>
-      <div class="f2"><div class="f"><label>Gruppe</label><select id="n_g">
+      <div class="f"><label>${L("wasIstEs")}</label><input id="n_de" placeholder="z. B. Sesamöl"></div>
+      <div class="f"><label>ไทย / Thai</label><input id="n_th"></div>
+      <div class="f2"><div class="f"><label>${L("gruppe")}</label><select id="n_g">
         ${[...new Set(KATALOG.map(k=>k.gruppe))].map(g=>`<option>${esc(g)}</option>`).join("")}</select></div>
-        <div class="f"><label>Einheit</label><select id="n_u"><option>g</option><option>ml</option><option>Stk</option><option>Pack</option><option>kg</option></select></div></div>
-      <div class="f2"><div class="f"><label>Menge</label><input type="number" step="any" id="n_m"></div>
+        <div class="f"><label>${L("einheit")}</label><select id="n_u"><option>g</option><option>ml</option><option>Stk</option><option>Pack</option><option>kg</option></select></div></div>
+      <div class="f2"><div class="f"><label>${L("menge")}</label><input type="number" step="any" id="n_m"></div>
         <div class="f"><label>Code</label><input id="n_c" maxlength="3" style="text-transform:uppercase"></div></div>
-      <div class="bar" style="margin:6px 0 0"><button class="b p" id="n_ok" style="flex:1">Übernehmen</button></div></div>`;
+      <div class="bar" style="margin:6px 0 0"><button class="b p" id="n_ok" style="flex:1">${h("uebernehmen")}</button></div></div>`;
     $("n_de").oninput=()=>{ if(!$("n_c").value)$("n_c").value=freierCode($("n_de").value) };
     $("n_ok").onclick=()=>{
-      const de=$("n_de").value.trim(); if(!de){alert("Name fehlt");return}
+      const de=$("n_de").value.trim(); if(!de){alert(h("wasIstEs"));return}
       const code=($("n_c").value.trim()||freierCode(de)).toUpperCase();
       S.eigen.push({code,de,th:$("n_th").value.trim(),gruppe:$("n_g").value,einheit:$("n_u").value,
                     rezepte:[],pmin:null,pmax:null,preistext:"selbst angelegt",eigen:true});
@@ -529,7 +729,7 @@ function binde(){
       const L=$("e_liste");
       if(!q){L.style.display="none";return}
       const tr=alleZutaten().filter(k=>[k.de,k.th,k.en,k.code].join(" ").toLowerCase().includes(q)).slice(0,40);
-      L.innerHTML=tr.length?tr.map(k=>`<button class="frow" data-c="${k.code}"><b>${esc(k.de)}</b> · ${esc(k.th||"")} ${esc(k.en||"")}
+      L.innerHTML=tr.length?tr.map(k=>`<button class="frow" data-c="${k.code}"><b>${esc(istLexi()?(k.th||k.de):k.de)}</b> · ${esc(k.en||"")} · ${esc(istLexi()?k.de:(k.th||""))}
         <small>${esc(k.gruppe)}${k.pmin!=null?` · ${k.pmin===k.pmax?k.pmin:k.pmin+"–"+k.pmax} ฿`:""}</small></button>`).join("")
         :`<div class="fgrp">nichts gefunden</div>`;
       L.style.display="block";
@@ -546,9 +746,9 @@ function binde(){
       const pr=Math.round(ges/kg*10)/10, eh=k.einheit==="Stk"?"Stück":"kg";
       let s=`🧾 ${ges} ฿ ÷ ${kg} ${eh} = <b>${pr} ฿/${eh}</b>`;
       const a=$("e_verarb").checked?100:k.ausbeute;
-      if(a&&a<100&&k.einheit!=="Stk")s+=`<br>🥤 Ausbeute ~${a} % → <b>${Math.round(pr/a*100)} ฿/kg Fruchtfleisch</b>`;
-      if(k.pmax!=null){ if(pr>k.pmax*1.15)s+=`<br><b style="color:var(--miss)">⚠ über Referenz ${k.pmin}–${k.pmax} ฿</b>`;
-        else if(pr<=k.pmin)s+=`<br><b style="color:var(--ok)">✓ auf/unter Referenz</b>`; }
+      if(a&&a<100&&k.einheit!=="Stk")s+=`<br>🥤 ${h("ausbeuteTxt")} ~${a} % → <b>${Math.round(pr/a*100)} ${h("fruchtfleisch")}</b>`;
+      if(k.pmax!=null){ if(pr>k.pmax*1.15)s+=`<br><b style="color:var(--miss)">⚠ ${h("ueberRef")} ${k.pmin}–${k.pmax} ฿</b>`;
+        else if(pr<=k.pmin)s+=`<br><b style="color:var(--ok)">✓ ${h("unterRef")}</b>`; }
       el.innerHTML=s;
     };
     $("e_kg").oninput=sumZeigen; $("e_ges").oninput=sumZeigen; $("e_verarb").onchange=sumZeigen;
@@ -571,7 +771,7 @@ function binde(){
         kg,ges,pr,verarb:$("e_verarb").checked?1:"",bx:$("e_bx").value,
         duft:eDuft||"",des:eDes.slice(),feh:eFeh.slice(),note:eNote||"",
         markt:S.cfg.markt,bem:$("e_bem").value.trim()};
-      if(!c.ges&&!c.bx&&!c.duft&&!c.sorte){alert("Mindestens Sorte, Menge+Preis, Brix oder Duft eintragen.");return}
+      if(!c.ges&&!c.bx&&!c.duft&&!c.sorte){alert(h("mind"));return}
       S.chargen.push(c);
       if($("e_bestand").checked&&+kg>0){
         const k=findeCode(eCode);
@@ -593,24 +793,24 @@ function binde(){
       if(!(roh>0)||!(fertig>0)){el.innerHTML="";return}
       const rohG=stk?roh:roh*1000, fertigG=fertig*1000;
       const proz=Math.round(fertigG/rohG*1000)/10;
-      let s=`📊 Ausbeute <b>${stk?Math.round(fertigG/roh)+" g je Stück":proz+" %"}</b>`;
+      let s=`📊 ${h("ausbeuteTxt")} <b>${stk?Math.round(fertigG/roh)+" g/Stk":proz+" %"}</b>`;
       /* echter Preis der Verkaufsware: was die Rohware kostete, geteilt durch das, was übrig blieb */
       const pr=letzterPreis(k.code);
       if(pr){
         const kosten=Math.round(pr*roh/fertig*10)/10;
-        s+=`<br>💰 Rohware ${pr} ฿/${stk?"Stück":"kg"} → <b>${kosten} ฿ je kg Verkaufsware</b>`;
-        if(!stk&&pr)s+=` <span style="opacity:.7">(+${Math.round((kosten/pr-1)*100)} % durch Verschnitt)</span>`;
+        s+=`<br>💰 ${pr} ฿/${stk?"Stk":"kg"} → <b>${kosten} ฿ ${h("verkaufsware")}</b>`;
+        if(!stk&&pr)s+=` <span style="opacity:.7">(+${Math.round((kosten/pr-1)*100)} % ${h("durchVerschnitt")})</span>`;
       }
       const rohDa=bestandVon(k.code);
-      if(rohG>rohDa)s+=`<br><b style="color:var(--warn)">⚠ Im Bestand stehen nur ${rohDa} ${k.einheit||"g"} — wird auf 0 gesetzt.</b>`;
-      if(fertigG>rohG)s+=`<br><b style="color:var(--miss)">⚠ Fertig größer als roh — Zahlendreher?</b>`;
+      if(rohG>rohDa)s+=`<br><b style="color:var(--warn)">⚠ ${h("zuVielRoh")} (${rohDa} ${k.einheit||"g"})</b>`;
+      if(fertigG>rohG)s+=`<br><b style="color:var(--miss)">⚠ ${h("dreher")}</b>`;
       el.innerHTML=s;
     };
     $("r_roh").oninput=rechnung; $("r_fertig").oninput=rechnung;
     $("r_ok").onclick=()=>{
       const k=findeCode(rCode), stk=(k.einheit==="Stk");
       const roh=parseFloat($("r_roh").value), fertig=parseFloat($("r_fertig").value);
-      if(!(roh>0)||!(fertig>0)){alert("Roh eingesetzt und fertig gefroren eintragen.");return}
+      if(!(roh>0)||!(fertig>0)){alert(h("rohFertig"));return}
       const rohG=Math.round(stk?roh:roh*1000), fertigG=Math.round(fertig*1000);
       const pr=letzterPreis(k.code);
       S.verarb.push({dat:heute(),who:S.cfg.who||"",code:rCode,roh:rohG,fertig:fertigG,
@@ -623,7 +823,7 @@ function binde(){
     };
   }
   document.querySelectorAll("[data-verarb]").forEach(b=>b.onclick=()=>{
-    if(!confirm("Rüst-Buchung zurücknehmen? Mengen werden zurückgebucht."))return;
+    if(!confirm(h("zurueck")))return;
     const v=S.verarb[+b.dataset.verarb];
     S.bestand[v.code]=(+(S.bestand[v.code]||0))+ +v.roh;
     S.tk[v.code]=Math.max(0,(+(S.tk[v.code]||0))- +v.fertig);
@@ -645,13 +845,41 @@ function freierCode(name){
   return b[0]+"9";
 }
 
-/* Erststart: wer bedient? */
-if(!S.cfg.who){
-  const w=prompt("Wer arbeitet gerade? (Peter / Lexi)","Peter");
-  S.cfg.who=(w||"Peter").trim(); save();
+/* ---- Wer bedient? Jederzeit umschaltbar, keine Sackgasse mehr ---------- */
+const dlg=$("dlg");
+function dialogAuf(){
+  $("dlgtitel").textContent=TXT.werArbeitet.de+" · "+TXT.werArbeitet.en+" · "+TXT.werArbeitet.th;
+  $("enaustxt").textContent=TXT.enAus.de+" · "+TXT.enAus.en;
+  $("enaus").checked=EN_AUS;
+  document.querySelectorAll(".wahl").forEach(b=>b.classList.toggle("on",b.dataset.u===USER));
+  stimmenPruefen();
+  dlg.showModal();
 }
-render();
+$("userbtn").onclick=dialogAuf;
+document.querySelectorAll(".wahl").forEach(b=>b.onclick=()=>{
+  USER=b.dataset.u; localStorage.setItem("blend_user",USER);
+  S.cfg.who=(USER==="lexi"?"Lexi":"Peter"); save();
+  document.querySelectorAll(".wahl").forEach(x=>x.classList.toggle("on",x===b));
+});
+$("enaus").onchange=e=>{EN_AUS=e.target.checked;localStorage.setItem("blend_enaus",EN_AUS?"1":"0")};
+$("dlgok").onclick=()=>{ if(!USER){USER="peter";S.cfg.who="Peter";save()} dlg.close(); render(); };
 
+/* Kann das Handy Thai und Deutsch sprechen? */
+function stimmenPruefen(){
+  const el=$("stimmen");
+  if(!window.speechSynthesis){el.className="stimmen no";el.textContent="🔊 —";return}
+  const zeig=()=>{
+    const v=speechSynthesis.getVoices();
+    const th=v.some(x=>x.lang&&x.lang.toLowerCase().startsWith("th"));
+    const de=v.some(x=>x.lang&&x.lang.toLowerCase().startsWith("de"));
+    el.className="stimmen "+(th&&de?"ok":"no");
+    el.innerHTML=`🔊 ไทย ${th?"✓":"✗"} · Deutsch ${de?"✓":"✗"}`
+      +(th&&de?"":"<br>Fehlende Stimme in den Android-Einstellungen (Sprachausgabe) nachladen.");
+  };
+  zeig(); speechSynthesis.onvoiceschanged=zeig;
+}
+
+if(!USER)dialogAuf(); else render();
 if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw-os.js").catch(()=>{});
 </script>
 </body>
