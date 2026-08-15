@@ -541,9 +541,11 @@ function render(){
       <button class="b" id="csv">${t("csv")}</button>
       <button class="b r" id="clear">${t("alles_loeschen")}</button></div>
     <div class="note" style="margin-top:2px">${t("send_note")}</div>`;
+  /* Leiste immer zeigen, auch bei leerer Liste — sonst "fehlt das Menü",
+     wenn die Chargen des Geräts gesendet+gelöscht wurden (Peter, 15.08.) */
   if(view==="neu"){v.innerHTML=formular();bindForm();}
-  else if(view==="liste"){v.innerHTML=liste()+(D.length?bar:"");bindList();}
-  else {v.innerHTML=auswertung()+(D.length?bar:"");bindList();}
+  else if(view==="liste"){v.innerHTML=liste()+bar;bindList();}
+  else {v.innerHTML=auswertung()+bar;bindList();}
   $("out").style.display="none";
 }
 
@@ -728,11 +730,12 @@ async function csvSenden(){
 }
 
 function bindList(){
-  const s=$("send");if(s)s.onclick=csvSenden;
+  const s=$("send");if(s)s.onclick=()=>{if(!D.length){alert(t("leer").replace(/<br>/g,"\n"));return}csvSenden()};
   const c=$("csv");if(c)c.onclick=()=>{
+    if(!D.length){alert(t("leer").replace(/<br>/g,"\n"));return}
     $("out").value=csvText().replace(/^﻿/,"");$("out").style.display="block";$("out").select();
   };
-  const cl=$("clear");if(cl)cl.onclick=()=>{if(confirm(t("confirm_clear"))){D=[];save();render()}};
+  const cl=$("clear");if(cl)cl.onclick=()=>{if(!D.length)return;if(confirm(t("confirm_clear"))){D=[];save();render()}};
   document.querySelectorAll(".del").forEach(b=>b.onclick=()=>{D.splice(+b.dataset.i,1);save();render()});
   document.querySelectorAll(".edit").forEach(b=>b.onclick=()=>{EDIT=+b.dataset.i;view="neu";render()});
 }
