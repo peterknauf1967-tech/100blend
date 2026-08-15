@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>100blend · Bestand übernehmen</title>
+<!--
+  Winzige Übernahme-Seite (wenige KB statt 165 KB App).
+
+  Grund (Peter, 16.08.2026): Lexis iPhone hat beim Scannen des QR-Codes
+  Safaris "เกิดปัญหาตลอดเวลา" gezeigt — die volle App ist beim Verarbeiten des
+  langen Links abgestürzt. Diese Seite lädt keinen Katalog, keine Rezepte und
+  kein Skript ausser dem hier: sie schreibt nur die Mengen in den Speicher und
+  schickt weiter zur App.
+
+  Aufruf:  uebernehmen.html#lade=roh:KN-4,PF-400;tk:WM-333
+-->
+<style>
+  :root{color-scheme:light dark}
+  body{margin:0;padding:20px 16px 40px;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+       background:#faf8f5;color:#26221d;max-width:640px;margin-inline:auto}
+  h1{font-size:19px;margin:0 0 4px}
+  .sub{color:#7a6f5f;font-size:13.5px;margin:0 0 18px}
+  .box{background:#fff;border:1px solid #e6e0d8;border-radius:14px;padding:14px 16px;margin-bottom:14px}
+  .z{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid #f0ece6;font-size:15px}
+  .z:last-child{border-bottom:0}
+  .c{font:700 12px ui-monospace,Menlo,monospace;background:#f0ede8;border-radius:5px;padding:3px 6px}
+  .m{font-weight:700;white-space:nowrap}
+  .tk{color:#1c5389}
+  button{width:100%;padding:16px;font:800 17px inherit;border:0;border-radius:13px;cursor:pointer;
+         background:#26221d;color:#fff;-webkit-appearance:none;margin-bottom:10px}
+  button.zweit{background:#fff;color:#26221d;border:1px solid #d8d1c7;font-weight:600;font-size:15px}
+  .ok{background:#e8f4ec;border-color:#bfe0cc;color:#1f6b40}
+  @media (prefers-color-scheme:dark){
+    body{background:#17150f;color:#efe9e0}
+    .box{background:#221f18;border-color:#39342a}
+    .z{border-color:#2e2a22}
+    .c{background:#302b22}
+    button{background:#efe9e0;color:#17150f}
+    button.zweit{background:#221f18;color:#efe9e0;border-color:#39342a}
+    .ok{background:#1c3527;border-color:#2f5b41;color:#8fd3aa}
+  }
+</style>
+</head>
+<body>
+<h1>📲 Bestand vom PC übernehmen</h1>
+<p class="sub" id="sub">wird gelesen …</p>
+<div id="liste"></div>
+<div id="knopf"></div>
+
+<script>
+(function(){
+  var SKEY = "blend_os_v1";
+  var APP  = "./standos.html?nosw=1";
+
+  function lesen(){
+    var h = (location.hash || "").replace(/^#/, "");
+    var i = h.indexOf("lade=");
+    if (i < 0) return null;
+    var roh = {}, tk = {}, txt;
+    try { txt = decodeURIComponent(h.slice(i + 5)); } catch (e) { txt = h.slice(i + 5); }
+    txt.split(";").forEach(function(teil){
+      var m = teil.split(":");
+      if (m.length < 2) return;
+      var ziel = /^\s*tk\s*$/i.test(m[0]) ? tk : roh;
+      m[1].split(",").forEach(function(paar){
+        var q = paar.split("-");
+        if (q.length < 2) return;
+        var code = q[0].trim().toUpperCase(), menge = parseFloat(q[1]);
+        if (code && menge >= 0) ziel[code] = menge;
+      });
+    });
+    return (Object.keys(roh).length || Object.keys(tk).length) ? {roh: roh, tk: tk} : null;
+  }
+
+  var daten = lesen();
+  var sub = document.getElementById("sub");
+  var liste = document.getElementById("liste");
+  var knopf = document.getElementById("knopf");
+
+  if (!daten) {
+    sub.textContent = "Kein Bestand im Link gefunden.";
+    knopf.innerHTML = '<button class="zweit" id="zurApp">App öffnen</button>';
+    document.getElementById("zurApp").onclick = function(){ location.href = APP; };
+    return;
+  }
+
+  var anz = Object.keys(daten.roh).length + Object.keys(daten.tk).length;
+  sub.textContent = anz + " Positionen. Nichts wird übernommen, bevor du unten tippst.";
+
+  var html = '<div class="box">';
+  Object.keys(daten.roh).forEach(function(c){
+    html += '<div class="z"><span class="c">' + c + '</span><span class="m">' + daten.roh[c] + '</span></div>';
+  });
+  Object.keys(daten.tk).forEach(function(c){
+    html += '<div class="z"><span class="c">' + c + '</span><span class="m tk">🧊 ' + daten.tk[c] + '</span></div>';
+  });
+  liste.innerHTML = html + '</div>';
+
+  knopf.innerHTML = '<button id="ok">✅ Übernehmen</button>' +
+                    '<button class="zweit" id="ab">Abbrechen, nur App öffnen</button>';
+
+  document.getElementById("ab").onclick = function(){ location.href = APP; };
+
+  document.getElementById("ok").onclick = function(){
+    var s;
+    try { s = JSON.parse(localStorage.getItem(SKEY) || "null"); } catch (e) { s = null; }
+    if (!s || typeof s !== "object") {
+      s = {bestand:{}, reift:{}, tk:{}, verarb:[], chargen:[], eigen:[], cfg:{who:"", markt:""}};
+    }
+    s.bestand = s.bestand || {}; s.tk = s.tk || {}; s.reift = s.reift || {};
+    Object.keys(daten.roh).forEach(function(c){
+      if (daten.roh[c] > 0) s.bestand[c] = daten.roh[c]; else delete s.bestand[c];
+    });
+    Object.keys(daten.tk).forEach(function(c){
+      if (daten.tk[c] > 0) { s.tk[c] = daten.tk[c]; delete s.bestand[c]; } else delete s.tk[c];
+    });
+    localStorage.setItem(SKEY, JSON.stringify(s));
+
+    liste.innerHTML = '<div class="box ok"><b>✅ ' + anz + ' Positionen übernommen.</b><br>' +
+                      'Die App öffnet gleich mit dem neuen Bestand.</div>';
+    knopf.innerHTML = '<button id="weiter">App öffnen</button>';
+    document.getElementById("weiter").onclick = function(){ location.href = APP; };
+    setTimeout(function(){ location.href = APP; }, 1200);
+  };
+})();
+</script>
+</body>
+</html>
