@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>100blend · Datenrettung</title>
+<style>
+body{margin:0;background:#faf8f5;color:#1a1a1a;
+ font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif;padding:20px 16px}
+.k{max-width:620px;margin:0 auto}
+h1{font-size:20px;margin:0 0 4px}
+h1 small{display:block;font-size:13.5px;color:#6b6b6b;font-weight:600}
+.box{background:#fff;border:1px solid #e6e2dc;border-radius:12px;padding:13px;margin:12px 0}
+.box.gut{border-color:#c4e2d0;background:#f4faf6}
+.box.leer{border-color:#f0cdc8;background:#fdf4f3}
+.box h3{margin:0 0 6px;font-size:15px}
+.box .zahl{font:800 22px inherit}
+.mini{font-size:12.5px;color:#6b6b6b}
+pre{background:#f6f4f1;border-radius:8px;padding:9px;font:11.5px/1.5 ui-monospace,Menlo,monospace;
+ overflow:auto;max-height:160px;margin:8px 0 0}
+button{border:1px solid #e6e2dc;background:#fff;color:#1a1a1a;padding:12px 15px;border-radius:10px;
+ font:700 15px inherit;cursor:pointer;margin:6px 6px 0 0}
+button.p{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+button.g{background:#2f8f5b;color:#fff;border-color:#2f8f5b}
+textarea{width:100%;height:190px;margin-top:12px;padding:10px;border:1px solid #e6e2dc;border-radius:10px;
+ font:11.5px/1.5 ui-monospace,Menlo,monospace}
+.warn{background:#fffdf5;border:1px solid #ecdfae;border-radius:10px;padding:11px 13px;font-size:14px;margin:12px 0}
+</style>
+</head>
+<body><div class="k">
+<h1>🔎 Datenrettung
+  <small>Was liegt auf DIESEM Gerät? · What is stored on THIS device?</small></h1>
+
+<div class="warn">
+  Diese Seite <b>liest nur</b> und löscht nichts. Sie zeigt alle 100blend-Daten,
+  die dieser Browser gespeichert hat — auch die der älteren App-Fassungen.
+</div>
+
+<div id="ergebnis">…</div>
+
+<div id="aktionen"></div>
+<textarea id="out" style="display:none" readonly></textarea>
+
+<script>
+var KEYS = {
+  "blend_os_v1":  "Stand-OS (die neue App)",
+  "bl_bestand2":  "alte Bestandsliste — Mengen",
+  "bl_bestand_extra": "alte Bestandsliste — selbst angelegte Zutaten",
+  "bl_einkauf1":  "alte Einkaufs-App — Chargen",
+  "bl_user":      "Benutzer",
+  "blend_user":   "Benutzer (neu)",
+  "bl_who":       "Name",
+  "bl_markt":     "Markt",
+  "bl_code":      "zuletzt gewählte Frucht",
+  "bl_lang":      "Sprache"
+};
+
+function zahl(o){ return o&&typeof o==="object" ? Object.keys(o).length : 0; }
+
+var gefunden = {}, html = "";
+for(var k in KEYS){
+  var roh = null;
+  try{ roh = localStorage.getItem(k); }catch(e){}
+  if(roh===null || roh===""){ continue; }
+  var wert = roh;
+  try{ wert = JSON.parse(roh); }catch(e){}
+  gefunden[k] = wert;
+
+  var info = "";
+  if(k==="blend_os_v1" && wert && typeof wert==="object"){
+    info = "Bestand: <b>"+zahl(wert.bestand)+"</b> Positionen · Gerüstet: <b>"+zahl(wert.tk)
+         +"</b> · Chargen: <b>"+((wert.chargen||[]).length)+"</b> · Rüst-Vorgänge: <b>"+((wert.verarb||[]).length)+"</b>";
+  } else if(k==="bl_bestand2" && wert && typeof wert==="object"){
+    info = "<b>"+zahl(wert)+"</b> erfasste Mengen";
+  } else if(Array.isArray(wert)){
+    info = "<b>"+wert.length+"</b> Einträge";
+  } else {
+    info = "<b>"+String(roh).slice(0,60)+"</b>";
+  }
+
+  var voll = (k==="blend_os_v1") ? (zahl(wert&&wert.bestand)>0) : true;
+  html += '<div class="box '+(voll?"gut":"leer")+'"><h3>'+KEYS[k]+'</h3>'
+        + '<div>'+info+'</div>'
+        + '<div class="mini">Speicherplatz: '+k+' · '+Math.round(roh.length/1024*10)/10+' KB</div>'
+        + '<pre>'+String(roh).slice(0,400).replace(/</g,"&lt;")+(roh.length>400?" …":"")+'</pre></div>';
+}
+
+if(!html) html = '<div class="box leer"><h3>Nichts gefunden</h3>'
+  + '<div>Dieser Browser hat keine 100blend-Daten gespeichert.</div>'
+  + '<div class="mini">Dann wurde die Inventur auf einem <b>anderen Gerät</b> oder in einem '
+  + '<b>anderen Browser</b> erfasst — oder lokal am PC in der Datei bestand.html.</div></div>';
+
+document.getElementById("ergebnis").innerHTML = html;
+
+/* --- Aktionen --- */
+var akt = "";
+if(gefunden["bl_bestand2"] && Object.keys(gefunden["bl_bestand2"]).length){
+  akt += '<button class="g" id="uebernehmen">→ Alte Mengen in Stand-OS übernehmen</button>';
+}
+akt += '<button class="p" id="alles">Alles als Text anzeigen (zum Kopieren)</button>';
+document.getElementById("aktionen").innerHTML = akt;
+
+var ue = document.getElementById("uebernehmen");
+if(ue) ue.onclick = function(){
+  var alt = gefunden["bl_bestand2"] || {};
+  var neu = gefunden["blend_os_v1"] || {bestand:{},tk:{},verarb:[],chargen:[],eigen:[],cfg:{}};
+  if(!neu.bestand) neu.bestand = {};
+  var n = 0;
+  /* alter Schlüssel war "g0_3" (Gruppe_Index) oder "x_<id>" — beides ohne Zutaten-Code.
+     Deshalb nur übernehmen, was schon wie ein Code aussieht; der Rest wird als Text gezeigt. */
+  for(var k in alt){
+    if(/^[A-Z]{2,3}[0-9]?$/.test(k)){ neu.bestand[k] = alt[k]; n++; }
+  }
+  localStorage.setItem("blend_os_v1", JSON.stringify(neu));
+  alert(n+" Positionen übernommen. Rest siehe Textausgabe — die alten Schlüssel enthielten keinen Zutaten-Code.");
+  location.reload();
+};
+
+document.getElementById("alles").onclick = function(){
+  var t = "100blend Datenrettung — " + new Date().toISOString().slice(0,16).replace("T"," ") + "\n\n";
+  for(var k in gefunden){
+    t += "=== " + k + " (" + (KEYS[k]||"") + ")\n"
+       + (typeof gefunden[k]==="object" ? JSON.stringify(gefunden[k],null,1) : gefunden[k]) + "\n\n";
+  }
+  var o = document.getElementById("out");
+  o.value = t; o.style.display = "block"; o.select();
+};
+</script>
+</div></body>
+</html>
