@@ -1,0 +1,2439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg:#0f1116; --panel:#191d26; --panel2:#222732; --line:#2c333f;
+    --txt:#eef1f6; --dim:#9aa3b2; --orange:#FF6600; --orange2:#ff8c3a;
+    --green:#37d67a; --red:#ff5d5d; --blue:#4ea3ff; --r:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--txt);font-family:"Segoe UI",system-ui,sans-serif;font-size:16px}
+  button{font-family:inherit;cursor:pointer;border:none}
+  .hidden{display:none!important}
+
+  header{display:flex;align-items:center;gap:14px;padding:12px 18px;background:linear-gradient(100deg,#1c1306,#191d26 60%);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;flex-wrap:wrap}
+  header .logo{font-size:24px;font-weight:900}.logo span{color:var(--orange)}
+  header .loc{font-size:12px;color:var(--dim)}
+  .langs{display:flex;gap:5px;margin-left:6px}
+  .lang{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-weight:800;font-size:13px}
+  .lang.on{background:#fff;color:#111;border-color:#fff}
+  header .tabs{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .tab{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-weight:700;font-size:14px}
+  .tab.on{background:var(--orange);color:#1a0d00;border-color:var(--orange)}
+
+  main{padding:16px;max-width:1280px;margin:0 auto}
+  .row{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
+  @media(max-width:900px){.row{grid-template-columns:1fr}}
+
+  .menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .item{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;text-align:left;position:relative;transition:.1s;overflow:hidden}
+  .item:active{transform:scale(.97)}
+  .item .bar{position:absolute;left:0;top:0;bottom:0;width:7px}
+  .item .nr{font-size:12px;color:var(--orange2);font-weight:800;padding-left:4px}
+  .item .nm{font-weight:800;font-size:15px;line-height:1.2;margin:3px 0 3px;min-height:36px;color:#ffffff;padding-left:4px}
+  .item .desc{font-size:11px;color:#b6bfce;margin:0 0 7px;min-height:26px;padding-left:4px}
+  .item .meta{display:flex;justify-content:space-between;align-items:flex-end;padding-left:4px}
+  .item .pr{font-size:19px;font-weight:900;color:var(--orange2)}
+  .item .sz{font-size:11px;color:var(--dim)}
+  .item .prov{color:var(--dim);font-size:11px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:12px}
+  .ol{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:42vh;overflow:auto}
+  .oli{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .oli .t{font-size:14px;font-weight:700}.oli .t small{color:var(--dim);font-weight:400}
+  .qty{display:flex;align-items:center;gap:8px}
+  .qty button{width:30px;height:30px;border-radius:8px;background:var(--panel);border:1px solid var(--line);color:var(--txt);font-size:18px;font-weight:800}
+  .oli .lp{font-weight:800;min-width:62px;text-align:right}
+  .empty{color:var(--dim);font-size:14px;padding:14px 0;text-align:center}
+  .sum{display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);padding-top:12px;margin-top:4px}
+  .sum .big{font-size:30px;font-weight:900}
+  .cust{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:14px;display:flex;align-items:center;gap:8px}
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .btn{padding:14px;border-radius:12px;font-weight:800;font-size:16px;background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+  .btn.pay{background:var(--orange);color:#1a0d00;grid-column:1/-1;font-size:19px}
+  .btn.green{background:var(--green);color:#06210f}
+  .btn.ghost{background:transparent}
+  .btn.red{background:transparent;border-color:#5a2a2a;color:var(--red)}
+  .btn:disabled{opacity:.4}
+
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}
+  .modal.on{display:flex}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:18px;max-width:430px;width:100%;max-height:92vh;overflow:auto;padding:20px}
+  .box h3{font-size:20px;margin-bottom:6px}
+  .box .x{float:right;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:5px 11px;font-weight:800}
+  .qrwrap{text-align:center;margin:14px 0}
+  .qrwrap img{width:240px;height:240px;background:#fff;border-radius:12px;padding:8px}
+  .field{margin:10px 0}
+  .field label{display:block;font-size:13px;color:var(--dim);margin-bottom:4px}
+  .field input,.field select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px;font-size:16px}
+  .chk{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--dim);margin:10px 0}
+  .chk input{margin-top:3px}
+
+  .bon{background:#fff;color:#111;border-radius:10px;padding:16px;font-family:"Courier New",monospace;font-size:13px;line-height:1.5}
+  .bon hr{border:none;border-top:1px dashed #999;margin:7px 0}
+  .bon .c{text-align:center}.bon .b{font-weight:800}
+  .bon table{width:100%}.bon td{padding:1px 0}.bon td:last-child{text-align:right}
+  .bon .qrc{text-align:center;margin-top:8px}.bon .qrc img{width:120px;height:120px}
+
+  .prep h4{font-size:15px;margin:12px 0 4px;border-bottom:1px solid var(--line);padding-bottom:3px}
+  .prep .grp{margin:6px 0}
+  .prep .gl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+  .prep ul{list-style:none;margin:3px 0}
+  .prep li{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dotted var(--line);font-size:14px}
+  .tag{display:inline-block;font-size:10px;font-weight:800;border-radius:6px;padding:2px 7px;margin-left:6px}
+
+  .list{display:flex;flex-direction:column;gap:8px}
+  .lrow{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .lrow .sub{font-size:12px;color:var(--dim)}
+  .stamps{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+  .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--orange);display:flex;align-items:center;justify-content:center;font-size:11px}
+  .dot.on{background:var(--orange);color:#1a0d00}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .kpi .k{font-size:11px;color:var(--dim);text-transform:uppercase}
+  .kpi .v{font-size:22px;font-weight:900;margin-top:3px}
+  .seduce{background:linear-gradient(135deg,#2a1606,#191d26);border:1px solid #5a3a14;border-radius:12px;padding:14px;margin-bottom:14px;line-height:1.6}
+  .seduce b{color:var(--orange2)}
+  .note{font-size:12px;color:var(--dim);margin-top:10px}
+  .free{background:var(--green);color:#06210f;border-radius:10px;padding:10px;text-align:center;font-weight:800;margin:10px 0}
+  .grleiste{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+  .grleiste .gr{padding:9px 14px;border:1px solid #d8d1c7;background:#fff;border-radius:10px;
+    font:700 14px inherit;cursor:pointer;color:#40352a}
+  .grleiste .gr.on{background:#1b4332;color:#fff;border-color:#1b4332}
+  .grleiste .trenner{width:1px;height:24px;background:#ddd;margin:0 4px}
+  .item .db{font:700 11px inherit;color:#2f855a;margin-top:2px}
+  .item .db.warn{color:#a4262c}
+  .item .stern{color:#d4a72c}
+</style>
+<meta name="robots" content="noindex,nofollow">
+<title>100blend · Kasse</title>
+<meta name="theme-color" content="#1a1a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kasse">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+</head>
+<body>
+
+<header>
+  <div><div class="logo">100<span>blend</span></div><div class="loc" id="locline">Stand —</div></div>
+  <div class="langs">
+    <button class="lang on" data-l="de" onclick="setLang('de')">DE</button>
+    <button class="lang" data-l="th" onclick="setLang('th')">TH</button>
+    <button class="lang" data-l="en" onclick="setLang('en')">EN</button>
+  </div>
+  <div class="tabs">
+    <button class="tab" id="syncchip" onclick="tab('tag')" title="Gemeinsamer Speicher"
+      style="border:0;background:transparent;font:700 12px inherit;padding:0 8px;cursor:pointer"></button>
+    <button class="tab on" data-t="kasse" onclick="tab('kasse')">🛒 <span data-i18n="tab_sell"></span></button>
+    <button class="tab" data-t="kunde" onclick="tab('kunde')">🎟️ <span data-i18n="tab_members"></span></button>
+    <button class="tab" data-t="tag" onclick="tab('tag')">📊 <span data-i18n="tab_day"></span></button>
+    <button class="tab" data-t="setup" onclick="tab('setup')">⚙️</button>
+  </div>
+</header>
+
+<main>
+  <!-- KASSE -->
+  <section id="v-kasse">
+    <div class="row">
+      <div>
+        <div class="cust" id="custline"></div>
+        <div id="groessenleiste" class="grleiste"></div>
+        <div class="menu" id="menu"></div>
+      </div>
+      <div class="panel">
+        <h2>🧾 <span data-i18n="order_h"></span></h2>
+        <div class="ol" id="orderlist"></div>
+        <div class="sum"><span data-i18n="sum"></span><span class="big" id="total">0 ฿</span></div>
+        <div class="actions">
+          <button class="btn" onclick="showPrep()" id="btnPrep" disabled>👩‍🍳 <span data-i18n="btn_prep"></span></button>
+          <button class="btn red" onclick="clearOrder()">🗑️ <span data-i18n="btn_clear"></span></button>
+          <button class="btn pay" onclick="pay()" id="btnPay" disabled>💳 <span data-i18n="btn_pay"></span></button>
+        </div>
+        <div class="note" data-i18n="tap_hint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KUNDEN -->
+  <section id="v-kunde" class="hidden">
+    <div class="row">
+      <div class="panel">
+        <div class="seduce">
+          🎁 <b data-i18n="seduce_h"></b><br>
+          <span data-i18n="seduce_perks"></span><br>
+          <span class="note" data-i18n="seduce_sub"></span>
+        </div>
+        <h2>➕ <span data-i18n="newmember_h"></span></h2>
+        <div class="field"><label data-i18n="lbl_name"></label><input id="c-name"></div>
+        <div class="field"><label data-i18n="lbl_bday"></label><input id="c-bday" type="date"></div>
+        <div class="field"><label data-i18n="lbl_contact"></label><input id="c-contact" placeholder="+66… / mail@…"></div>
+        <label class="chk"><input type="checkbox" id="c-pdpa"><span data-i18n="pdpa"></span></label>
+        <button class="btn green" style="width:100%" onclick="addCustomer()">✅ <span data-i18n="btn_createmember"></span></button>
+      </div>
+      <div class="panel">
+        <h2>🎟️ <span data-i18n="members_h"></span> <span style="color:var(--dim);font-weight:400" id="custcount"></span></h2>
+        <div class="field"><input id="c-search" data-i18n-ph="ph_search" oninput="renderCustomers()"></div>
+        <div class="list" id="custlist"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAG -->
+  <section id="v-tag" class="hidden">
+    <div class="kpis">
+      <div class="kpi"><div class="k" data-i18n="kpi_rev"></div><div class="v" id="d-ums">0 ฿</div></div>
+      <div class="kpi"><div class="k" data-i18n="kpi_cups"></div><div class="v" id="d-cnt">0</div></div>
+      <div class="kpi"><div class="k" data-i18n="kpi_avg"></div><div class="v" id="d-avg">0 ฿</div></div>
+      <div class="kpi"><div class="k" data-i18n="kpi_db"></div><div class="v" id="d-db">0 ฿</div></div>
+    </div>
+    <div class="panel" id="lagerpanel" style="display:none">
+      <h2>📦 <span data-i18n="stock_h"></span></h2>
+      <div class="list" id="lagerlist"></div>
+      <div class="note" data-i18n="stock_note"></div>
+    </div>
+    <div class="panel">
+      <h2>📈 <span data-i18n="sales_h"></span></h2>
+      <div class="list" id="saleslist"></div>
+      <div class="actions" style="grid-template-columns:1fr 1fr 1fr;margin-top:14px">
+        <button class="btn" onclick="exportCSV()">⬇️ <span data-i18n="btn_export"></span></button>
+        <button class="btn" onclick="copyKIZ()">📋 <span data-i18n="btn_copykiz"></span></button>
+        <button class="btn" onclick="sendeWarteschlange(true)">☁️ <span data-i18n="btn_sync"></span></button>
+        <button class="btn red" onclick="closeDay()">🔒 <span data-i18n="btn_closeday"></span></button>
+      </div>
+      <div class="note" data-i18n="db_note"></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="v-setup" class="hidden">
+    <div class="panel" style="max-width:560px">
+      <h2>⚙️ <span data-i18n="settings_h"></span></h2>
+      <div class="field"><label data-i18n="lbl_locnr"></label><input id="s-loc" placeholder="01"></div>
+      <div class="field"><label data-i18n="lbl_mname"></label><input id="s-name" maxlength="25" placeholder="100BLEND"></div>
+      <div class="field"><label data-i18n="lbl_city"></label><input id="s-city" placeholder="PATTAYA"></div>
+      <div class="field"><label data-i18n="lbl_pptype"></label>
+        <select id="s-pptype"><option value="phone" data-i18n="opt_phone"></option><option value="natid" data-i18n="opt_natid"></option></select></div>
+      <div class="field"><label data-i18n="lbl_ppid"></label><input id="s-ppid" placeholder="0812345678"></div>
+      <div class="field"><label data-i18n="lbl_sync"></label><input id="s-sync" placeholder="https://script.google.com/…/exec"></div>
+      <button class="btn green" style="width:100%" onclick="saveSetup()">💾 <span data-i18n="btn_save"></span></button>
+      <div class="note" data-i18n="setup_note"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Bezahlen -->
+<div class="modal" id="m-pay"><div class="box">
+  <button class="x" onclick="off('m-pay')">✕</button>
+  <h3>💳 <span data-i18n="pay_h"></span></h3>
+  <div style="font-size:34px;font-weight:900;text-align:center;margin:6px 0" id="pay-amount">0 ฿</div>
+  <div class="qrwrap"><img id="pay-qr" alt="PromptPay QR"><div class="note" id="pay-recv"></div></div>
+  <div class="actions" style="grid-template-columns:1fr 1fr">
+    <button class="btn green" onclick="confirmSale('PromptPay')">✅ <span data-i18n="btn_pp_paid"></span></button>
+    <button class="btn" onclick="confirmSale('Bar')">💵 <span data-i18n="btn_cash_paid"></span></button>
+  </div>
+</div></div>
+
+<!-- Bon -->
+<div class="modal" id="m-bon"><div class="box">
+  <button class="x" onclick="off('m-bon')">✕</button>
+  <h3>🧾 <span data-i18n="bon_h"></span></h3>
+  <div class="bon" id="bon"></div>
+  <div class="actions" style="grid-template-columns:1fr 1fr;margin-top:14px">
+    <button class="btn" onclick="window.print()">🖨️ <span data-i18n="btn_print"></span></button>
+    <button class="btn green" onclick="off('m-bon');newSale()"><span data-i18n="btn_next"></span> ▶</button>
+  </div>
+</div></div>
+
+<!-- Zubereitung -->
+<div class="modal" id="m-prep"><div class="box">
+  <button class="x" onclick="off('m-prep')">✕</button>
+  <h3>👩‍🍳 <span data-i18n="prep_h"></span></h3>
+  <div class="note" data-i18n="prep_note"></div>
+  <div class="prep" id="prep"></div>
+  <button class="btn" style="width:100%;margin-top:12px" onclick="window.print()">🖨️ <span data-i18n="btn_print"></span></button>
+</div></div>
+
+<!-- Ausweis -->
+<div class="modal" id="m-card"><div class="box">
+  <button class="x" onclick="off('m-card')">✕</button>
+  <h3>🎟️ <span data-i18n="card_h"></span></h3>
+  <div id="card-body"></div>
+</div></div>
+
+<script>
+/* =================== ÜBERSETZUNGEN =================== */
+const T={
+ de:{tab_sell:"Kasse",tab_members:"Kunden",tab_day:"Tag",order_h:"Bestellung",sum:"Summe",btn_prep:"Zubereitung",btn_clear:"Leeren",btn_pay:"Kassieren",
+  tap_hint:"Antippen legt in den Warenkorb. Mehrfach = Menge erhöhen.",empty_order:"Noch nichts gewählt — links antippen.",
+  guest:"Laufkunde",choose_member:"Member wählen / anmelden",remove:"entfernen",stamp:"Stempel",free_short:"Gratis",
+  seduce_h:"100blend-Member werden — lohnt sich sofort:",seduce_perks:"⭐ Jeder <b>10. Smoothie GRATIS</b> · 🎂 <b>Geschenk zum Geburtstag</b> · 📲 exklusive Aktionen.",seduce_sub:"Nur Name, Geburtstag & WhatsApp/E-Mail — in 20 Sekunden dabei.",
+  newmember_h:"Neuen Member anmelden",lbl_name:"Name / Spitzname",lbl_bday:"Geburtstag 🎂",lbl_contact:"WhatsApp oder E-Mail",
+  pdpa:"Einwilligung (PDPA): 100blend / Luxfox darf mich per WhatsApp/E-Mail zu Aktionen & Geburtstag kontaktieren. Jederzeit widerrufbar.",
+  btn_createmember:"Member anlegen + Ausweis-QR",members_h:"Member",ph_search:"🔍 Name / Kontakt / ID suchen…",card_btn:"Ausweis",choose_btn:"Wählen",no_members:"Keine Member gefunden.",
+  membercard:"Member-Ausweis",free_open:"Gratis-Standard-Smoothie offen",card_note:"Bei jedem 10. Smoothie 1 Standard-Smoothie (Nr. 09–12) gratis. QR = digitaler Ausweis oder ausdrucken.",print_card:"Ausweis drucken",
+  kpi_rev:"Umsatz heute",kpi_cups:"Becher",kpi_avg:"Ø-Bon",kpi_db:"Deckungsbeitrag*",sales_h:"Verkäufe heute",no_sales:"Heute noch keine Verkäufe.",
+  btn_export:"CSV exportieren",btn_copykiz:"für KI-Zentrale kopieren",btn_closeday:"Tag abschließen",db_note:"*DB = Umsatz − geschätzter Wareneinsatz laut Rezept-COGS. Teils ⚠ vorläufig.",
+  settings_h:"Einstellungen",lbl_locnr:"Standort-Nummer",lbl_mname:"Händlername (Bon/QR, max 25)",lbl_city:"Stadt",lbl_pptype:"PromptPay-Typ",lbl_ppid:"PromptPay-ID (Empfänger)",btn_save:"Speichern",
+  opt_phone:"Handynummer",opt_natid:"Steuer-/Personal-ID (13-stellig)",setup_note:"⚠️ Ohne echte PromptPay-ID erzeugt der QR nur einen Test-Code. Empfänger & Betrag stecken dann im QR.",
+  pay_h:"Bezahlen",btn_pp_paid:"PromptPay bezahlt",btn_cash_paid:"Bar bezahlt",receiver:"Empfänger",ppid_notset:"⚠ nicht gesetzt",
+  bon_h:"Kassenbon",btn_print:"Drucken",btn_next:"Nächster Kunde",
+  prep_h:"Zubereitung",prep_note:"Interne Liste — Gramm pro Becher, nach Zustand getrennt. 🔒 nicht an Kunden zeigen.",
+  grp_fl:"Flüssig",grp_tk:"Gefroren (TK)",grp_fest:"Fest / frisch",grp_wirk:"Wirkstoffe",
+  mix_line:"Mixen: harte Dinge + Flüssigkeit zuerst (Taste 60″) → TK-Pack 2–3× PULSE, dann 45″.",
+  card_h:"Kundenausweis",no:"Nr.",halal:"Halal · Bio · ohne Zuckerzusatz",join_bon:"Member werden: jeder 10. gratis + Geburtstagsgeschenk — QR scannen:",thanks:"Danke! 🦊",
+  a_fill:"Name und WhatsApp/E-Mail bitte ausfüllen.",a_pdpa:"Bitte die PDPA-Einwilligung bestätigen.",a_saved:"Gespeichert.",a_copied:"Stand-Live-Daten kopiert.",
+  lbl_sync:"Gemeinsamer Speicher (URL)",btn_sync:"Jetzt senden",
+  stock_h:"Bestand — heute verbraucht",stock_note:"Wird beim Kassieren automatisch abgezogen. ⚠ = der Bestand hat rechnerisch nicht gereicht: nachwiegen und im Bestand korrigieren.",
+  sync_off:"kein gemeinsamer Speicher",sync_ok:"gesendet",sync_wait:"warten",sync_err:"nicht gesendet",
+  sync_old:"Der gemeinsame Speicher kennt noch keine Verkäufe. Neue Server-Version in Apps Script einspielen (_sync-server.gs). Die Bons bleiben so lange gespeichert und gehen danach automatisch raus.",
+  stock_short:"Bestand hat nicht gereicht"},
+
+ th:{tab_sell:"ขาย",tab_members:"สมาชิก",tab_day:"วันนี้",order_h:"รายการสั่ง",sum:"รวม",btn_prep:"วิธีทำ",btn_clear:"ล้าง",btn_pay:"รับเงิน",
+  tap_hint:"แตะเพื่อเพิ่มลงตะกร้า แตะซ้ำเพื่อเพิ่มจำนวน",empty_order:"ยังไม่ได้เลือก — แตะเมนูด้านซ้าย",
+  guest:"ลูกค้าทั่วไป",choose_member:"เลือก/สมัครสมาชิก",remove:"เอาออก",stamp:"แสตมป์",free_short:"ฟรี",
+  seduce_h:"เป็นสมาชิก 100blend — คุ้มทันที:",seduce_perks:"⭐ <b>ทุกแก้วที่ 10 ฟรี</b> · 🎂 <b>ของขวัญวันเกิด</b> · 📲 โปรพิเศษเฉพาะสมาชิก",seduce_sub:"แค่ชื่อ วันเกิด และ WhatsApp/อีเมล — สมัครใน 20 วินาที",
+  newmember_h:"สมัครสมาชิกใหม่",lbl_name:"ชื่อ / ชื่อเล่น",lbl_bday:"วันเกิด 🎂",lbl_contact:"WhatsApp หรือ อีเมล",
+  pdpa:"ยินยอม (PDPA): 100blend/Luxfox ติดต่อฉันทาง WhatsApp/อีเมล เรื่องโปรโมชั่นและวันเกิดได้ ยกเลิกได้ทุกเมื่อ",
+  btn_createmember:"สร้างสมาชิก + QR บัตร",members_h:"สมาชิก",ph_search:"🔍 ค้นหา ชื่อ/ติดต่อ/ไอดี…",card_btn:"บัตร",choose_btn:"เลือก",no_members:"ไม่พบสมาชิก",
+  membercard:"บัตรสมาชิก",free_open:"สมูทตี้สแตนดาร์ดฟรีที่ยังไม่ได้ใช้",card_note:"ทุกแก้วที่ 10 รับสมูทตี้สแตนดาร์ด (เบอร์ 09–12) ฟรี 1 แก้ว · QR = บัตรในมือถือ หรือพิมพ์ออกมา",print_card:"พิมพ์บัตร",
+  kpi_rev:"ยอดขายวันนี้",kpi_cups:"แก้ว",kpi_avg:"เฉลี่ย/บิล",kpi_db:"กำไรเบื้องต้น*",sales_h:"การขายวันนี้",no_sales:"วันนี้ยังไม่มีการขาย",
+  btn_export:"ส่งออก CSV",btn_copykiz:"คัดลอกไปศูนย์ KI",btn_closeday:"ปิดยอดวัน",db_note:"*กำไร = ยอดขาย − ต้นทุนวัตถุดิบโดยประมาณ บางส่วน ⚠ ยังไม่แน่นอน",
+  settings_h:"ตั้งค่า",lbl_locnr:"หมายเลขสาขา",lbl_mname:"ชื่อร้าน (บิล/QR สูงสุด 25)",lbl_city:"เมือง",lbl_pptype:"ประเภทพร้อมเพย์",lbl_ppid:"พร้อมเพย์ไอดี (ผู้รับเงิน)",btn_save:"บันทึก",
+  opt_phone:"เบอร์มือถือ",opt_natid:"เลขประจำตัว/ผู้เสียภาษี (13 หลัก)",setup_note:"⚠️ ถ้ายังไม่ใส่พร้อมเพย์ไอดีจริง QR จะเป็นโค้ดทดสอบ · ผู้รับและจำนวนเงินจะอยู่ใน QR",
+  pay_h:"ชำระเงิน",btn_pp_paid:"จ่ายพร้อมเพย์แล้ว",btn_cash_paid:"จ่ายเงินสดแล้ว",receiver:"ผู้รับเงิน",ppid_notset:"⚠ ยังไม่ตั้ง",
+  bon_h:"ใบเสร็จ",btn_print:"พิมพ์",btn_next:"ลูกค้าคนถัดไป",
+  prep_h:"วิธีทำ",prep_note:"รายการภายใน — กรัมต่อแก้ว แยกตามชนิด 🔒 ห้ามให้ลูกค้าดู",
+  grp_fl:"ของเหลว",grp_tk:"แช่แข็ง",grp_fest:"ของแข็ง / สด",grp_wirk:"สารออกฤทธิ์",
+  mix_line:"ปั่น: ของแข็ง+ของเหลวก่อน (ปุ่ม 60″) → ใส่ถุงแช่แข็ง กด PULSE 2–3 ครั้ง แล้ว 45″",
+  card_h:"บัตรสมาชิก",no:"เบอร์",halal:"ฮาลาล · ออร์แกนิก · ไม่เติมน้ำตาล",join_bon:"สมัครสมาชิก: ทุกแก้วที่ 10 ฟรี + ของขวัญวันเกิด — สแกน QR:",thanks:"ขอบคุณค่ะ 🦊",
+  a_fill:"กรุณากรอกชื่อ และ WhatsApp/อีเมล",a_pdpa:"กรุณายืนยันการยินยอม PDPA",a_saved:"บันทึกแล้ว",a_copied:"คัดลอกข้อมูลแล้ว",
+  lbl_sync:"ที่เก็บข้อมูลร่วม (URL)",btn_sync:"ส่งเดี๋ยวนี้",
+  stock_h:"สต๊อก — ใช้ไปวันนี้",stock_note:"ตัดสต๊อกอัตโนมัติเมื่อรับเงิน · ⚠ = สต๊อกไม่พอตามการคำนวณ ให้ชั่งใหม่แล้วแก้ในระบบสต๊อก",
+  sync_off:"ยังไม่ตั้งที่เก็บข้อมูลร่วม",sync_ok:"ส่งแล้ว",sync_wait:"รอส่ง",sync_err:"ยังไม่ได้ส่ง",
+  sync_old:"ที่เก็บข้อมูลร่วมยังไม่รองรับการขาย ต้องอัปเดตเซิร์ฟเวอร์ก่อน · บิลจะถูกเก็บไว้และส่งอัตโนมัติภายหลัง",
+  stock_short:"สต๊อกไม่พอ"},
+
+ en:{tab_sell:"Sell",tab_members:"Members",tab_day:"Day",order_h:"Order",sum:"Total",btn_prep:"Recipe",btn_clear:"Clear",btn_pay:"Charge",
+  tap_hint:"Tap to add to cart. Tap again to increase quantity.",empty_order:"Nothing selected — tap the menu on the left.",
+  guest:"Guest",choose_member:"Choose / sign up member",remove:"remove",stamp:"Stamp",free_short:"Free",
+  seduce_h:"Become a 100blend member — instant perks:",seduce_perks:"⭐ <b>Every 10th smoothie FREE</b> · 🎂 <b>birthday gift</b> · 📲 members-only deals.",seduce_sub:"Just name, birthday & WhatsApp/e-mail — done in 20 seconds.",
+  newmember_h:"Sign up new member",lbl_name:"Name / nickname",lbl_bday:"Birthday 🎂",lbl_contact:"WhatsApp or e-mail",
+  pdpa:"Consent (PDPA): 100blend / Luxfox may contact me via WhatsApp/e-mail about promotions & birthday. Revocable anytime.",
+  btn_createmember:"Create member + card QR",members_h:"Members",ph_search:"🔍 Search name / contact / ID…",card_btn:"Card",choose_btn:"Choose",no_members:"No members found.",
+  membercard:"Member card",free_open:"free standard smoothie available",card_note:"Every 10th smoothie = 1 standard smoothie (No. 09–12) free. QR = digital card or print it.",print_card:"Print card",
+  kpi_rev:"Revenue today",kpi_cups:"Cups",kpi_avg:"Avg ticket",kpi_db:"Gross margin*",sales_h:"Sales today",no_sales:"No sales yet today.",
+  btn_export:"Export CSV",btn_copykiz:"copy for KI-Zentrale",btn_closeday:"Close day",db_note:"*Margin = revenue − estimated ingredient cost. Partly ⚠ provisional.",
+  settings_h:"Settings",lbl_locnr:"Location number",lbl_mname:"Merchant name (receipt/QR, max 25)",lbl_city:"City",lbl_pptype:"PromptPay type",lbl_ppid:"PromptPay ID (receiver)",btn_save:"Save",
+  opt_phone:"Mobile number",opt_natid:"Tax/National ID (13 digits)",setup_note:"⚠️ Without a real PromptPay ID the QR is only a test code. Receiver & amount are embedded in the QR.",
+  pay_h:"Pay",btn_pp_paid:"PromptPay paid",btn_cash_paid:"Cash paid",receiver:"Receiver",ppid_notset:"⚠ not set",
+  bon_h:"Receipt",btn_print:"Print",btn_next:"Next customer",
+  prep_h:"Preparation",prep_note:"Internal list — grams per cup, grouped by type. 🔒 do not show customers.",
+  grp_fl:"Liquid",grp_tk:"Frozen",grp_fest:"Solid / fresh",grp_wirk:"Actives",
+  mix_line:"Blend: hard items + liquid first (button 60″) → frozen pack, PULSE 2–3×, then 45″.",
+  card_h:"Member card",no:"No.",halal:"Halal · Organic · no added sugar",join_bon:"Join: every 10th free + birthday gift — scan QR:",thanks:"Thank you! 🦊",
+  a_fill:"Please fill in name and WhatsApp/e-mail.",a_pdpa:"Please confirm the PDPA consent.",a_saved:"Saved.",a_copied:"Stand-live data copied.",
+  lbl_sync:"Shared storage (URL)",btn_sync:"Send now",
+  stock_h:"Stock — used today",stock_note:"Deducted automatically when charging. ⚠ = stock did not cover it on paper: re-weigh and correct in the stock app.",
+  sync_off:"no shared storage",sync_ok:"sent",sync_wait:"pending",sync_err:"not sent",
+  sync_old:"The shared storage does not know about sales yet. Deploy the new server version (_sync-server.gs). Receipts are kept and sent automatically afterwards.",
+  stock_short:"stock did not cover it"}
+};
+
+/* desc je Smoothie (kurz) — Markennamen bleiben gleich */
+const DESC={
+ "01":{de:"Morgen-Booster, spritzig",th:"ปลุกเช้า เปรี้ยวสดชื่น",en:"Zesty morning booster"},
+ "02":{de:"Sport, cremig-nussig",th:"พลังกีฬา ครีมมี่ถั่ว",en:"Creamy protein power"},
+ "03":{de:"Abend/Schlaf, Pandan",th:"ผ่อนคลายก่อนนอน ใบเตย",en:"Calming pandan nightcap"},
+ "04":{de:"Detox, grün-frisch",th:"ดีท็อกซ์ เขียวสดชื่น",en:"Fresh green cleanse"},
+ "05":{de:"Zellschutz, beerig",th:"ชะลอวัย เบอร์รี่",en:"Cell-protect berry"},
+ "06":{de:"Beauty, Kollagen",th:"ผิวสวย คอลลาเจน",en:"Beauty collagen berry"},
+ "07":{de:"Schoko, Magnesium",th:"ช็อกโกแลต แมกนีเซียม",en:"Choco antioxidant"},
+ "08":{de:"Maßgeschneidert",th:"เฉพาะคุณ ตามผลเลือด",en:"Bespoke by blood test"},
+ "09":{de:"Bestseller, tropisch",th:"มะม่วง หวานหอม",en:"Tropical mango"},
+ "10":{de:"Pink, erfrischend",th:"แก้วมังกร สีชมพู",en:"Pink dragon fruit"},
+ "11":{de:"ultra-cremig",th:"อะโวคาโด เนียนนุ่ม",en:"Creamy avocado"},
+ "12":{de:"Hitze-Killer",th:"แตงโม มินต์ เย็นชื่นใจ",en:"Watermelon-mint cooler"}
+};
+
+/* Zutaten-Glossar (TH/EN) — von Lexi/Native gegenlesen lassen */
+const ING={
+ "grüner/Jasmintee (abgek.)":{th:"ชาเขียว/ชามะลิ (เย็น)",en:"green/jasmine tea (cooled)"},
+ "Sonnenblumenkerne (roh)":{th:"เมล็ดทานตะวัน (ดิบ)",en:"sunflower seeds (raw)"},
+ "Sonnenblumenkerne":{th:"เมล็ดทานตะวัน",en:"sunflower seeds"},
+ "Zitronengras (innen)":{th:"ตะไคร้ (ส่วนใน)",en:"lemongrass (inner)"},
+ "Galgant-Scheibe":{th:"ข่า (แว่น)",en:"galangal slice"},
+ "Seidentofu":{th:"เต้าหู้นิ่ม (เต้าหู้ไข่)",en:"silken tofu"},
+ "Passionsfrucht":{th:"เสาวรส",en:"passion fruit"},
+ "Ananas":{th:"สับปะรด",en:"pineapple"},
+ "Kokoswasser":{th:"น้ำมะพร้าว",en:"coconut water"},
+ "Kürbiskerne (roh)":{th:"เมล็ดฟักทอง (ดิบ)",en:"pumpkin seeds (raw)"},
+ "Minzblätter":{th:"ใบสะระแหน่",en:"mint leaves"},
+ "Mangostan":{th:"มังคุด",en:"mangosteen"},
+ "Banane":{th:"กล้วย",en:"banana"},
+ "Banane (reif)":{th:"กล้วยสุก",en:"ripe banana"},
+ "Pandan-Wasser":{th:"น้ำใบเตย",en:"pandan water"},
+ "Ceylon-Zimt":{th:"อบเชยซีลอน",en:"Ceylon cinnamon"},
+ "kaltes Wasser":{th:"น้ำเย็น",en:"cold water"},
+ "Limettensaft":{th:"น้ำมะนาว",en:"lime juice"},
+ "Ingwer":{th:"ขิง",en:"ginger"},
+ "weiße Drachenfrucht":{th:"แก้วมังกรเนื้อขาว",en:"white dragon fruit"},
+ "rote Drachenfrucht":{th:"แก้วมังกรเนื้อแดง",en:"red dragon fruit"},
+ "Wasserspinat (zart)":{th:"ผักบุ้ง (ยอดอ่อน)",en:"water spinach (tender)"},
+ "Roselle/Krachiap":{th:"กระเจี๊ยบแดง",en:"roselle"},
+ "Thai-Erdbeere+Maulbeere":{th:"สตรอว์เบอร์รีไทย + หม่อน",en:"Thai strawberry + mulberry"},
+ "Astaxanthin":{th:"แอสตาแซนทิน",en:"astaxanthin"},
+ "Vitamin C (Acerola)":{th:"วิตามินซี (อะเซโรลา)",en:"vitamin C (acerola)"},
+ "Joghurt (frisch)":{th:"โยเกิร์ต (สด)",en:"yogurt (fresh)"},
+ "gemischte Beeren":{th:"เบอร์รีรวม",en:"mixed berries"},
+ "Marine-Kollagen":{th:"คอลลาเจนจากทะเล",en:"marine collagen"},
+ "CoQ10":{th:"โคเอนไซม์ คิวเทน",en:"CoQ10"},
+ "Kokosmilch":{th:"กะทิ",en:"coconut milk"},
+ "Kokosmilch (od. Thai-Soja)":{th:"กะทิ (หรือ นมถั่วเหลืองไทย)",en:"coconut milk (or Thai soy milk)"},
+ "roher Kakao":{th:"ผงโกโก้ดิบ",en:"raw cacao"},
+ "Süßtamarinde":{th:"มะขามหวาน",en:"sweet tamarind"},
+ "Resveratrol/Traubenkern":{th:"เรสเวอราทรอล / เมล็ดองุ่น",en:"resveratrol / grape seed"},
+ "Kokoswasser od. Joghurt":{th:"น้ำมะพร้าว หรือ โยเกิร์ต",en:"coconut water or yogurt"},
+ "Beeren od. Mango":{th:"เบอร์รี หรือ มะม่วง",en:"berries or mango"},
+ "Kuhmilch (od. Joghurt/Kokos)":{th:"นมวัว (หรือ โยเกิร์ต/กะทิ)",en:"cow milk (or yogurt/coconut)"},
+ "Kuhmilch (od. Kokos/Reis)":{th:"นมวัว (หรือ กะทิ/นมข้าว)",en:"cow milk (or coconut/rice milk)"},
+ "Mango":{th:"มะม่วง",en:"mango"},
+ "Avocado":{th:"อะโวคาโด",en:"avocado"},
+ "Wassermelone (FRISCH!)":{th:"แตงโม (สด!)",en:"watermelon (FRESH!)"},
+ "Erdbeere":{th:"สตรอว์เบอร์รี",en:"strawberry"}
+};
+/* Mengen-Einheiten mit Wort-Anteil */
+const UNIT={
+ "1 Stg":{th:"1 ต้น",en:"1 stalk"},"1 Stk":{th:"1 ชิ้น",en:"1 pc"},"1 Prise":{th:"1 หยิบมือ",en:"1 pinch"},
+ "1 cm":{th:"1 ซม.",en:"1 cm"},"1 Limette":{th:"มะนาว 1 ลูก",en:"1 lime"},"½ Limette":{th:"มะนาว ½ ลูก",en:"½ lime"},
+ "n. Dosis":{th:"ตามปริมาณ",en:"per dose"}
+};
+/* Vorbereitungs-Hinweise je Nr. */
+const PREPN={
+ "03":{th:"เตรียมน้ำใบเตยก่อน: ใบเตย 2–3 ใบ + น้ำ 150 มล. ปั่นแล้วกรอง",en:"Prep pandan water first: 2–3 leaves + 150 ml water, blend & strain."},
+ "08":{th:"ฐาน + โมดูลตามผลเลือด (ดูคำแนะนำ) ของแข็ง (บีทรูท/ขิง/เมล็ดฟักทอง) ใส่ในของเหลวก่อน",en:"Base + modules per result (see consult). Hard items (beetroot/ginger/pumpkin seeds) into the liquid first."}
+};
+const tIng=s=>LANG==="de"?s:((ING[s]||{})[LANG]||s);
+const tUnit=s=>LANG==="de"?s:((UNIT[s]||{})[LANG]||s);
+
+/* ERZEUGT — nicht von Hand aendern.
+   Quelle: rezepte-lexi.html + _katalog.json
+   Neu erzeugen: node stand-os/_kassenmenue-generieren.js
+   Erzeugt am 2026-08-17.
+
+   Je Rezept drei Bechergroessen mit eigener Rechnung:
+     ware   Wareneinsatz der Zutaten
+     verp   Becher + Deckel + Halm + Sticker
+     ek     Wareneinsatz gesamt bei Abholung
+     ekLief dasselbe bei Lieferung (halbe Thermo-Tasche, 2 Becher je Tasche)
+     kalk   Vorschlag = ek x 3.5, auf Preisstufe gerundet
+     preis  was tatsaechlich verlangt wird — in der Kasse aenderbar
+     offen  Zutaten ohne hinterlegten Preis (Rechnung unvollstaendig)
+     abzug  { Code: Menge } — was ein verkaufter Becher vom Bestand nimmt,
+            inkl. Becher, Deckel, Halm, Sticker. Thermo-Tasche TB kommt
+            bei Lieferung dazu (eine je zwei Becher, siehe THERMO_PRO_BECHER). */
+const KALK_FAKTOR=3.5;
+const THERMO_TASCHE=4.5;
+const TASCHE_CODE="TB";
+const THERMO_PRO_BECHER=0.5;
+/* Namen und Einheiten der abgezogenen Codes — nur damit die Verbrauchsliste
+   im Tag-Reiter lesbar ist ("Ananas 1 310 g" statt "AN 1310"). */
+const ZUTATNAME={"TE":"Grüner Tee / Jasmintee","SK":"Sonnenblumenkerne","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","KE":"Kürbiskerne","MI":"Minze","MS":"Mangostan","BA":"Banane","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","ER":"Erdbeere TK","MB":"Maulbeere TK","GU":"Guave","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","KK":"Kakao (Holland, ungesüßt)","ST":"Süßtamarinde (Makham Wan)","MG":"Mango","KM":"Kuhmilch 🥛 (Meiji, 2 L)","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","HF":"Haferflocken → Hafermilch","GK":"Gurke","ZT":"Zitrone","BK":"Brokkoli TK","PS":"Pfirsich TK","KU":"Kurkuma","TB":"Thermo-Tasche (Lieferung)"};
+const EINHEIT={"TE":"g","SK":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","KE":"g","MI":"g","MS":"g","BA":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","ER":"g","MB":"g","GU":"g","JO":"g","BM":"g","KL":"g","KO":"ml","KK":"g","ST":"g","MG":"g","KM":"ml","DR":"g","AV":"g","WM":"g","HF":"g","GK":"g","ZT":"g","BK":"g","PS":"g","KU":"g","TB":"Stk"};
+const MENU=[
+ {
+  "nr": "01",
+  "name": "Bangkok Wake-Up",
+  "th": "บางกอก เวค-อัพ",
+  "en": "Bangkok Wake-Up",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 9.7,
+    "verp": 4.2,
+    "ek": 13.9,
+    "ekLief": 16.1,
+    "kalk": 49,
+    "preis": 49,
+    "offen": [
+     "TE",
+     "SK",
+     "TO"
+    ],
+    "abzug": {
+     "TE": 82.5,
+     "SK": 22,
+     "TO": 66,
+     "PF": 33,
+     "AN": 27.5,
+     "ZG": 8.3,
+     "GA": 1.7,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 12.9,
+    "verp": 4.2,
+    "ek": 17.1,
+    "ekLief": 19.3,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "TE",
+     "SK",
+     "TO"
+    ],
+    "abzug": {
+     "TE": 109.5,
+     "SK": 29.2,
+     "TO": 87.6,
+     "PF": 43.8,
+     "AN": 36.5,
+     "ZG": 11,
+     "GA": 2.2,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 17.6,
+    "verp": 4.2,
+    "ek": 21.8,
+    "ekLief": 24.1,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "TE",
+     "SK",
+     "TO"
+    ],
+    "abzug": {
+     "TE": 150,
+     "SK": 40,
+     "TO": 120,
+     "PF": 60,
+     "AN": 50,
+     "ZG": 15,
+     "GA": 3,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "02",
+  "name": "Muay Thai Power",
+  "th": "มวยไทย พาวเวอร์",
+  "en": "Muay Thai Power",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 10.8,
+    "verp": 4.2,
+    "ek": 14.9,
+    "ekLief": 17.2,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "KE",
+     "MI",
+     "TO"
+    ],
+    "abzug": {
+     "KN": 0.33,
+     "KE": 22,
+     "MI": 1.7,
+     "TO": 66,
+     "MS": 33,
+     "BA": 27.5,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 14.3,
+    "verp": 4.2,
+    "ek": 18.5,
+    "ekLief": 20.7,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "KE",
+     "MI",
+     "TO"
+    ],
+    "abzug": {
+     "KN": 0.44,
+     "KE": 29.2,
+     "MI": 2.2,
+     "TO": 87.6,
+     "MS": 43.8,
+     "BA": 36.5,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 19.6,
+    "verp": 4.2,
+    "ek": 23.8,
+    "ekLief": 26,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "KE",
+     "MI",
+     "TO"
+    ],
+    "abzug": {
+     "KN": 0.6,
+     "KE": 40,
+     "MI": 3,
+     "TO": 120,
+     "MS": 60,
+     "BA": 50,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "03",
+  "name": "Siam Serenity",
+  "th": "สยาม เซเรนิตี้",
+  "en": "Siam Serenity",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 0.5,
+    "verp": 4.2,
+    "ek": 4.7,
+    "ekLief": 7,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "PD",
+     "SK",
+     "ZI",
+     "TO"
+    ],
+    "abzug": {
+     "PD": 3.3,
+     "SK": 22,
+     "ZI": 0.3,
+     "TO": 66,
+     "BA": 27.5,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 0.7,
+    "verp": 4.2,
+    "ek": 4.9,
+    "ekLief": 7.1,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "PD",
+     "SK",
+     "ZI",
+     "TO"
+    ],
+    "abzug": {
+     "PD": 4.4,
+     "SK": 29.2,
+     "ZI": 0.4,
+     "TO": 87.6,
+     "BA": 36.5,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 1,
+    "verp": 4.2,
+    "ek": 5.2,
+    "ekLief": 7.4,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "PD",
+     "SK",
+     "ZI",
+     "TO"
+    ],
+    "abzug": {
+     "PD": 6,
+     "SK": 40,
+     "ZI": 0.5,
+     "TO": 120,
+     "BA": 50,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "04",
+  "name": "Pure Thai Cleanse",
+  "th": "เพียว ไทย คลีนส์",
+  "en": "Pure Thai Cleanse",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 2.2,
+    "verp": 4.2,
+    "ek": 6.4,
+    "ekLief": 8.6,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "SK",
+     "LS",
+     "TO",
+     "WS",
+     "IG"
+    ],
+    "abzug": {
+     "SK": 22,
+     "LS": 5.5,
+     "TO": 66,
+     "DW": 44,
+     "WS": 22,
+     "IG": 1.7,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 2.9,
+    "verp": 4.2,
+    "ek": 7.1,
+    "ekLief": 9.4,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "SK",
+     "LS",
+     "TO",
+     "WS",
+     "IG"
+    ],
+    "abzug": {
+     "SK": 29.2,
+     "LS": 7.3,
+     "TO": 87.6,
+     "DW": 58.4,
+     "WS": 29.2,
+     "IG": 2.2,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 4,
+    "verp": 4.2,
+    "ek": 8.2,
+    "ekLief": 10.4,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "SK",
+     "LS",
+     "TO",
+     "WS",
+     "IG"
+    ],
+    "abzug": {
+     "SK": 40,
+     "LS": 10,
+     "TO": 120,
+     "DW": 80,
+     "WS": 40,
+     "IG": 3,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "05",
+  "name": "Anti-Age Roselle-Beere",
+  "th": "แอนตี้เอจ กระเจี๊ยบ-เบอร์รี",
+  "en": "Anti-Age Roselle-Berry",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 10.4,
+    "verp": 4.2,
+    "ek": 14.6,
+    "ekLief": 16.8,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "HT"
+    ],
+    "abzug": {
+     "KN": 0.26,
+     "RO": 0.1,
+     "ER": 33,
+     "MB": 22,
+     "BA": 27.5,
+     "GU": 33,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 13.8,
+    "verp": 4.2,
+    "ek": 18,
+    "ekLief": 20.2,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "HT"
+    ],
+    "abzug": {
+     "KN": 0.35,
+     "RO": 0.13,
+     "ER": 43.8,
+     "MB": 29.2,
+     "BA": 36.5,
+     "GU": 43.8,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 18.9,
+    "verp": 4.2,
+    "ek": 23.1,
+    "ekLief": 25.3,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "HT"
+    ],
+    "abzug": {
+     "KN": 0.48,
+     "RO": 0.18,
+     "ER": 60,
+     "MB": 40,
+     "BA": 50,
+     "GU": 60,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "06",
+  "name": "Anti-Age Beeren-Kollagen",
+  "th": "แอนตี้เอจ เบอร์รี-คอลลาเจน",
+  "en": "Anti-Age Berry-Collagen",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 16,
+    "verp": 4.2,
+    "ek": 20.2,
+    "ekLief": 22.4,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "JO",
+     "KL"
+    ],
+    "abzug": {
+     "KN": 0.18,
+     "JO": 44,
+     "BM": 82.5,
+     "BA": 27.5,
+     "KL": 5.5,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 21.2,
+    "verp": 4.2,
+    "ek": 25.4,
+    "ekLief": 27.7,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "JO",
+     "KL"
+    ],
+    "abzug": {
+     "KN": 0.23,
+     "JO": 58.4,
+     "BM": 109.5,
+     "BA": 36.5,
+     "KL": 7.3,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 29.1,
+    "verp": 4.2,
+    "ek": 33.3,
+    "ekLief": 35.5,
+    "kalk": 119,
+    "preis": 119,
+    "offen": [
+     "JO",
+     "KL"
+    ],
+    "abzug": {
+     "KN": 0.32,
+     "JO": 80,
+     "BM": 150,
+     "BA": 50,
+     "KL": 10,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "07",
+  "name": "Anti-Age Kakao-Magnesium",
+  "th": "แอนตี้เอจ โกโก้-แมกนีเซียม",
+  "en": "Anti-Age Cacao-Magnesium",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 18.4,
+    "verp": 4.2,
+    "ek": 22.6,
+    "ekLief": 24.9,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "ST",
+     "KE"
+    ],
+    "abzug": {
+     "KO": 110,
+     "KK": 5.5,
+     "ST": 8.3,
+     "BA": 44,
+     "KE": 6.6,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 24.5,
+    "verp": 4.2,
+    "ek": 28.7,
+    "ekLief": 30.9,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [
+     "ST",
+     "KE"
+    ],
+    "abzug": {
+     "KO": 146,
+     "KK": 7.3,
+     "ST": 11,
+     "BA": 58.4,
+     "KE": 8.8,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 33.5,
+    "verp": 4.2,
+    "ek": 37.7,
+    "ekLief": 40,
+    "kalk": 139,
+    "preis": 139,
+    "offen": [
+     "ST",
+     "KE"
+    ],
+    "abzug": {
+     "KO": 200,
+     "KK": 10,
+     "ST": 15,
+     "BA": 80,
+     "KE": 12,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "08",
+  "name": "Blutwert-Bespoke",
+  "th": "สูตรเฉพาะตามผลเลือด",
+  "en": "Blood-Value Bespoke",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 12.2,
+    "verp": 4.2,
+    "ek": 16.3,
+    "ekLief": 18.6,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "ST"
+    ],
+    "abzug": {
+     "KN": 0.26,
+     "BA": 44,
+     "BM": 44,
+     "ST": 8.3,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 16.1,
+    "verp": 4.2,
+    "ek": 20.3,
+    "ekLief": 22.6,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "ST"
+    ],
+    "abzug": {
+     "KN": 0.35,
+     "BA": 58.4,
+     "BM": 58.4,
+     "ST": 11,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 22.1,
+    "verp": 4.2,
+    "ek": 26.3,
+    "ekLief": 28.5,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [
+     "ST"
+    ],
+    "abzug": {
+     "KN": 0.48,
+     "BA": 80,
+     "BM": 80,
+     "ST": 15,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "09",
+  "name": "Mango Tango",
+  "th": "มะม่วง แทงโก้",
+  "en": "Mango Tango",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 4.3,
+    "verp": 4.2,
+    "ek": 8.5,
+    "ekLief": 10.8,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "KM",
+     "LS"
+    ],
+    "abzug": {
+     "MG": 82.5,
+     "BA": 33,
+     "KM": 82.5,
+     "LS": 2.8,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 5.8,
+    "verp": 4.2,
+    "ek": 10,
+    "ekLief": 12.2,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "KM",
+     "LS"
+    ],
+    "abzug": {
+     "MG": 109.5,
+     "BA": 43.8,
+     "KM": 109.5,
+     "LS": 3.7,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 7.9,
+    "verp": 4.2,
+    "ek": 12.1,
+    "ekLief": 14.3,
+    "kalk": 49,
+    "preis": 49,
+    "offen": [
+     "KM",
+     "LS"
+    ],
+    "abzug": {
+     "MG": 150,
+     "BA": 60,
+     "KM": 150,
+     "LS": 5,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "10",
+  "name": "Dragon Fruit Pink Pitaya",
+  "th": "แก้วมังกร พิงค์ พิทายา",
+  "en": "Dragon Fruit Pink Pitaya",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 18,
+    "verp": 4.2,
+    "ek": 22.2,
+    "ekLief": 24.5,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [],
+    "abzug": {
+     "KO": 82.5,
+     "BA": 33,
+     "DR": 82.5,
+     "ER": 5.5,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 23.9,
+    "verp": 4.2,
+    "ek": 28.1,
+    "ekLief": 30.4,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [],
+    "abzug": {
+     "KO": 109.5,
+     "BA": 43.8,
+     "DR": 109.5,
+     "ER": 7.3,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 32.8,
+    "verp": 4.2,
+    "ek": 37,
+    "ekLief": 39.2,
+    "kalk": 139,
+    "preis": 139,
+    "offen": [],
+    "abzug": {
+     "KO": 150,
+     "BA": 60,
+     "DR": 150,
+     "ER": 10,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "11",
+  "name": "Avocado Sinh Tố Bơ",
+  "th": "อะโวคาโด ซิงโต๋ บ๋อ",
+  "en": "Avocado Sinh Tố Bơ",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 9.6,
+    "verp": 4.2,
+    "ek": 13.8,
+    "ekLief": 16.1,
+    "kalk": 49,
+    "preis": 49,
+    "offen": [
+     "KM",
+     "ST"
+    ],
+    "abzug": {
+     "KM": 82.5,
+     "ST": 8.3,
+     "BA": 27.5,
+     "AV": 66,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 12.8,
+    "verp": 4.2,
+    "ek": 17,
+    "ekLief": 19.2,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "KM",
+     "ST"
+    ],
+    "abzug": {
+     "KM": 109.5,
+     "ST": 11,
+     "BA": 36.5,
+     "AV": 87.6,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 17.5,
+    "verp": 4.2,
+    "ek": 21.7,
+    "ekLief": 23.9,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "KM",
+     "ST"
+    ],
+    "abzug": {
+     "KM": 150,
+     "ST": 15,
+     "BA": 50,
+     "AV": 120,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "12",
+  "name": "Watermelon-Mint Cooler",
+  "th": "แตงโม-มินต์ คูลเลอร์",
+  "en": "Watermelon-Mint Cooler",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 10.5,
+    "verp": 4.2,
+    "ek": 14.7,
+    "ekLief": 17,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "MI",
+     "LS"
+    ],
+    "abzug": {
+     "WM": 77,
+     "ER": 11,
+     "KN": 0.44,
+     "MI": 1.7,
+     "LS": 5.5,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 14,
+    "verp": 4.2,
+    "ek": 18.2,
+    "ekLief": 20.4,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "MI",
+     "LS"
+    ],
+    "abzug": {
+     "WM": 102.2,
+     "ER": 14.6,
+     "KN": 0.58,
+     "MI": 2.2,
+     "LS": 7.3,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 19.1,
+    "verp": 4.2,
+    "ek": 23.3,
+    "ekLief": 25.6,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "MI",
+     "LS"
+    ],
+    "abzug": {
+     "WM": 140,
+     "ER": 20,
+     "KN": 0.8,
+     "MI": 3,
+     "LS": 10,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "15",
+  "name": "Wassermelone-Limette-Minze",
+  "th": "แตงโม-มะนาว-สะระแหน่",
+  "en": "Watermelon-Lime-Mint",
+  "alg": "",
+  "bestaetigt": 1,
+  "std": true,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 4.1,
+    "verp": 4.2,
+    "ek": 8.3,
+    "ekLief": 10.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "LS",
+     "MI"
+    ],
+    "abzug": {
+     "LS": 8.3,
+     "MI": 1.7,
+     "WM": 176,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 5.5,
+    "verp": 4.2,
+    "ek": 9.6,
+    "ekLief": 11.9,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "LS",
+     "MI"
+    ],
+    "abzug": {
+     "LS": 11,
+     "MI": 2.2,
+     "WM": 233.6,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 7.5,
+    "verp": 4.2,
+    "ek": 11.7,
+    "ekLief": 13.9,
+    "kalk": 49,
+    "preis": 49,
+    "offen": [
+     "LS",
+     "MI"
+    ],
+    "abzug": {
+     "LS": 15,
+     "MI": 3,
+     "WM": 320,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "16",
+  "name": "Ananas-Passionsfrucht-Kokos",
+  "th": "สัปปะรด-เสาวรส-มะพร้าว",
+  "en": "Pineapple-Passion Fruit-Coconut",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 14.5,
+    "verp": 4.2,
+    "ek": 18.6,
+    "ekLief": 20.9,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [],
+    "abzug": {
+     "KN": 0.26,
+     "PF": 22,
+     "AN": 132,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 19.2,
+    "verp": 4.2,
+    "ek": 23.4,
+    "ekLief": 25.6,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [],
+    "abzug": {
+     "KN": 0.35,
+     "PF": 29.2,
+     "AN": 175.2,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 26.3,
+    "verp": 4.2,
+    "ek": 30.5,
+    "ekLief": 32.7,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [],
+    "abzug": {
+     "KN": 0.48,
+     "PF": 40,
+     "AN": 240,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "17",
+  "name": "Banane-Kakao",
+  "th": "กล้วย-โกโก้",
+  "en": "Banana-Cacao",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 7.6,
+    "verp": 4.2,
+    "ek": 11.8,
+    "ekLief": 14.1,
+    "kalk": 49,
+    "preis": 49,
+    "offen": [],
+    "abzug": {
+     "HF": 11,
+     "KK": 4.4,
+     "BA": 110,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 10.1,
+    "verp": 4.2,
+    "ek": 14.3,
+    "ekLief": 16.5,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [],
+    "abzug": {
+     "HF": 14.6,
+     "KK": 5.8,
+     "BA": 146,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 13.8,
+    "verp": 4.2,
+    "ek": 18,
+    "ekLief": 20.3,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [],
+    "abzug": {
+     "HF": 20,
+     "KK": 8,
+     "BA": 200,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "18",
+  "name": "Drachenfrucht-Banane-Limette",
+  "th": "แก้วมังกร-กล้วย-มะนาว",
+  "en": "Dragon Fruit-Banana-Lime",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 14.8,
+    "verp": 4.2,
+    "ek": 19,
+    "ekLief": 21.2,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "LS"
+    ],
+    "abzug": {
+     "KN": 0.24,
+     "LS": 4.4,
+     "BA": 49.5,
+     "DR": 99,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 19.6,
+    "verp": 4.2,
+    "ek": 23.8,
+    "ekLief": 26.1,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "LS"
+    ],
+    "abzug": {
+     "KN": 0.32,
+     "LS": 5.8,
+     "BA": 65.7,
+     "DR": 131.4,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 26.9,
+    "verp": 4.2,
+    "ek": 31.1,
+    "ekLief": 33.3,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [
+     "LS"
+    ],
+    "abzug": {
+     "KN": 0.44,
+     "LS": 8,
+     "BA": 90,
+     "DR": 180,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "19",
+  "name": "Ananas-Gurke-Minze",
+  "th": "สัปปะรด-แตงกวา-สะระแหน่",
+  "en": "Pineapple-Cucumber-Mint",
+  "alg": "",
+  "bestaetigt": 1,
+  "std": true,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 8,
+    "verp": 4.2,
+    "ek": 12.2,
+    "ekLief": 14.5,
+    "kalk": 49,
+    "preis": 49,
+    "offen": [
+     "LS",
+     "MI",
+     "GK"
+    ],
+    "abzug": {
+     "KN": 0.2,
+     "LS": 6.6,
+     "MI": 1.7,
+     "GK": 66,
+     "AN": 99,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 10.6,
+    "verp": 4.2,
+    "ek": 14.8,
+    "ekLief": 17.1,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "LS",
+     "MI",
+     "GK"
+    ],
+    "abzug": {
+     "KN": 0.26,
+     "LS": 8.8,
+     "MI": 2.2,
+     "GK": 87.6,
+     "AN": 131.4,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 14.6,
+    "verp": 4.2,
+    "ek": 18.8,
+    "ekLief": 21,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "LS",
+     "MI",
+     "GK"
+    ],
+    "abzug": {
+     "KN": 0.36,
+     "LS": 12,
+     "MI": 3,
+     "GK": 120,
+     "AN": 180,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "20",
+  "name": "Mango-Joghurt-Zitrone",
+  "th": "มะม่วง-โยเกิร์ต-เลมอน",
+  "en": "Mango-Yogurt-Lemon",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 5.8,
+    "verp": 4.2,
+    "ek": 10,
+    "ekLief": 12.2,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "JO",
+     "ZT"
+    ],
+    "abzug": {
+     "JO": 66,
+     "HF": 3.3,
+     "ZT": 4.4,
+     "MG": 121,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 7.7,
+    "verp": 4.2,
+    "ek": 11.9,
+    "ekLief": 14.1,
+    "kalk": 49,
+    "preis": 49,
+    "offen": [
+     "JO",
+     "ZT"
+    ],
+    "abzug": {
+     "JO": 87.6,
+     "HF": 4.38,
+     "ZT": 5.8,
+     "MG": 160.6,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 10.5,
+    "verp": 4.2,
+    "ek": 14.7,
+    "ekLief": 16.9,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "JO",
+     "ZT"
+    ],
+    "abzug": {
+     "JO": 120,
+     "HF": 6,
+     "ZT": 8,
+     "MG": 220,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "13",
+  "name": "Leber-Morgen Vital 🔒",
+  "th": "ตับ-เช้า ไวทัล 🔒",
+  "en": "Liver-Morning Vital 🔒",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 12.1,
+    "verp": 4.2,
+    "ek": 16.3,
+    "ekLief": 18.6,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "JO",
+     "LS",
+     "GK",
+     "IG",
+     "KU"
+    ],
+    "abzug": {
+     "JO": 55,
+     "LS": 8.3,
+     "GK": 22,
+     "IG": 2.8,
+     "BK": 33,
+     "PS": 33,
+     "BM": 38.5,
+     "KU": 0.6,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 16.1,
+    "verp": 4.2,
+    "ek": 20.3,
+    "ekLief": 22.6,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "JO",
+     "LS",
+     "GK",
+     "IG",
+     "KU"
+    ],
+    "abzug": {
+     "JO": 73,
+     "LS": 11,
+     "GK": 29.2,
+     "IG": 3.7,
+     "BK": 43.8,
+     "PS": 43.8,
+     "BM": 51.1,
+     "KU": 0.7,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 22.1,
+    "verp": 4.2,
+    "ek": 26.3,
+    "ekLief": 28.5,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [
+     "JO",
+     "LS",
+     "GK",
+     "IG",
+     "KU"
+    ],
+    "abzug": {
+     "JO": 100,
+     "LS": 15,
+     "GK": 40,
+     "IG": 5,
+     "BK": 60,
+     "PS": 60,
+     "BM": 70,
+     "KU": 1,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ }
+];
+
+/* =================== STATE =================== */
+const LS=k=>JSON.parse(localStorage.getItem(k)||"null");
+const SET=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+let CFG=LS("kb_cfg")||{loc:"01",name:"100BLEND",city:"PATTAYA",pptype:"phone",ppid:"",lang:"de"};
+/* Dieselbe Adresse wie die Bestands-App — EIN gemeinsamer Speicher, EINE
+   Sperre. Waeren es zwei, koennten Verkauf und Bestandskorrektur einander
+   ueberschreiben. */
+const SYNC_STANDARD="https://script.google.com/macros/s/AKfycbzDrg7mh6nIeGWYKNOXRYjs4bw0aAqmOyN1ZQQZcfbyWg5MZLt87B7FbiqyeN2p1f0S/exec";
+if(!CFG.sync)CFG.sync=SYNC_STANDARD;
+/* WARTESCHLANGE: Am Stand faellt das WLAN aus. Jeder Verkauf wird ZUERST hier
+   abgelegt und erst danach gesendet. Geht das Senden schief, bleibt er liegen
+   und wandert beim naechsten Versuch raus. So kann kein Bon verloren gehen.
+   Der Server erkennt doppelt gesendete Bons an der Bon-Nummer. */
+let WARTE=LS("kb_warte")||[];
+let SYNCSTAND={zeit:0,ok:null,knapp:[]};
+let LANG=CFG.lang||"de";
+let CUST=LS("kb_cust")||[];
+let SALES=LS("kb_sales")||[];
+let order={};
+let curCust=null;
+
+const $=s=>document.querySelector(s);
+const t=k=>(T[LANG]&&T[LANG][k])||T.de[k]||k;
+const baht=n=>Math.round(n).toLocaleString("de-DE")+" ฿";
+const item=nr=>MENU.find(m=>m.nr===nr);
+
+/* --- Bechergroesse + Kanal ------------------------------------------------
+   Die Kasse arbeitete bisher mit einem einzigen Preis je Rezept. Jetzt traegt
+   jede Bestellzeile ihre Groesse; Preis und Wareneinsatz kommen aus MENU[..]
+   .groessen[groesse]. Der Kanal entscheidet, ob die Thermo-Tasche mitzaehlt. */
+let GROESSE = localStorage.getItem("kasse_groesse") || "16";
+let KANAL   = localStorage.getItem("kasse_kanal")   || "abholung";
+const GR_NAME = { "22":"22 oz", "16":"16 oz", "12":"12 oz" };
+
+/* Vom Nutzer geaenderte Verkaufspreise (Peter: "muss aenderbar sein").
+   Schluessel "19|16" = Rezept 19 in 16 oz. */
+let PREISE = JSON.parse(localStorage.getItem("kasse_preise") || "{}");
+const pKey = (nr,g) => nr + "|" + g;
+function preisVon(m, g){
+  g = g || GROESSE;
+  const eigen = PREISE[pKey(m.nr,g)];
+  if (eigen != null) return +eigen;
+  return (m.groessen[g] || {}).preis || 0;
+}
+function kostenVon(m, g){
+  g = g || GROESSE;
+  const d = m.groessen[g] || {};
+  return KANAL === "lieferung" ? (d.ekLief || 0) : (d.ek || 0);
+}
+function preisSetzen(nr, g, wert){
+  if (wert === "" || wert == null) delete PREISE[pKey(nr,g)];
+  else PREISE[pKey(nr,g)] = +wert;
+  localStorage.setItem("kasse_preise", JSON.stringify(PREISE));
+}
+function setGroesse(g){ GROESSE=g; localStorage.setItem("kasse_groesse",g); renderMenu(); renderOrder(); }
+function setKanal(k){ KANAL=k; localStorage.setItem("kasse_kanal",k); renderMenu(); renderOrder(); }
+const today=()=>new Date().toISOString().slice(0,10);
+function off(id){$("#"+id).classList.remove("on");}
+function on(id){$("#"+id).classList.add("on");}
+
+/* =================== SPRACHE =================== */
+function applyI18n(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll("[data-i18n]").forEach(e=>{e.innerHTML=t(e.dataset.i18n);});
+  document.querySelectorAll("[data-i18n-ph]").forEach(e=>{e.placeholder=t(e.dataset.i18nPh);});
+}
+function setLang(l){
+  LANG=l;CFG.lang=l;SET("kb_cfg",CFG);
+  document.querySelectorAll(".lang").forEach(b=>b.classList.toggle("on",b.dataset.l===l));
+  applyI18n();renderMenu();renderOrder();setCust(curCust);
+  const cur=document.querySelector(".tab.on")?.dataset.t;
+  if(cur==="kunde")renderCustomers();if(cur==="tag")renderDay();
+}
+
+function tab(tb){
+  ["kasse","kunde","tag","setup"].forEach(x=>{
+    $("#v-"+x).classList.toggle("hidden",x!==tb);
+    document.querySelector('.tab[data-t="'+x+'"]').classList.toggle("on",x===tb);
+  });
+  if(tb==="kunde")renderCustomers();
+  if(tb==="tag")renderDay();
+  if(tb==="setup")fillSetup();
+}
+
+/* =================== MENÜ / BESTELLUNG =================== */
+function renderMenu(){
+  const leiste=$("#groessenleiste");
+  if(leiste)leiste.innerHTML=
+    ["22","16","12"].map(g=>`<button class="gr ${GROESSE===g?"on":""}" onclick="setGroesse('${g}')">${GR_NAME[g]}</button>`).join("")
+    +`<span class="trenner"></span>`
+    +[["abholung","🥤 Abholung"],["lieferung","🛵 Lieferung"]]
+      .map(([k,l])=>`<button class="gr ${KANAL===k?"on":""}" onclick="setKanal('${k}')">${l}</button>`).join("");
+
+  $("#menu").innerHTML=MENU.map(m=>{
+    const d=m.groessen[GROESSE]||{};
+    const vk=preisVon(m), ek=kostenVon(m);
+    const db=vk-ek;
+    const unsicher=(d.offen||[]).length;      /* Zutaten ohne Preis */
+    return `
+    <button class="item" onclick="add('${m.nr}')">
+      <div class="bar" style="background:${FARBE(m.nr)}"></div>
+      <div class="nr">${t('no')} ${m.nr}${m.bestaetigt?' <span class="stern">★</span>':''}</div>
+      <div class="nm">${m.name}</div>
+      <div class="desc">${(DESC[m.nr]||{})[LANG]||m.th||""}</div>
+      <div class="meta"><div>
+        <div class="pr">${vk} ฿</div>
+        <div class="sz">${GR_NAME[GROESSE]} · ${d.ml||"?"} ml</div>
+        <div class="db ${db<=0?"warn":""}">DB ${Math.round(db)} ฿${unsicher?` <span class="prov" title="${unsicher} Zutaten ohne Preis">~</span>`:""}</div>
+      </div></div>
+    </button>`;}).join("");
+}
+/* Farben blieben frueher im Menue stehen; jetzt aus der Nummer abgeleitet,
+   damit das erzeugte Menue keine Gestaltung mitschleppen muss. */
+function FARBE(nr){
+  const p=["#f2a900","#b98c5a","#7faa6e","#5aa9b9","#e85d75","#9b6bb5","#d97706","#2f855a"];
+  return p[(parseInt(nr,10)||0)%p.length];
+}
+/* Schluessel der Bestellzeile ist jetzt "Nr|Groesse" — derselbe Smoothie in
+   zwei Groessen sind zwei Zeilen. */
+function add(nr){const k=pKey(nr,GROESSE);order[k]=(order[k]||0)+1;renderOrder();}
+function chg(k,d){order[k]=(order[k]||0)+d;if(order[k]<=0)delete order[k];renderOrder();}
+function clearOrder(){order={};renderOrder();}
+function orderRows(){
+  return Object.entries(order).map(([k,q])=>{
+    const [nr,g]=k.split("|");
+    return {k,m:item(nr),g:g||"16",q};
+  }).filter(r=>r.m);
+}
+function orderTotal(){return orderRows().reduce((s,r)=>s+preisVon(r.m,r.g)*r.q,0);}
+function orderCost(){
+  /* Thermo-Tasche faellt je angefangene 2 Becher an, nicht je Becher. */
+  const roh=orderRows().reduce((s,r)=>s+((r.m.groessen[r.g]||{}).ek||0)*r.q,0);
+  if(KANAL!=="lieferung")return roh;
+  return roh + Math.ceil(orderCount()/2)*THERMO_TASCHE;
+}
+function orderCount(){return orderRows().reduce((s,r)=>s+r.q,0);}
+
+/* --- SCHRITT 3: was nimmt dieser Bon vom Bestand? ------------------------
+   Die Mengen je Becher stehen fertig hochgerechnet im Menue (Feld "abzug",
+   erzeugt von _kassenmenue-generieren.js). Hier wird nur noch mit der
+   Stueckzahl multipliziert und zusammengezaehlt.
+   Die Thermo-Tasche kommt nur bei Lieferung dazu — eine je zwei Becher,
+   deshalb 0,5 je Becher; aufgerundet, weil man keine halbe Tasche gibt. */
+function abzugFuer(rows, kanal){
+  const a={};
+  const nimm=(c,m)=>{ if(!c||!m)return; a[c]=Math.round(((a[c]||0)+m)*100)/100; };
+  rows.forEach(r=>{
+    const d=(r.m.groessen[r.g]||{}).abzug||{};
+    Object.keys(d).forEach(c=>nimm(c,d[c]*r.q));
+  });
+  if(kanal==="lieferung"){
+    const becher=rows.reduce((x,r)=>x+r.q,0);
+    if(becher>0)nimm(TASCHE_CODE, Math.ceil(becher*THERMO_PRO_BECHER));
+  }
+  return a;
+}
+function renderOrder(){
+  const rows=orderRows();
+  $("#orderlist").innerHTML=rows.length?rows.map(r=>`
+    <div class="oli">
+      <div class="t">${r.m.name}<br><small>${t('no')} ${r.m.nr} · ${GR_NAME[r.g]} · ${preisVon(r.m,r.g)} ฿</small></div>
+      <div class="qty"><button onclick="chg('${r.k}',-1)">−</button><b>${r.q}</b><button onclick="chg('${r.k}',1)">+</button></div>
+      <div class="lp">${baht(preisVon(r.m,r.g)*r.q)}</div>
+    </div>`).join(""):`<div class="empty">${t('empty_order')}</div>`;
+  $("#total").textContent=baht(orderTotal());
+  const has=rows.length>0;$("#btnPay").disabled=!has;$("#btnPrep").disabled=!has;
+}
+
+/* =================== KUNDE / MEMBER =================== */
+function setCust(c){curCust=c;
+  $("#custline").innerHTML=c
+    ? `<span>🎟️ <b>${c.name}</b> · ${t('stamp')} ${c.stamps%10}/10${c.free>0?` · 🎁 ${c.free} ${t('free_short')}`:''}</span>
+       <button class="btn ghost" style="margin-left:auto;padding:6px 12px;font-size:13px" onclick="setCust(null)">${t('remove')}</button>`
+    : `<span>👤 ${t('guest')}</span>
+       <button class="btn ghost" style="margin-left:auto;padding:6px 12px;font-size:13px" onclick="tab('kunde')">${t('choose_member')}</button>`;
+}
+function newId(){return "K"+String(Date.now()).slice(-6)+Math.floor(Math.random()*90+10);}
+function addCustomer(){
+  const name=$("#c-name").value.trim(),bday=$("#c-bday").value,contact=$("#c-contact").value.trim();
+  if(!name||!contact){alert(t('a_fill'));return;}
+  if(!$("#c-pdpa").checked){alert(t('a_pdpa'));return;}
+  const c={id:newId(),name,bday,contact,stamps:0,free:0,visits:0,created:today()};
+  CUST.unshift(c);SET("kb_cust",CUST);
+  $("#c-name").value="";$("#c-bday").value="";$("#c-contact").value="";$("#c-pdpa").checked=false;
+  renderCustomers();setCust(c);showCard(c.id);
+}
+function renderCustomers(){
+  const q=($("#c-search")?.value||"").toLowerCase();
+  $("#custcount").textContent="("+CUST.length+")";
+  const list=CUST.filter(c=>!q||(c.name+c.contact+c.id).toLowerCase().includes(q));
+  $("#custlist").innerHTML=list.length?list.map(c=>`
+    <div class="lrow">
+      <div><b>${c.name}</b><div class="sub">${c.contact}${c.bday?' · 🎂 '+c.bday:''} · ${c.stamps%10}/10${c.free>0?' · 🎁 '+c.free+' '+t('free_short'):''}</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn ghost" style="padding:7px 10px;font-size:13px" onclick="showCard('${c.id}')">${t('card_btn')}</button>
+        <button class="btn green" style="padding:7px 10px;font-size:13px" onclick="pick('${c.id}')">${t('choose_btn')}</button>
+      </div>
+    </div>`).join(""):`<div class="empty">${t('no_members')}</div>`;
+}
+function pick(id){setCust(CUST.find(c=>c.id===id));tab('kasse');}
+function showCard(id){
+  const c=CUST.find(c=>c.id===id);if(!c)return;
+  const data="100BLEND:"+CFG.loc+":"+c.id;
+  const dots=Array.from({length:10},(_,i)=>`<div class="dot ${i<c.stamps%10?'on':''}">${i<c.stamps%10?'★':''}</div>`).join("");
+  $("#card-body").innerHTML=`
+    <div class="bon" style="text-align:center">
+      <div class="b" style="font-size:16px">100blend · ${t('membercard')}</div>
+      <div>${c.name}</div>
+      <div class="qrc"><img src="${qr(data,200)}"></div>
+      <div style="font-size:11px">ID ${c.id} · Stand ${CFG.loc}</div>
+    </div>
+    <div class="stamps">${dots}</div>
+    ${c.free>0?`<div class="free">🎁 ${c.free}× ${t('free_open')}</div>`:''}
+    <div class="note">${t('card_note')}</div>
+    <button class="btn" style="width:100%;margin-top:10px" onclick="window.print()">🖨️ ${t('print_card')}</button>`;
+  on('m-card');
+}
+
+/* =================== PROMPTPAY QR =================== */
+function tlv(id,val){return id+String(val.length).padStart(2,"0")+val;}
+function crc16(s){let c=0xFFFF;for(let i=0;i<s.length;i++){c^=s.charCodeAt(i)<<8;for(let j=0;j<8;j++){c=(c&0x8000)?((c<<1)^0x1021):(c<<1);c&=0xFFFF;}}return c.toString(16).toUpperCase().padStart(4,"0");}
+function ppAccount(){
+  const id=(CFG.ppid||"").replace(/\D/g,"")||"0000000000";
+  if(CFG.pptype==="natid")return tlv("00","A000000677010111")+tlv("02",id);
+  return tlv("00","A000000677010111")+tlv("01","0066"+id.replace(/^0/,""));
+}
+function ppPayload(amount,ref){
+  const name=(CFG.name||"100BLEND").toUpperCase().replace(/[^A-Z0-9 ]/g,"").slice(0,25);
+  let p=tlv("00","01")+tlv("01",amount>0?"12":"11")+tlv("29",ppAccount())+tlv("53","764")
+    +(amount>0?tlv("54",amount.toFixed(2)):"")+tlv("58","TH")+tlv("59",name)
+    +tlv("60",(CFG.city||"PATTAYA").toUpperCase().slice(0,15))+tlv("62",tlv("05",ref.slice(0,25)));
+  p+="6304";return p+crc16(p);
+}
+function qr(data,size){return "https://api.qrserver.com/v1/create-qr-code/?size="+size+"x"+size+"&margin=1&data="+encodeURIComponent(data);}
+
+/* =================== BEZAHLEN / VERKAUF =================== */
+let pending=null;
+function pay(){
+  const total=orderTotal();if(total<=0)return;
+  const ref="ST"+CFG.loc+"-"+String(Date.now()).slice(-6);
+  pending={ref,total};
+  $("#pay-amount").textContent=baht(total);
+  $("#pay-qr").src=qr(ppPayload(total,ref),260);
+  $("#pay-recv").innerHTML=`${t('receiver')}: <b>${CFG.name}</b> (Stand ${CFG.loc}) · PromptPay ${CFG.ppid||t('ppid_notset')}`;
+  on('m-pay');
+}
+function confirmSale(method){
+  /* Tatsaechlicher VK und tatsaechlicher EK je Zeile — Grundlage des Gewinns.
+     Peter 17.08.: geschaetzte Werte sind nur der Vorschlag, gebucht wird real. */
+  const items=orderRows().map(r=>({
+    nr:r.m.nr, name:r.m.name, groesse:r.g, ml:(r.m.groessen[r.g]||{}).ml,
+    preis:preisVon(r.m,r.g), cost:(r.m.groessen[r.g]||{}).ek||0,
+    kanal:KANAL, qty:r.q
+  }));
+  const total=orderTotal(),cost=orderCost(),cnt=orderCount();
+  if(curCust){
+    const c=CUST.find(x=>x.id===curCust.id);
+    c.visits+=cnt;c.stamps+=cnt;while(c.stamps>=10){c.stamps-=10;c.free+=1;}
+    SET("kb_cust",CUST);curCust=c;setCust(c);
+  }
+  const rows=orderRows();
+  const abzug=abzugFuer(rows,KANAL);
+  const sale={ts:new Date().toISOString(),ref:pending?.ref||("ST"+CFG.loc+"-"+String(Date.now()).slice(-6)),
+    items,total,cost,pay:method,custId:curCust?.id||null,kanal:KANAL,abzug};
+  SALES.unshift(sale);SET("kb_sales",SALES);
+
+  /* SCHRITT 3+4: erst in die Warteschlange, dann senden. Nie umgekehrt —
+     sonst waere ein Bon bei Netzausfall zwischen Senden und Speichern weg. */
+  WARTE.push({
+    ref:sale.ref, ts:Date.parse(sale.ts), stand:CFG.loc, kanal:KANAL,
+    zahlung:method, kunde:sale.custId,
+    posten:items.map(i=>({nr:i.nr,groesse:i.groesse,menge:i.qty,preis:i.preis,ek:i.cost})),
+    summe:total, ek:cost, abzug
+  });
+  SET("kb_warte",WARTE);
+  sendeWarteschlange();
+
+  off('m-pay');showBon(sale);
+}
+
+/* --- SCHRITT 4: Bons an den gemeinsamen Speicher -------------------------
+   Der Server bucht Verkauf und Bestandsabzug in EINEM Schritt innerhalb
+   seiner Sperre. Antwortet er nicht, bleibt alles in der Warteschlange.  */
+let sendeLaeuft=false;
+function sendeWarteschlange(laut){
+  if(sendeLaeuft){ if(laut)alert(t('sync_wait')); return; }
+  if(!CFG.sync){ if(laut)alert(t('sync_off')); syncChip(); return; }
+  if(!WARTE.length){ if(laut)alert(t('sync_ok')); syncChip(); return; }
+  sendeLaeuft=true; syncChip();
+  const paket=WARTE.slice(0,25);            /* nicht alles auf einmal */
+  fetch(CFG.sync,{
+    method:"POST",
+    /* text/plain mit Absicht: Apps Script beantwortet die Vorab-Anfrage des
+       Browsers sonst nicht und der Abgleich scheitert stumm. */
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({typ:"verkauf",geraet:"Kasse "+CFG.loc,verkaeufe:paket})
+  })
+  .then(r=>r.json())
+  .then(a=>{
+    if(!a||!a.ok)throw new Error("Server sagt nein");
+    /* Der alte Server kennt "typ:verkauf" nicht und antwortet trotzdem mit
+       ok:true — er haelt das Paket fuer eine Bestandsmeldung. Ohne diese
+       Pruefung wuerde die Kasse den Bon als gebucht ansehen und wegwerfen,
+       obwohl der Server ihn nie gesehen hat. Fehlt das Feld "gebucht"
+       vollstaendig, ist der Server noch nicht aktualisiert. */
+    if(!("gebucht" in a))throw new Error("veraltet");
+    /* Gebucht UND als doppelt erkannt heisst beides: liegt sicher dort. */
+    const fertig={};
+    (a.gebucht||[]).forEach(r=>fertig[r]=1);
+    (a.doppelt||[]).forEach(r=>fertig[r]=1);
+    WARTE=WARTE.filter(v=>!fertig[v.ref]);
+    SET("kb_warte",WARTE);
+    SYNCSTAND={zeit:Date.now(),ok:true,knapp:a.knapp||[]};
+    if(laut)alert(t('sync_ok')+" · "+(a.gebucht||[]).length);
+  })
+  .catch(e=>{
+    const alt=e&&e.message==="veraltet";
+    SYNCSTAND={zeit:Date.now(),ok:false,alt:alt,knapp:SYNCSTAND.knapp};
+    if(laut)alert(alt?t('sync_old'):t('sync_err'));
+  })
+  .finally(()=>{ sendeLaeuft=false; syncChip(); if($("#v-tag")&&!$("#v-tag").classList.contains("hidden"))renderDay(); });
+}
+
+function syncChip(){
+  const el=$("#syncchip"); if(!el)return;
+  if(!CFG.sync){ el.textContent="⛔"; el.title=t('sync_off'); return; }
+  if(sendeLaeuft){ el.textContent="⏳"; el.title=t('sync_wait'); return; }
+  if(WARTE.length){ el.textContent="📤 "+WARTE.length; el.title=t('sync_err'); return; }
+  el.textContent=SYNCSTAND.ok===false?"⚠️":"☁️";
+  el.title=SYNCSTAND.ok===false?(SYNCSTAND.alt?t('sync_old'):t('sync_err')):t('sync_ok');
+}
+function showBon(sale){
+  const d=new Date(sale.ts);
+  const rows=sale.items.map(i=>`<tr><td>${i.qty}× ${t('no')}${i.nr} ${i.name}</td><td>${baht(i.preis*i.qty)}</td></tr>`).join("");
+  const c=sale.custId?CUST.find(x=>x.id===sale.custId):null;
+  const bonData="100BLEND:BON:"+CFG.loc+":"+(sale.ref||"")+(c?":"+c.id:"");
+  $("#bon").innerHTML=`
+    <div class="c b" style="font-size:17px">100blend</div>
+    <div class="c">Stand ${CFG.loc} · ${CFG.city||""}</div>
+    <div class="c" style="font-size:11px">${t('halal')}</div>
+    <hr><div>${d.toLocaleString("de-DE")}</div><div>Bon: ${sale.ref||"-"}</div><hr>
+    <table>${rows}</table><hr>
+    <table><tr class="b"><td>${t('sum').toUpperCase()}</td><td>${baht(sale.total)}</td></tr>
+    <tr><td>${t('pay_h')}</td><td>${sale.pay}</td></tr></table>
+    ${c?`<hr><div>🎟️ ${c.name} · ${t('stamp')} ${c.stamps%10}/10${c.free>0?` · 🎁 ${c.free}`:''}</div>`:''}
+    <hr><div class="c" style="font-size:11px">🎁 ${t('join_bon')}</div>
+    <div class="qrc"><img src="${qr(bonData,150)}"></div>
+    <div class="c" style="font-size:11px">${t('thanks')}</div>`;
+  on('m-bon');
+}
+function newSale(){clearOrder();setCust(null);}
+
+/* =================== ZUBEREITUNGS-BON =================== */
+function showPrep(){
+  const rows=orderRows();
+  const COL={fl:"#0d3b2e",tk:"#13335a",fest:"#3a2f0c",wirk:"#3a1340"};
+  const TC={fl:"#7fe0bf",tk:"#9cc8ff",fest:"#ffce4d",wirk:"#e3a0ff"};
+  $("#prep").innerHTML=rows.map(r=>{
+    const m=r.m,z=m.z;
+    const grp=k=>z[k]?`<div class="grp"><div class="gl">${t('grp_'+k)}</div><ul>${z[k].map(x=>`<li><span>${tIng(x[0])}</span><b>${tUnit(x[1])}</b></li>`).join("")}</ul></div>`:"";
+    const pn=m.prep?(LANG==="de"?m.prep:((PREPN[m.nr]||{})[LANG]||m.prep)):"";
+    return `<h4>${r.q}× ${t('no')} ${m.nr} — ${m.name} <span class="tag" style="background:${COL.fl};color:${TC.fl}">${m.size}</span></h4>
+      ${pn?`<div class="note">🔪 ${pn}</div>`:""}
+      ${grp('fl')}${grp('tk')}${grp('fest')}${grp('wirk')}
+      <div class="note">${t('mix_line')}</div>`;
+  }).join("");
+  on('m-prep');
+}
+
+/* =================== TAG =================== */
+function todays(){const t0=today();return SALES.filter(s=>s.ts.slice(0,10)===t0);}
+function renderDay(){
+  const s=todays();
+  const ums=s.reduce((a,x)=>a+x.total,0),cnt=s.reduce((a,x)=>a+x.items.reduce((b,i)=>b+i.qty,0),0),cost=s.reduce((a,x)=>a+x.cost,0);
+  $("#d-ums").textContent=baht(ums);$("#d-cnt").textContent=cnt;
+  $("#d-avg").textContent=baht(s.length?ums/s.length:0);$("#d-db").textContent=baht(ums-cost);
+  $("#saleslist").innerHTML=s.length?s.map(x=>{
+    const c=x.custId?CUST.find(k=>k.id===x.custId):null;
+    return `<div class="lrow"><div><b>${baht(x.total)}</b> · ${x.pay}<div class="sub">${new Date(x.ts).toLocaleTimeString("de-DE")} · ${x.items.map(i=>i.qty+"×"+i.nr).join(", ")}${c?" · 🎟️"+c.name:""}</div></div></div>`;
+  }).join(""):`<div class="empty">${t('no_sales')}</div>`;
+
+  /* Was der Tag vom Lager genommen hat — die Gegenprobe zur Inventur.
+     Peter sieht damit abends, ob der Bestand noch zu den Verkaeufen passt. */
+  const verbr={};
+  s.forEach(x=>Object.keys(x.abzug||{}).forEach(c=>verbr[c]=Math.round(((verbr[c]||0)+x.abzug[c])*100)/100));
+  const codes=Object.keys(verbr).sort((a,b)=>verbr[b]-verbr[a]);
+  const knapp={}; (SYNCSTAND.knapp||[]).forEach(k=>knapp[k.code]=k.fehlt);
+  $("#lagerpanel").style.display=codes.length?"":"none";
+  $("#lagerlist").innerHTML=codes.map(c=>{
+    const nm=(ZUTATNAME[c]||c), e=(EINHEIT[c]||"g");
+    return `<div class="lrow"><div><b>${nm}</b>
+      <div class="sub">${c}${knapp[c]?` · ⚠ ${t('stock_short')} (${knapp[c]} ${e})`:""}</div></div>
+      <div style="font-weight:800">${verbr[c].toLocaleString("de-DE")} ${e}</div></div>`;
+  }).join("");
+  syncChip();
+}
+function exportCSV(){
+  const s=todays();let csv="Zeit;Bon;Positionen;Summe_THB;Wareneinsatz_THB;DB_THB;Zahlart;KundeID\n";
+  s.forEach(x=>{csv+=[new Date(x.ts).toLocaleString("de-DE"),x.ref||"",x.items.map(i=>i.qty+"x"+i.nr).join("|"),x.total,x.cost,x.total-x.cost,x.pay,x.custId||""].join(";")+"\n";});
+  const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="100blend_verkaeufe_"+today()+".csv";a.click();
+}
+function copyKIZ(){
+  const s=todays();const ums=s.reduce((a,x)=>a+x.total,0),cnt=s.reduce((a,x)=>a+x.items.reduce((b,i)=>b+i.qty,0),0),cost=s.reduce((a,x)=>a+x.cost,0);
+  const obj={aktiv:true,stand:"Stand "+CFG.loc,heute:{umsatz_thb:ums,becher:cnt,obon_thb:s.length?Math.round(ums/s.length):0,wareneinsatz_thb:cost,db_thb:ums-cost},aktualisiert:new Date().toLocaleString("de-DE")};
+  navigator.clipboard.writeText(JSON.stringify(obj,null,2)).then(()=>alert(t('a_copied')));
+}
+function closeDay(){renderDay();}
+
+/* =================== SETUP =================== */
+function fillSetup(){$("#s-loc").value=CFG.loc;$("#s-name").value=CFG.name;$("#s-city").value=CFG.city;$("#s-pptype").value=CFG.pptype;$("#s-ppid").value=CFG.ppid;$("#s-sync").value=CFG.sync||"";}
+function saveSetup(){
+  CFG={loc:$("#s-loc").value.trim()||"01",name:$("#s-name").value.trim()||"100BLEND",city:$("#s-city").value.trim()||"PATTAYA",pptype:$("#s-pptype").value,ppid:$("#s-ppid").value.trim(),sync:$("#s-sync").value.trim(),lang:LANG};
+  SET("kb_cfg",CFG);$("#locline").textContent="Stand "+CFG.loc+" · "+CFG.city;alert(t('a_saved'));
+}
+
+/* =================== INIT =================== */
+document.querySelectorAll(".lang").forEach(b=>b.classList.toggle("on",b.dataset.l===LANG));
+$("#locline").textContent="Stand "+CFG.loc+" · "+CFG.city;
+applyI18n();renderMenu();renderOrder();setCust(null);syncChip();
+/* Liegengebliebene Bons beim Start und bei zurueckkehrendem Netz nachreichen. */
+if(WARTE.length)sendeWarteschlange();
+window.addEventListener("online",()=>sendeWarteschlange());
+setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },120000);
+</script>
+</body>
+</html>
