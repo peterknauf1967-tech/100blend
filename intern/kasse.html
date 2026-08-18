@@ -443,7 +443,7 @@ const TASCHE_CODE="TB";
 const THERMO_PRO_BECHER=0.5;
 /* Namen und Einheiten der abgezogenen Codes — nur damit die Verbrauchsliste
    im Tag-Reiter lesbar ist ("Ananas 1 310 g" statt "AN 1310"). */
-const ZUTATNAME={"TE":"Grüner Tee / Jasmintee","SK":"Sonnenblumenkerne","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","KE":"Kürbiskerne","MI":"Minze","MS":"Mangostan","BA":"Banane","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","ER":"Erdbeere TK","MB":"Maulbeere TK","GU":"Guave","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","KK":"Kakao (Holland, ungesüßt)","ST":"Süßtamarinde (Makham Wan)","MG":"Mango","KM":"Kuhmilch 🥛 (Meiji, 2 L)","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","HF":"Haferflocken → Hafermilch","GK":"Gurke","ZT":"Zitrone","BK":"Brokkoli TK","PS":"Pfirsich TK","KU":"Kurkuma","TB":"Thermo-Tasche (Lieferung)"};
+const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","SK":"Sonnenblumenkerne","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","KE":"Kürbiskerne","MI":"Minze","MS":"Mangostan","BA":"Banane","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","ER":"Erdbeere TK","MB":"Maulbeere TK","GU":"Guave","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","KK":"Kakao (Holland, ungesüßt)","ST":"Süßtamarinde (Makham Wan)","MG":"Mango","KM":"Kuhmilch 🥛 (Meiji, 2 L)","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","HF":"Haferflocken → Hafermilch","GK":"Gurke","ZT":"Zitrone","BK":"Brokkoli TK","PS":"Pfirsich TK","KU":"Kurkuma","TB":"Thermo-Tasche (Lieferung)"};
 const EINHEIT={"TE":"g","SK":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","KE":"g","MI":"g","MS":"g","BA":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","ER":"g","MB":"g","GU":"g","JO":"g","BM":"g","KL":"g","KO":"ml","KK":"g","ST":"g","MG":"g","KM":"ml","DR":"g","AV":"g","WM":"g","HF":"g","GK":"g","ZT":"g","BK":"g","PS":"g","KU":"g","TB":"Stk"};
 const MENU=[
  {
@@ -822,10 +822,10 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 10.4,
+    "ware": 11.2,
     "verp": 4.2,
-    "ek": 14.6,
-    "ekLief": 16.8,
+    "ek": 15.4,
+    "ekLief": 17.6,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -846,10 +846,10 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 13.8,
+    "ware": 14.9,
     "verp": 4.2,
-    "ek": 18,
-    "ekLief": 20.2,
+    "ek": 19.1,
+    "ekLief": 21.3,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -870,10 +870,10 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 18.9,
+    "ware": 20.4,
     "verp": 4.2,
-    "ek": 23.1,
-    "ekLief": 25.3,
+    "ek": 24.6,
+    "ekLief": 26.8,
     "kalk": 89,
     "preis": 89,
     "offen": [
@@ -1228,10 +1228,10 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 18,
+    "ware": 18.2,
     "verp": 4.2,
-    "ek": 22.2,
-    "ekLief": 24.5,
+    "ek": 22.3,
+    "ekLief": 24.6,
     "kalk": 79,
     "preis": 79,
     "offen": [],
@@ -1248,12 +1248,12 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 23.9,
+    "ware": 24.1,
     "verp": 4.2,
-    "ek": 28.1,
-    "ekLief": 30.4,
-    "kalk": 99,
-    "preis": 99,
+    "ek": 28.3,
+    "ekLief": 30.5,
+    "kalk": 109,
+    "preis": 109,
     "offen": [],
     "abzug": {
      "KO": 109.5,
@@ -1268,10 +1268,10 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 32.8,
+    "ware": 33,
     "verp": 4.2,
-    "ek": 37,
-    "ekLief": 39.2,
+    "ek": 37.2,
+    "ekLief": 39.5,
     "kalk": 139,
     "preis": 139,
     "offen": [],
@@ -1379,10 +1379,10 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 10.5,
+    "ware": 10.8,
     "verp": 4.2,
-    "ek": 14.7,
-    "ekLief": 17,
+    "ek": 15,
+    "ekLief": 17.2,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -1403,10 +1403,10 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 14,
+    "ware": 14.3,
     "verp": 4.2,
-    "ek": 18.2,
-    "ekLief": 20.4,
+    "ek": 18.5,
+    "ekLief": 20.8,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -1427,10 +1427,10 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 19.1,
+    "ware": 19.6,
     "verp": 4.2,
-    "ek": 23.3,
-    "ekLief": 25.6,
+    "ek": 23.8,
+    "ekLief": 26.1,
     "kalk": 89,
     "preis": 89,
     "offen": [
