@@ -438,12 +438,12 @@ const tUnit=s=>LANG==="de"?s:((UNIT[s]||{})[LANG]||s);
             inkl. Becher, Deckel, Halm, Sticker. Thermo-Tasche TB kommt
             bei Lieferung dazu (eine je zwei Becher, siehe THERMO_PRO_BECHER). */
 const KALK_FAKTOR=3.5;
-const THERMO_TASCHE=4.5;
+const THERMO_TASCHE=2.6;
 const TASCHE_CODE="TB";
 const THERMO_PRO_BECHER=0.5;
 /* Namen und Einheiten der abgezogenen Codes — nur damit die Verbrauchsliste
    im Tag-Reiter lesbar ist ("Ananas 1 310 g" statt "AN 1310"). */
-const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","SK":"Sonnenblumenkerne","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","KE":"Kürbiskerne","MI":"Minze","MS":"Mangostan","BA":"Banane","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","ER":"Erdbeere TK","MB":"Maulbeere TK","GU":"Guave","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","KK":"Kakao (Holland, ungesüßt)","ST":"Süßtamarinde (Makham Wan)","MG":"Mango","KM":"Kuhmilch 🥛 (Meiji, 2 L)","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","HF":"Haferflocken → Hafermilch","GK":"Gurke","ZT":"Zitrone","BK":"Brokkoli TK","PS":"Pfirsich TK","KU":"Kurkuma","HS":"Hanfsamen (geschält)","JB":"Schwarze Johannisbeere TK","TB":"Thermo-Tasche (Lieferung)"};
+const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","SK":"Sonnenblumenkerne","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","KE":"Kürbiskerne","MI":"Minze","MS":"Mangostan","BA":"Banane","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","ER":"Erdbeere TK","MB":"Maulbeere TK","GU":"Guave","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","KK":"Kakao (Holland, ungesüßt)","ST":"Süßtamarinde (Makham Wan)","MG":"Mango","KM":"Kuhmilch 🥛 (Meiji, 2 L)","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","HF":"Haferflocken → Hafermilch","GK":"Gurke","ZT":"Zitrone","BK":"Brokkoli TK","PS":"Pfirsich TK","KU":"Kurkuma","HS":"Hanfsamen (geschält)","JB":"Schwarze Johannisbeere TK","TB":"Thermo-Tasche (Lieferung) 25×30 cm"};
 const EINHEIT={"TE":"g","SK":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","KE":"g","MI":"g","MS":"g","BA":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","ER":"g","MB":"g","GU":"g","JO":"g","BM":"g","KL":"g","KO":"ml","KK":"g","ST":"g","MG":"g","KM":"ml","DR":"g","AV":"g","WM":"g","HF":"g","GK":"g","ZT":"g","BK":"g","PS":"g","KU":"g","HS":"g","JB":"g","TB":"Stk"};
 const MENU=[
  {
@@ -460,7 +460,7 @@ const MENU=[
     "ware": 9.7,
     "verp": 4.2,
     "ek": 13.9,
-    "ekLief": 16.1,
+    "ekLief": 15.2,
     "kalk": 49,
     "preis": 49,
     "offen": [
@@ -487,7 +487,7 @@ const MENU=[
     "ware": 12.9,
     "verp": 4.2,
     "ek": 17.1,
-    "ekLief": 19.3,
+    "ekLief": 18.4,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -514,7 +514,7 @@ const MENU=[
     "ware": 17.6,
     "verp": 4.2,
     "ek": 21.8,
-    "ekLief": 24.1,
+    "ekLief": 23.1,
     "kalk": 79,
     "preis": 79,
     "offen": [
@@ -552,7 +552,7 @@ const MENU=[
     "ware": 10.8,
     "verp": 4.2,
     "ek": 14.9,
-    "ekLief": 17.2,
+    "ekLief": 16.2,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -578,7 +578,7 @@ const MENU=[
     "ware": 14.3,
     "verp": 4.2,
     "ek": 18.5,
-    "ekLief": 20.7,
+    "ekLief": 19.8,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -604,7 +604,7 @@ const MENU=[
     "ware": 19.6,
     "verp": 4.2,
     "ek": 23.8,
-    "ekLief": 26,
+    "ekLief": 25.1,
     "kalk": 89,
     "preis": 89,
     "offen": [
@@ -641,7 +641,7 @@ const MENU=[
     "ware": 0.5,
     "verp": 4.2,
     "ek": 4.7,
-    "ekLief": 7,
+    "ekLief": 6,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -667,7 +667,7 @@ const MENU=[
     "ware": 0.7,
     "verp": 4.2,
     "ek": 4.9,
-    "ekLief": 7.1,
+    "ekLief": 6.2,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -693,7 +693,7 @@ const MENU=[
     "ware": 1,
     "verp": 4.2,
     "ek": 5.2,
-    "ekLief": 7.4,
+    "ekLief": 6.5,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -730,7 +730,7 @@ const MENU=[
     "ware": 2.2,
     "verp": 4.2,
     "ek": 6.4,
-    "ekLief": 8.6,
+    "ekLief": 7.7,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -758,7 +758,7 @@ const MENU=[
     "ware": 2.9,
     "verp": 4.2,
     "ek": 7.1,
-    "ekLief": 9.4,
+    "ekLief": 8.4,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -786,7 +786,7 @@ const MENU=[
     "ware": 4,
     "verp": 4.2,
     "ek": 8.2,
-    "ekLief": 10.4,
+    "ekLief": 9.5,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -825,7 +825,7 @@ const MENU=[
     "ware": 11.2,
     "verp": 4.2,
     "ek": 15.4,
-    "ekLief": 17.6,
+    "ekLief": 16.7,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -849,7 +849,7 @@ const MENU=[
     "ware": 14.9,
     "verp": 4.2,
     "ek": 19.1,
-    "ekLief": 21.3,
+    "ekLief": 20.4,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -873,7 +873,7 @@ const MENU=[
     "ware": 20.4,
     "verp": 4.2,
     "ek": 24.6,
-    "ekLief": 26.8,
+    "ekLief": 25.9,
     "kalk": 89,
     "preis": 89,
     "offen": [
@@ -908,7 +908,7 @@ const MENU=[
     "ware": 16,
     "verp": 4.2,
     "ek": 20.2,
-    "ekLief": 22.4,
+    "ekLief": 21.5,
     "kalk": 79,
     "preis": 79,
     "offen": [
@@ -932,7 +932,7 @@ const MENU=[
     "ware": 21.2,
     "verp": 4.2,
     "ek": 25.4,
-    "ekLief": 27.7,
+    "ekLief": 26.7,
     "kalk": 89,
     "preis": 89,
     "offen": [
@@ -956,7 +956,7 @@ const MENU=[
     "ware": 29.1,
     "verp": 4.2,
     "ek": 33.3,
-    "ekLief": 35.5,
+    "ekLief": 34.6,
     "kalk": 119,
     "preis": 119,
     "offen": [
@@ -991,7 +991,7 @@ const MENU=[
     "ware": 18.4,
     "verp": 4.2,
     "ek": 22.6,
-    "ekLief": 24.9,
+    "ekLief": 23.9,
     "kalk": 89,
     "preis": 89,
     "offen": [
@@ -1015,7 +1015,7 @@ const MENU=[
     "ware": 24.5,
     "verp": 4.2,
     "ek": 28.7,
-    "ekLief": 30.9,
+    "ekLief": 30,
     "kalk": 109,
     "preis": 109,
     "offen": [
@@ -1039,7 +1039,7 @@ const MENU=[
     "ware": 33.5,
     "verp": 4.2,
     "ek": 37.7,
-    "ekLief": 40,
+    "ekLief": 39,
     "kalk": 139,
     "preis": 139,
     "offen": [
@@ -1074,7 +1074,7 @@ const MENU=[
     "ware": 12.2,
     "verp": 4.2,
     "ek": 16.3,
-    "ekLief": 18.6,
+    "ekLief": 17.6,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -1096,7 +1096,7 @@ const MENU=[
     "ware": 16.1,
     "verp": 4.2,
     "ek": 20.3,
-    "ekLief": 22.6,
+    "ekLief": 21.6,
     "kalk": 79,
     "preis": 79,
     "offen": [
@@ -1118,7 +1118,7 @@ const MENU=[
     "ware": 22.1,
     "verp": 4.2,
     "ek": 26.3,
-    "ekLief": 28.5,
+    "ekLief": 27.6,
     "kalk": 99,
     "preis": 99,
     "offen": [
@@ -1151,7 +1151,7 @@ const MENU=[
     "ware": 4.3,
     "verp": 4.2,
     "ek": 8.5,
-    "ekLief": 10.8,
+    "ekLief": 9.8,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -1174,7 +1174,7 @@ const MENU=[
     "ware": 5.8,
     "verp": 4.2,
     "ek": 10,
-    "ekLief": 12.2,
+    "ekLief": 11.3,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -1197,7 +1197,7 @@ const MENU=[
     "ware": 7.9,
     "verp": 4.2,
     "ek": 12.1,
-    "ekLief": 14.3,
+    "ekLief": 13.4,
     "kalk": 49,
     "preis": 49,
     "offen": [
@@ -1231,7 +1231,7 @@ const MENU=[
     "ware": 18.2,
     "verp": 4.2,
     "ek": 22.3,
-    "ekLief": 24.6,
+    "ekLief": 23.6,
     "kalk": 79,
     "preis": 79,
     "offen": [],
@@ -1251,7 +1251,7 @@ const MENU=[
     "ware": 24.1,
     "verp": 4.2,
     "ek": 28.3,
-    "ekLief": 30.5,
+    "ekLief": 29.6,
     "kalk": 109,
     "preis": 109,
     "offen": [],
@@ -1271,7 +1271,7 @@ const MENU=[
     "ware": 33,
     "verp": 4.2,
     "ek": 37.2,
-    "ekLief": 39.5,
+    "ekLief": 38.5,
     "kalk": 139,
     "preis": 139,
     "offen": [],
@@ -1302,7 +1302,7 @@ const MENU=[
     "ware": 9.6,
     "verp": 4.2,
     "ek": 13.8,
-    "ekLief": 16.1,
+    "ekLief": 15.1,
     "kalk": 49,
     "preis": 49,
     "offen": [
@@ -1325,7 +1325,7 @@ const MENU=[
     "ware": 12.8,
     "verp": 4.2,
     "ek": 17,
-    "ekLief": 19.2,
+    "ekLief": 18.3,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -1348,7 +1348,7 @@ const MENU=[
     "ware": 17.5,
     "verp": 4.2,
     "ek": 21.7,
-    "ekLief": 23.9,
+    "ekLief": 23,
     "kalk": 79,
     "preis": 79,
     "offen": [
@@ -1382,7 +1382,7 @@ const MENU=[
     "ware": 10.8,
     "verp": 4.2,
     "ek": 15,
-    "ekLief": 17.2,
+    "ekLief": 16.3,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -1406,7 +1406,7 @@ const MENU=[
     "ware": 14.3,
     "verp": 4.2,
     "ek": 18.5,
-    "ekLief": 20.8,
+    "ekLief": 19.8,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -1430,7 +1430,7 @@ const MENU=[
     "ware": 19.6,
     "verp": 4.2,
     "ek": 23.8,
-    "ekLief": 26.1,
+    "ekLief": 25.1,
     "kalk": 89,
     "preis": 89,
     "offen": [
@@ -1465,7 +1465,7 @@ const MENU=[
     "ware": 4.1,
     "verp": 4.2,
     "ek": 8.3,
-    "ekLief": 10.5,
+    "ekLief": 9.6,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -1487,7 +1487,7 @@ const MENU=[
     "ware": 5.5,
     "verp": 4.2,
     "ek": 9.6,
-    "ekLief": 11.9,
+    "ekLief": 10.9,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -1509,7 +1509,7 @@ const MENU=[
     "ware": 7.5,
     "verp": 4.2,
     "ek": 11.7,
-    "ekLief": 13.9,
+    "ekLief": 13,
     "kalk": 49,
     "preis": 49,
     "offen": [
@@ -1542,7 +1542,7 @@ const MENU=[
     "ware": 14.5,
     "verp": 4.2,
     "ek": 18.6,
-    "ekLief": 20.9,
+    "ekLief": 19.9,
     "kalk": 69,
     "preis": 69,
     "offen": [],
@@ -1561,7 +1561,7 @@ const MENU=[
     "ware": 19.2,
     "verp": 4.2,
     "ek": 23.4,
-    "ekLief": 25.6,
+    "ekLief": 24.7,
     "kalk": 89,
     "preis": 89,
     "offen": [],
@@ -1580,7 +1580,7 @@ const MENU=[
     "ware": 26.3,
     "verp": 4.2,
     "ek": 30.5,
-    "ekLief": 32.7,
+    "ekLief": 31.8,
     "kalk": 109,
     "preis": 109,
     "offen": [],
@@ -1610,7 +1610,7 @@ const MENU=[
     "ware": 7.6,
     "verp": 4.2,
     "ek": 11.8,
-    "ekLief": 14.1,
+    "ekLief": 13.1,
     "kalk": 49,
     "preis": 49,
     "offen": [],
@@ -1629,7 +1629,7 @@ const MENU=[
     "ware": 10.1,
     "verp": 4.2,
     "ek": 14.3,
-    "ekLief": 16.5,
+    "ekLief": 15.6,
     "kalk": 59,
     "preis": 59,
     "offen": [],
@@ -1648,7 +1648,7 @@ const MENU=[
     "ware": 13.8,
     "verp": 4.2,
     "ek": 18,
-    "ekLief": 20.3,
+    "ekLief": 19.3,
     "kalk": 69,
     "preis": 69,
     "offen": [],
@@ -1678,7 +1678,7 @@ const MENU=[
     "ware": 14.8,
     "verp": 4.2,
     "ek": 19,
-    "ekLief": 21.2,
+    "ekLief": 20.3,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -1700,7 +1700,7 @@ const MENU=[
     "ware": 19.6,
     "verp": 4.2,
     "ek": 23.8,
-    "ekLief": 26.1,
+    "ekLief": 25.1,
     "kalk": 89,
     "preis": 89,
     "offen": [
@@ -1722,7 +1722,7 @@ const MENU=[
     "ware": 26.9,
     "verp": 4.2,
     "ek": 31.1,
-    "ekLief": 33.3,
+    "ekLief": 32.4,
     "kalk": 109,
     "preis": 109,
     "offen": [
@@ -1755,7 +1755,7 @@ const MENU=[
     "ware": 8,
     "verp": 4.2,
     "ek": 12.2,
-    "ekLief": 14.5,
+    "ekLief": 13.5,
     "kalk": 49,
     "preis": 49,
     "offen": [
@@ -1780,7 +1780,7 @@ const MENU=[
     "ware": 10.6,
     "verp": 4.2,
     "ek": 14.8,
-    "ekLief": 17.1,
+    "ekLief": 16.1,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -1805,7 +1805,7 @@ const MENU=[
     "ware": 14.6,
     "verp": 4.2,
     "ek": 18.8,
-    "ekLief": 21,
+    "ekLief": 20.1,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -1841,7 +1841,7 @@ const MENU=[
     "ware": 5.8,
     "verp": 4.2,
     "ek": 10,
-    "ekLief": 12.2,
+    "ekLief": 11.3,
     "kalk": 39,
     "preis": 39,
     "offen": [
@@ -1864,7 +1864,7 @@ const MENU=[
     "ware": 7.7,
     "verp": 4.2,
     "ek": 11.9,
-    "ekLief": 14.1,
+    "ekLief": 13.2,
     "kalk": 49,
     "preis": 49,
     "offen": [
@@ -1887,7 +1887,7 @@ const MENU=[
     "ware": 10.5,
     "verp": 4.2,
     "ek": 14.7,
-    "ekLief": 16.9,
+    "ekLief": 16,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -1921,7 +1921,7 @@ const MENU=[
     "ware": 12.1,
     "verp": 4.2,
     "ek": 16.3,
-    "ekLief": 18.6,
+    "ekLief": 17.6,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -1951,7 +1951,7 @@ const MENU=[
     "ware": 16.1,
     "verp": 4.2,
     "ek": 20.3,
-    "ekLief": 22.6,
+    "ekLief": 21.6,
     "kalk": 79,
     "preis": 79,
     "offen": [
@@ -1981,7 +1981,7 @@ const MENU=[
     "ware": 22.1,
     "verp": 4.2,
     "ek": 26.3,
-    "ekLief": 28.5,
+    "ekLief": 27.6,
     "kalk": 99,
     "preis": 99,
     "offen": [
@@ -2022,7 +2022,7 @@ const MENU=[
     "ware": 11.5,
     "verp": 4.2,
     "ek": 15.7,
-    "ekLief": 17.9,
+    "ekLief": 17,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -2044,7 +2044,7 @@ const MENU=[
     "ware": 15.2,
     "verp": 4.2,
     "ek": 19.4,
-    "ekLief": 21.7,
+    "ekLief": 20.7,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -2066,7 +2066,7 @@ const MENU=[
     "ware": 20.9,
     "verp": 4.2,
     "ek": 25.1,
-    "ekLief": 27.3,
+    "ekLief": 26.4,
     "kalk": 89,
     "preis": 89,
     "offen": [
@@ -2099,7 +2099,7 @@ const MENU=[
     "ware": 12.6,
     "verp": 4.2,
     "ek": 16.7,
-    "ekLief": 19,
+    "ekLief": 18,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -2120,7 +2120,7 @@ const MENU=[
     "ware": 16.7,
     "verp": 4.2,
     "ek": 20.9,
-    "ekLief": 23.1,
+    "ekLief": 22.2,
     "kalk": 79,
     "preis": 79,
     "offen": [
@@ -2141,7 +2141,7 @@ const MENU=[
     "ware": 22.8,
     "verp": 4.2,
     "ek": 27,
-    "ekLief": 29.3,
+    "ekLief": 28.3,
     "kalk": 99,
     "preis": 99,
     "offen": [
@@ -2173,7 +2173,7 @@ const MENU=[
     "ware": 17.6,
     "verp": 4.2,
     "ek": 21.8,
-    "ekLief": 24.1,
+    "ekLief": 23.1,
     "kalk": 79,
     "preis": 79,
     "offen": [
@@ -2196,7 +2196,7 @@ const MENU=[
     "ware": 23.4,
     "verp": 4.2,
     "ek": 27.6,
-    "ekLief": 29.8,
+    "ekLief": 28.9,
     "kalk": 99,
     "preis": 99,
     "offen": [
@@ -2219,7 +2219,7 @@ const MENU=[
     "ware": 32.1,
     "verp": 4.2,
     "ek": 36.3,
-    "ekLief": 38.5,
+    "ekLief": 37.6,
     "kalk": 129,
     "preis": 129,
     "offen": [
@@ -2253,7 +2253,7 @@ const MENU=[
     "ware": 10.7,
     "verp": 4.2,
     "ek": 14.9,
-    "ekLief": 17.1,
+    "ekLief": 16.2,
     "kalk": 59,
     "preis": 59,
     "offen": [
@@ -2276,7 +2276,7 @@ const MENU=[
     "ware": 14.2,
     "verp": 4.2,
     "ek": 18.4,
-    "ekLief": 20.6,
+    "ekLief": 19.7,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -2299,7 +2299,7 @@ const MENU=[
     "ware": 19.4,
     "verp": 4.2,
     "ek": 23.6,
-    "ekLief": 25.9,
+    "ekLief": 24.9,
     "kalk": 89,
     "preis": 89,
     "offen": [
