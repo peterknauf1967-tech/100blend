@@ -166,26 +166,20 @@
    Mengen = ECHTER 22-oz-Becher (650 ml). Einmal mixen, in die 50-ml-Probier-
    becher fuellen: ergibt 13 Proben und schmeckt wie das Verkaufsprodukt.
    ★ = in der Praxis schon verkostet und fuer gut befunden. */
+/* ERZEUGT — nicht von Hand aendern.
+   Quelle: stand-os/rezepte-lexi.html + _katalog.json
+   Neu erzeugen: node stand-os/_verkostung-generieren.js
+   Mengen = ECHTER 22-oz-Becher (650 ml). Einmal mixen, in die 50-ml-Probier-
+   becher fuellen: ergibt 13 Proben und schmeckt wie das Verkaufsprodukt.
+   ★ = in der Praxis schon verkostet und fuer gut befunden. */
 const R=[
  {
-  "l": "Basis",
-  "n": "15 Wassermelone-Limette-Minze",
-  "th": "แตงโม-มะนาว-สะระแหน่",
-  "p": "",
-  "bestaetigt": 1,
-  "z": [
-   "Limette 15 g",
-   "Minze 3 g",
-   "Wassermelone 180 g",
-   "Wassermelone 140 g"
-  ]
- },
- {
-  "l": "Basis",
+  "l": "BASIS-10",
   "n": "19 Ananas-Gurke-Minze",
   "th": "สัปปะรด-แตงกวา-สะระแหน่",
   "p": "",
   "bestaetigt": 1,
+  "basis": 1,
   "z": [
    "Kokoswasser 90 ml",
    "Limette 12 g",
@@ -195,11 +189,137 @@ const R=[
   ]
  },
  {
-  "l": "Karte alt",
+  "l": "BASIS-10",
+  "n": "15 Wassermelone-Limette-Minze",
+  "th": "แตงโม-มะนาว-สะระแหน่",
+  "p": "",
+  "bestaetigt": 1,
+  "basis": 2,
+  "z": [
+   "Limette 15 g",
+   "Minze 3 g",
+   "Wassermelone 180 g",
+   "Wassermelone 140 g"
+  ]
+ },
+ {
+  "l": "BASIS-10",
+  "n": "16 Ananas-Passionsfrucht-Kokos",
+  "th": "สัปปะรด-เสาวรส-มะพร้าว",
+  "p": "",
+  "bestaetigt": 0,
+  "basis": 3,
+  "z": [
+   "Kokoswasser 120 ml",
+   "Passionsfrucht rot 40 g",
+   "Ananas 240 g"
+  ]
+ },
+ {
+  "l": "BASIS-10",
+  "n": "24 Ananas-Ingwer-Limette",
+  "th": "สัปปะรด-ขิง-มะนาว",
+  "p": "",
+  "bestaetigt": 0,
+  "basis": 4,
+  "z": [
+   "Kokoswasser 120 ml",
+   "Ingwer 5 g",
+   "Limette 10 g",
+   "Ananas 240 g"
+  ]
+ },
+ {
+  "l": "BASIS-10",
+  "n": "21 Erdbeere-Banane-Limette",
+  "th": "สตรอว์เบอร์รี-กล้วย-มะนาว",
+  "p": "",
+  "bestaetigt": 0,
+  "basis": 5,
+  "z": [
+   "Hafermilch (selbst gemacht) 140 ml",
+   "Limette 10 g",
+   "Banane 90 g",
+   "Erdbeere TK 180 g"
+  ]
+ },
+ {
+  "l": "BASIS-10",
+  "n": "22 Erdbeere-Hibiskus",
+  "th": "สตรอว์เบอร์รี-กระเจี๊ยบ",
+  "p": "",
+  "bestaetigt": 0,
+  "basis": 6,
+  "z": [
+   "Hibiskustee fertig 150 ml",
+   "Banane 60 g",
+   "Erdbeere TK 220 g"
+  ]
+ },
+ {
+  "l": "BASIS-10",
+  "n": "18 Drachenfrucht-Banane-Limette",
+  "th": "แก้วมังกร-กล้วย-มะนาว",
+  "p": "",
+  "bestaetigt": 0,
+  "basis": 7,
+  "z": [
+   "Kokoswasser 110 ml",
+   "Limette 8 g",
+   "Banane 90 g",
+   "Drachenfrucht rot 180 g"
+  ]
+ },
+ {
+  "l": "BASIS-10",
+  "n": "23 Beere-Hanf-Banane",
+  "th": "เบอร์รี-เมล็ดกัญชง-กล้วย",
+  "p": "",
+  "bestaetigt": 0,
+  "basis": 8,
+  "z": [
+   "Hafermilch (selbst gemacht) 150 ml",
+   "Hanfsamen (geschält) 18 g",
+   "Banane 70 g",
+   "Beeren-Mix TK fertig 130 g",
+   "Schwarze Johannisbeere TK 55 g"
+  ]
+ },
+ {
+  "l": "BASIS-10",
+  "n": "17 Banane-Kakao",
+  "th": "กล้วย-โกโก้",
+  "p": "",
+  "bestaetigt": 0,
+  "basis": 9,
+  "z": [
+   "Hafermilch (selbst gemacht) 200 ml",
+   "Kakao (Holland, ungesüßt) 8 g",
+   "Salz 0,2 g",
+   "Banane 200 g"
+  ]
+ },
+ {
+  "l": "BASIS-10",
+  "n": "20 Mango-Joghurt-Zitrone",
+  "th": "มะม่วง-โยเกิร์ต-เลมอน",
+  "p": "",
+  "bestaetigt": 0,
+  "basis": 10,
+  "z": [
+   "Joghurt natur 🥛 (2 L) 120 g",
+   "Hafermilch (selbst gemacht) 60 ml",
+   "Zitrone 8 g",
+   "Mango 220 g"
+  ]
+ },
+ {
+  "l": "Reserve",
   "n": "01 Bangkok Wake-Up",
   "th": "บางกอก เวค-อัพ",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Grüner Tee (lose, ungesüßt) 150 g",
    "Sonnenblumenkerne 40 g",
@@ -211,11 +331,12 @@ const R=[
   ]
  },
  {
-  "l": "Karte alt",
+  "l": "Reserve",
   "n": "02 Muay Thai Power",
   "th": "มวยไทย พาวเวอร์",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Kokoswasser 150 ml",
    "Kürbiskerne 40 g",
@@ -226,11 +347,12 @@ const R=[
   ]
  },
  {
-  "l": "Karte alt",
+  "l": "Reserve",
   "n": "03 Siam Serenity",
   "th": "สยาม เซเรนิตี้",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Pandanblätter 6 g",
    "Wasser (kalt/abgekocht) 150 ml",
@@ -241,11 +363,12 @@ const R=[
   ]
  },
  {
-  "l": "Karte alt",
+  "l": "Reserve",
   "n": "04 Pure Thai Cleanse",
   "th": "เพียว ไทย คลีนส์",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Wasser (kalt/abgekocht) 150 ml",
    "Sonnenblumenkerne 40 g",
@@ -262,6 +385,7 @@ const R=[
   "th": "แอนตี้เอจ กระเจี๊ยบ-เบอร์รี",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Kokoswasser 120 ml",
    "Hibiskustee fertig 60 ml",
@@ -277,6 +401,7 @@ const R=[
   "th": "แอนตี้เอจ เบอร์รี-คอลลาเจน",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Kokoswasser 80 ml",
    "Joghurt natur 🥛 (2 L) 80 g",
@@ -291,6 +416,7 @@ const R=[
   "th": "แอนตี้เอจ โกโก้-แมกนีเซียม",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Kokosmilch 200 ml",
    "Kakao (Holland, ungesüßt) 10 g",
@@ -305,6 +431,7 @@ const R=[
   "th": "สูตรเฉพาะตามผลเลือด",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Kokoswasser 120 ml",
    "Banane 80 g",
@@ -313,11 +440,12 @@ const R=[
   ]
  },
  {
-  "l": "Karte alt",
+  "l": "Reserve",
   "n": "09 Mango Tango",
   "th": "มะม่วง แทงโก้",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Mango 150 g",
    "Banane 60 g",
@@ -326,11 +454,12 @@ const R=[
   ]
  },
  {
-  "l": "Karte alt",
+  "l": "Reserve",
   "n": "10 Dragon Fruit Pink Pitaya",
   "th": "แก้วมังกร พิงค์ พิทายา",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Kokosmilch 150 ml",
    "Banane 60 g",
@@ -339,11 +468,12 @@ const R=[
   ]
  },
  {
-  "l": "Karte alt",
+  "l": "Reserve",
   "n": "11 Avocado Sinh Tố Bơ",
   "th": "อะโวคาโด ซิงโต๋ บ๋อ",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Kuhmilch 🥛 (Meiji, 2 L) 150 ml",
    "Süßtamarinde (Makham Wan) 15 g",
@@ -352,11 +482,12 @@ const R=[
   ]
  },
  {
-  "l": "Karte alt",
+  "l": "Reserve",
   "n": "12 Watermelon-Mint Cooler",
   "th": "แตงโม-มินต์ คูลเลอร์",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Wassermelone 140 g",
    "Erdbeere TK 20 g",
@@ -371,6 +502,7 @@ const R=[
   "th": "ตับ-เช้า ไวทัล 🔒",
   "p": "",
   "bestaetigt": 0,
+  "basis": 0,
   "z": [
    "Wasser (kalt/abgekocht) 80 ml",
    "Joghurt natur 🥛 (2 L) 100 g",
@@ -382,57 +514,6 @@ const R=[
    "Beeren-Mix TK fertig 70 g",
    "Schwarzer Pfeffer 0,3 g",
    "Kurkuma 1 g"
-  ]
- },
- {
-  "l": "Basis",
-  "n": "16 Ananas-Passionsfrucht-Kokos",
-  "th": "สัปปะรด-เสาวรส-มะพร้าว",
-  "p": "",
-  "bestaetigt": 0,
-  "z": [
-   "Kokoswasser 120 ml",
-   "Passionsfrucht rot 40 g",
-   "Ananas 240 g"
-  ]
- },
- {
-  "l": "Basis",
-  "n": "17 Banane-Kakao",
-  "th": "กล้วย-โกโก้",
-  "p": "",
-  "bestaetigt": 0,
-  "z": [
-   "Hafermilch (selbst gemacht) 200 ml",
-   "Kakao (Holland, ungesüßt) 8 g",
-   "Salz 0,2 g",
-   "Banane 200 g"
-  ]
- },
- {
-  "l": "Basis",
-  "n": "18 Drachenfrucht-Banane-Limette",
-  "th": "แก้วมังกร-กล้วย-มะนาว",
-  "p": "",
-  "bestaetigt": 0,
-  "z": [
-   "Kokoswasser 110 ml",
-   "Limette 8 g",
-   "Banane 90 g",
-   "Drachenfrucht rot 180 g"
-  ]
- },
- {
-  "l": "Basis",
-  "n": "20 Mango-Joghurt-Zitrone",
-  "th": "มะม่วง-โยเกิร์ต-เลมอน",
-  "p": "",
-  "bestaetigt": 0,
-  "z": [
-   "Joghurt natur 🥛 (2 L) 120 g",
-   "Hafermilch (selbst gemacht) 60 ml",
-   "Zitrone 8 g",
-   "Mango 220 g"
   ]
  }
 ];

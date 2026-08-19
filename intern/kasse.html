@@ -443,8 +443,8 @@ const TASCHE_CODE="TB";
 const THERMO_PRO_BECHER=0.5;
 /* Namen und Einheiten der abgezogenen Codes — nur damit die Verbrauchsliste
    im Tag-Reiter lesbar ist ("Ananas 1 310 g" statt "AN 1310"). */
-const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","SK":"Sonnenblumenkerne","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","KE":"Kürbiskerne","MI":"Minze","MS":"Mangostan","BA":"Banane","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","ER":"Erdbeere TK","MB":"Maulbeere TK","GU":"Guave","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","KK":"Kakao (Holland, ungesüßt)","ST":"Süßtamarinde (Makham Wan)","MG":"Mango","KM":"Kuhmilch 🥛 (Meiji, 2 L)","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","HF":"Haferflocken → Hafermilch","GK":"Gurke","ZT":"Zitrone","BK":"Brokkoli TK","PS":"Pfirsich TK","KU":"Kurkuma","TB":"Thermo-Tasche (Lieferung)"};
-const EINHEIT={"TE":"g","SK":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","KE":"g","MI":"g","MS":"g","BA":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","ER":"g","MB":"g","GU":"g","JO":"g","BM":"g","KL":"g","KO":"ml","KK":"g","ST":"g","MG":"g","KM":"ml","DR":"g","AV":"g","WM":"g","HF":"g","GK":"g","ZT":"g","BK":"g","PS":"g","KU":"g","TB":"Stk"};
+const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","SK":"Sonnenblumenkerne","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","KE":"Kürbiskerne","MI":"Minze","MS":"Mangostan","BA":"Banane","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","ER":"Erdbeere TK","MB":"Maulbeere TK","GU":"Guave","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","KK":"Kakao (Holland, ungesüßt)","ST":"Süßtamarinde (Makham Wan)","MG":"Mango","KM":"Kuhmilch 🥛 (Meiji, 2 L)","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","HF":"Haferflocken → Hafermilch","GK":"Gurke","ZT":"Zitrone","BK":"Brokkoli TK","PS":"Pfirsich TK","KU":"Kurkuma","HS":"Hanfsamen (geschält)","JB":"Schwarze Johannisbeere TK","TB":"Thermo-Tasche (Lieferung)"};
+const EINHEIT={"TE":"g","SK":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","KE":"g","MI":"g","MS":"g","BA":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","ER":"g","MB":"g","GU":"g","JO":"g","BM":"g","KL":"g","KO":"ml","KK":"g","ST":"g","MG":"g","KM":"ml","DR":"g","AV":"g","WM":"g","HF":"g","GK":"g","ZT":"g","BK":"g","PS":"g","KU":"g","HS":"g","JB":"g","TB":"Stk"};
 const MENU=[
  {
   "nr": "01",
@@ -2000,6 +2000,317 @@ const MENU=[
      "PS": 60,
      "BM": 70,
      "KU": 1,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "21",
+  "name": "Erdbeere-Banane-Limette",
+  "th": "สตรอว์เบอร์รี-กล้วย-มะนาว",
+  "en": "Strawberry-Banana-Lime",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 11.5,
+    "verp": 4.2,
+    "ek": 15.7,
+    "ekLief": 17.9,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "LS"
+    ],
+    "abzug": {
+     "HF": 7.7,
+     "LS": 5.5,
+     "BA": 49.5,
+     "ER": 99,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 15.2,
+    "verp": 4.2,
+    "ek": 19.4,
+    "ekLief": 21.7,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "LS"
+    ],
+    "abzug": {
+     "HF": 10.22,
+     "LS": 7.3,
+     "BA": 65.7,
+     "ER": 131.4,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 20.9,
+    "verp": 4.2,
+    "ek": 25.1,
+    "ekLief": 27.3,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "LS"
+    ],
+    "abzug": {
+     "HF": 14,
+     "LS": 10,
+     "BA": 90,
+     "ER": 180,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "22",
+  "name": "Erdbeere-Hibiskus",
+  "th": "สตรอว์เบอร์รี-กระเจี๊ยบ",
+  "en": "Strawberry-Hibiscus",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 12.6,
+    "verp": 4.2,
+    "ek": 16.7,
+    "ekLief": 19,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "HT"
+    ],
+    "abzug": {
+     "RO": 0.25,
+     "BA": 33,
+     "ER": 121,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 16.7,
+    "verp": 4.2,
+    "ek": 20.9,
+    "ekLief": 23.1,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "HT"
+    ],
+    "abzug": {
+     "RO": 0.33,
+     "BA": 43.8,
+     "ER": 160.6,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 22.8,
+    "verp": 4.2,
+    "ek": 27,
+    "ekLief": 29.3,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [
+     "HT"
+    ],
+    "abzug": {
+     "RO": 0.45,
+     "BA": 60,
+     "ER": 220,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "23",
+  "name": "Beere-Hanf-Banane",
+  "th": "เบอร์รี-เมล็ดกัญชง-กล้วย",
+  "en": "Berry-Hemp-Banana",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 17.6,
+    "verp": 4.2,
+    "ek": 21.8,
+    "ekLief": 24.1,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "HS"
+    ],
+    "abzug": {
+     "HF": 8.25,
+     "HS": 9.9,
+     "BA": 38.5,
+     "BM": 71.5,
+     "JB": 30.3,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 23.4,
+    "verp": 4.2,
+    "ek": 27.6,
+    "ekLief": 29.8,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [
+     "HS"
+    ],
+    "abzug": {
+     "HF": 10.95,
+     "HS": 13.1,
+     "BA": 51.1,
+     "BM": 94.9,
+     "JB": 40.2,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 32.1,
+    "verp": 4.2,
+    "ek": 36.3,
+    "ekLief": 38.5,
+    "kalk": 129,
+    "preis": 129,
+    "offen": [
+     "HS"
+    ],
+    "abzug": {
+     "HF": 15,
+     "HS": 18,
+     "BA": 70,
+     "BM": 130,
+     "JB": 55,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "24",
+  "name": "Ananas-Ingwer-Limette",
+  "th": "สัปปะรด-ขิง-มะนาว",
+  "en": "Pineapple-Ginger-Lime",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 10.7,
+    "verp": 4.2,
+    "ek": 14.9,
+    "ekLief": 17.1,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "IG",
+     "LS"
+    ],
+    "abzug": {
+     "KN": 0.26,
+     "IG": 2.8,
+     "LS": 5.5,
+     "AN": 132,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 14.2,
+    "verp": 4.2,
+    "ek": 18.4,
+    "ekLief": 20.6,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "IG",
+     "LS"
+    ],
+    "abzug": {
+     "KN": 0.35,
+     "IG": 3.7,
+     "LS": 7.3,
+     "AN": 175.2,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 19.4,
+    "verp": 4.2,
+    "ek": 23.6,
+    "ekLief": 25.9,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "IG",
+     "LS"
+    ],
+    "abzug": {
+     "KN": 0.48,
+     "IG": 5,
+     "LS": 10,
+     "AN": 240,
      "BE": 1,
      "DE": 1,
      "HA": 1,
