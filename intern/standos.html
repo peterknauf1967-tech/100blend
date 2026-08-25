@@ -300,6 +300,21 @@ if(!Object.keys(S.bestand||{}).length && !Object.keys(S.tk||{}).length){
   serverStandUebernehmen(S);
   localStorage.setItem(SKEY,JSON.stringify(S));
 }
+/* PAPIERINVENTUR-UEBERNAHME (Peter 24.08.2026):
+   Wenn im Deploy ein neuerer STARTBESTAND.stand liegt als der zuletzt
+   quittierte, gilt das als Inventur-Zeitpunkt: dann werden bestand + tk
+   einmal ueberschrieben. Auf allen Geraeten. So sehen Peter und Lexi nach
+   dem naechsten Laden dieselben Papierinventur-Werte - und Sonderfaelle
+   wie "Peter hat schon lokal 5 Ananas gebucht" werden hier bewusst
+   verworfen, weil die Papierinventur die Wahrheit ist.
+   Neue Buchungen ab jetzt bleiben erhalten (das quittierte Datum verhindert
+   ein zweites Ueberschreiben mit derselben Version). */
+if (STARTBESTAND.stand && S.inv_quittiert !== STARTBESTAND.stand) {
+  serverStandUebernehmen(S);
+  S.inv_quittiert = STARTBESTAND.stand;
+  localStorage.setItem(SKEY, JSON.stringify(S));
+  console.log("Papierinventur uebernommen: Stand " + STARTBESTAND.stand);
+}
 S.ts=S.ts||{};
 const save=()=>localStorage.setItem(SKEY,JSON.stringify(S));
 
