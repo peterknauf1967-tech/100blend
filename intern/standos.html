@@ -178,21 +178,34 @@ details.tipp summary::-webkit-details-marker{display:none}
 details.tipp .inhalt{padding:0 12px 11px;font-size:13.5px;line-height:1.55}
 details.tipp .inhalt .en{display:block;margin-top:4px}
 </style>
+<script type="module">
+  /* Firestore-Parallel-Modus: NUR bei ?firestore=1 in der URL. Sonst
+     verhält sich die App exakt wie vorher (kein Adapter geladen, kein
+     Login-Overlay). Damit bleibt die produktive URL unangetastet, während
+     der Doppelbetrieb parallel getestet wird. */
+  if (new URLSearchParams(location.search).get("firestore") === "1") {
+    try { await import("../firebase/parallel-sync.js"); }
+    catch (e) { console.error("Firestore-Modus konnte nicht laden: " + e.message); }
+  }
+</script>
 <meta name="robots" content="noindex,nofollow">
-<title>100blend · Stand-OS</title>
+<title>MIXO · 100blend</title>
 <link rel="manifest" href="./standos.webmanifest">
 <meta name="theme-color" content="#1a1a1a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Stand-OS">
+<meta name="apple-mobile-web-app-title" content="MIXO">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" href="./icon-192.png">
 </head>
 <body>
 <header>
   <div class="top">
-    <div class="brand">100<span>blend</span> · Stand-OS <i id="verstempel" style="font:400 10.5px/1 ui-monospace,monospace;opacity:.45;font-style:normal"></i><i id="syncstempel" style="font:400 10.5px/1 ui-monospace,monospace;opacity:.7;font-style:normal;margin-left:6px"></i></div>
-    <button class="user" id="userbtn">👤</button>
+    <div class="brand"><b style="letter-spacing:1px">MIXO</b> · 100<span>blend</span> <i id="verstempel" style="font:400 10.5px/1 ui-monospace,monospace;opacity:.45;font-style:normal"></i><i id="syncstempel" style="font:400 10.5px/1 ui-monospace,monospace;opacity:.7;font-style:normal;margin-left:6px"></i></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <a href="./kasse.html" title="Zur Kasse" style="text-decoration:none;color:inherit;font-size:22px">💰</a>
+      <button class="user" id="userbtn">👤</button>
+    </div>
   </div>
 </header>
 <main id="view"></main>
@@ -316,7 +329,7 @@ if (STARTBESTAND.stand && S.inv_quittiert !== STARTBESTAND.stand) {
   console.log("Papierinventur uebernommen: Stand " + STARTBESTAND.stand);
 }
 S.ts=S.ts||{};
-const save=()=>localStorage.setItem(SKEY,JSON.stringify(S));
+const save=()=>{localStorage.setItem(SKEY,JSON.stringify(S));window.blendSync?.(S);};
 
 /* ===== Gemeinsamer Speicher =============================================
    Peter (Android) und Lexi (iPhone) hatten je einen eigenen Browser-Speicher.
