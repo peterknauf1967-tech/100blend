@@ -184,7 +184,7 @@ details.tipp .inhalt .en{display:block;margin-top:4px}
      Login-Overlay). Damit bleibt die produktive URL unangetastet, während
      der Doppelbetrieb parallel getestet wird. */
   if (new URLSearchParams(location.search).get("firestore") === "1") {
-    try { await import("../firebase/parallel-sync.js"); }
+    try { await import("./firebase/parallel-sync.js"); }
     catch (e) { console.error("Firestore-Modus konnte nicht laden: " + e.message); }
   }
 </script>
