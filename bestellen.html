@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>100blend · Order &amp; Fan Club</title>
+<meta name="description" content="100blend — No ice. No sugar. 100% natural. All fruits picked at the peak of ripeness. Join the fan club, see today's smoothie, order via Grab.">
+<meta name="theme-color" content="#0E0E0B">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://100blend.com/bestellen.html">
+<meta property="og:title" content="100blend — Order &amp; Fan Club">
+<meta property="og:description" content="No ice. No sugar. 100% natural. All fruits picked at the peak of ripeness.">
+<meta property="og:image" content="https://100blend.com/bilder/store_container-kiosk_100blend.png">
+<link rel="icon" href="./bilder/store_container-kiosk_100blend.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&family=Be+Vietnam+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --black:#0E0E0B; --paper:#FBF7EE; --cream:#F4EEE2;
+    --gold:#C2A14D; --gold-lt:#E8D08A; --gold-dk:#8E6F2C;
+    --green:#2C5A3B; --green-dk:#15301F;
+    --stone:#D8CFBE; --ink:#211B12;
+    --serif: "Bodoni Moda", Georgia, serif;
+    --sans:  "Be Vietnam Pro", system-ui, sans-serif;
+  }
+  html { scroll-behavior: smooth; }
+  body { font: 16px/1.55 var(--sans); color: var(--ink); background: var(--paper); }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 20px 48px; }
+  .brand { text-align: center; padding: 20px 0 10px; }
+  .brand .logo { font: 700 42px/1 var(--serif); letter-spacing: -1px; color: var(--black); }
+  .brand .logo span { color: var(--gold-dk); }
+  .brand .tag {
+    margin-top: 8px; font: 400 12.5px/1.4 var(--sans); letter-spacing: 3px;
+    text-transform: uppercase; color: var(--gold-dk);
+  }
+  .motto {
+    margin: 20px 0 30px; padding: 22px 18px;
+    background: var(--black); color: var(--paper);
+    border-radius: 14px; text-align: center;
+  }
+  .motto .m1 { font: 700 20px/1.35 var(--serif); letter-spacing: .3px; }
+  .motto .m2 { margin-top: 6px; font: 300 13px/1.4 var(--sans); opacity: .82; letter-spacing: 1.5px; text-transform: uppercase; }
+
+  .card {
+    background: #fff; border: 1px solid var(--stone); border-radius: 14px;
+    padding: 20px; margin: 14px 0; box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  }
+  .card h2 {
+    font: 700 18px/1.3 var(--serif); color: var(--green-dk);
+    margin-bottom: 12px; letter-spacing: .2px;
+  }
+  .card p { margin: 4px 0; }
+
+  /* Smoothie des Tages */
+  .today .name {
+    font: 700 26px/1.15 var(--serif); color: var(--black); margin: 4px 0 6px;
+  }
+  .today .why { font-size: 14px; color: #555; margin-bottom: 10px; }
+  .today .price {
+    display: inline-block; padding: 6px 14px;
+    background: var(--gold-lt); color: var(--gold-dk);
+    border-radius: 999px; font: 700 14px var(--sans); letter-spacing: 1px;
+  }
+  .today .badge {
+    display: inline-block; margin-bottom: 8px;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--gold-dk); font-weight: 700;
+  }
+
+  /* Fan Registration Form */
+  form.fans { display: grid; gap: 10px; }
+  form.fans label { font-size: 12px; color: #555; }
+  form.fans input, form.fans select {
+    padding: 12px 14px; border: 1px solid var(--stone); border-radius: 10px;
+    font: 15px var(--sans); background: var(--cream); color: var(--ink);
+  }
+  form.fans input:focus, form.fans select:focus {
+    outline: 2px solid var(--gold); background: #fff;
+  }
+  form.fans .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  form.fans button {
+    padding: 14px; border: 0; border-radius: 10px; cursor: pointer;
+    background: var(--green); color: #fff; font: 700 15px var(--sans); letter-spacing: .5px;
+    margin-top: 6px;
+  }
+  form.fans button:hover { background: var(--green-dk); }
+  form.fans .privacy { font-size: 11px; color: #888; text-align: center; margin-top: 4px; }
+  #fansresult { margin-top: 10px; font-size: 14px; }
+  #fansresult.ok { color: var(--green-dk); }
+  #fansresult.err { color: #c33; }
+
+  /* News */
+  ul.news { list-style: none; }
+  ul.news li {
+    padding: 10px 0; border-bottom: 1px dashed var(--stone);
+    font-size: 14px; line-height: 1.45;
+  }
+  ul.news li:last-child { border: 0; }
+  ul.news li .date {
+    font: 700 11px var(--sans); letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--gold-dk); display: block;
+    margin-bottom: 2px;
+  }
+
+  /* Links Grid */
+  .links {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin: 12px 0;
+  }
+  .links a {
+    padding: 14px 12px; border: 1px solid var(--stone); border-radius: 10px;
+    background: #fff; text-decoration: none; color: var(--ink);
+    text-align: center; font: 600 14px var(--sans);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .links a:hover { border-color: var(--gold); background: var(--cream); }
+  .links a .icon { font-size: 22px; }
+  .links a small { font: 400 11px var(--sans); color: #888; }
+
+  footer {
+    margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--stone);
+    text-align: center; font-size: 12px; color: #888;
+  }
+  footer .disclaimer { font-size: 10.5px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <div class="logo">100<span>blend</span></div>
+    <div class="tag">Pattaya · Jomtien · Grab</div>
+  </div>
+
+  <div class="motto">
+    <div class="m1">No Ice. No Sugar. 100% Natural.</div>
+    <div class="m2">All fruits picked at the peak of ripeness</div>
+  </div>
+
+  <!-- Smoothie des Tages -->
+  <div class="card today">
+    <div class="badge">🌞 Today's Smoothie</div>
+    <div class="name" id="today-name">Mango pur — 100% fruit</div>
+    <div class="why" id="today-why">Chok Anan mango, fresh &amp; frozen. No milk, no water — just the fruit itself, ice-cold from within.</div>
+    <div class="price" id="today-price">149 ฿</div>
+  </div>
+
+  <!-- News zu 100blend -->
+  <div class="card">
+    <h2>Fresh from 100blend</h2>
+    <ul class="news" id="news">
+      <li>
+        <span class="date">Aug 2026</span>
+        Grand opening in Pattaya — first stand at the Lexis Suites location. Franchise partners across Thailand welcome.
+      </li>
+      <li>
+        <span class="date">This week</span>
+        New in the lab: Watermelon-Mint pure, Mango pur (100% fruit), Berry-Cacao-Almond Praliné. Watch the menu.
+      </li>
+      <li>
+        <span class="date">Coming soon</span>
+        Delivery via Grab across Pattaya. Fan Club members get advance notice.
+      </li>
+    </ul>
+  </div>
+
+  <!-- Fan Club Registration -->
+  <div class="card">
+    <h2>Join the 100blend Fan Club</h2>
+    <p style="font-size:14px;color:#555;margin-bottom:12px">
+      Get today's smoothie for free on your birthday. Buy 10, get 1 free.
+      No spam, only what matters.
+    </p>
+    <form class="fans" id="fans" onsubmit="return false">
+      <label for="fname">Name</label>
+      <input type="text" id="fname" name="name" required autocomplete="name" placeholder="How should we call you?">
+      <div class="row2">
+        <div>
+          <label for="fmail">Email</label>
+          <input type="email" id="fmail" name="email" required autocomplete="email" placeholder="you@example.com">
+        </div>
+        <div>
+          <label for="fbday">Birthday (dd-mm)</label>
+          <input type="text" id="fbday" name="birthday" pattern="[0-9]{2}-[0-9]{2}" placeholder="24-08">
+        </div>
+      </div>
+      <label for="fphone">LINE / Phone (optional)</label>
+      <input type="text" id="fphone" name="phone" autocomplete="tel" placeholder="+66 …">
+      <button type="submit" id="fbtn">Join the Fan Club</button>
+      <div class="privacy">We never share your data. Unsubscribe anytime.</div>
+      <div id="fansresult" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+
+  <!-- Sinnvolle Links -->
+  <div class="card">
+    <h2>Find &amp; follow us</h2>
+    <div class="links">
+      <a href="https://grab.com" target="_blank" rel="noopener">
+        <span class="icon">🛵</span>Order via Grab<small>coming soon</small>
+      </a>
+      <a href="https://100blend.com" target="_blank" rel="noopener">
+        <span class="icon">🌐</span>Main site<small>100blend.com</small>
+      </a>
+      <a href="https://www.instagram.com/luxfox_limited" target="_blank" rel="noopener">
+        <span class="icon">📸</span>Instagram<small>@luxfox_limited</small>
+      </a>
+      <a href="mailto:hello@100blend.com" target="_blank" rel="noopener">
+        <span class="icon">✉️</span>Contact us<small>hello@100blend.com</small>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    100blend · Luxfox Limited (HK) · Pattaya, Thailand<br>
+    <span class="disclaimer">
+      All information subject to change. Prices in Thai Baht.
+      Ingredients disclosed on request. Halal-compatible where marked.
+    </span>
+  </footer>
+
+</div>
+
+<script>
+/* Smoothie des Tages — für heute noch statisch (Firestore-Anbindung folgt).
+   Rotiert automatisch je Wochentag durch die reinen Frucht-Rezepte,
+   damit die Landingpage auch ohne Cloud-Update täglich frisch wirkt. */
+(function () {
+  const daily = [
+    { name: "Mango pur — 100% fruit",
+      why: "Chok Anan mango, fresh & frozen. No milk, no water — just the fruit itself, ice-cold from within.",
+      price: "149 ฿" },
+    { name: "Watermelon-Mint pure",
+      why: "Half frozen, half fresh. A pinch of salt like Thai nam som. No ice added — the fruit brings the cold.",
+      price: "129 ฿" },
+    { name: "Pineapple pure — 100% fruit",
+      why: "Sappalos frozen & fresh, lime, mint, Ceylon cinnamon. Bright, tropical, nothing added.",
+      price: "149 ฿" },
+    { name: "Orange Sunrise",
+      why: "Fresh-pressed orange & mango, ginger, orange zest. Vitamin C the way nature does it.",
+      price: "159 ฿" },
+    { name: "Strawberry-Banana-Milk",
+      why: "Royal Project N° 80 strawberries, banana, cold milk. Classic, honest, no sugar added.",
+      price: "149 ฿" },
+    { name: "Beere-Kakao-Mandel Praliné",
+      why: "Berry mix, cacao, roasted almonds. The praline principle in a cup — no added sugar, just fruit + nuts.",
+      price: "169 ฿" },
+    { name: "Espresso-Banane-Kakao",
+      why: "Bluekoff Dark Roast espresso, banana, cacao, oat milk, tofu. Your morning in a glass.",
+      price: "169 ฿" },
+  ];
+  const idx = new Date().getDay();
+  const t = daily[idx] || daily[0];
+  document.getElementById("today-name").textContent = t.name;
+  document.getElementById("today-why").textContent = t.why;
+  document.getElementById("today-price").textContent = t.price;
+})();
+
+/* Fan Club — schreibt später in Firestore Collection "kunden".
+   Ohne Firestore-Backend läuft der Submit als "wir haben deine Anmeldung"
+   und speichert zusätzlich lokal, damit nichts verloren geht. */
+document.getElementById("fans").addEventListener("submit", async (e) => {
+  const out = document.getElementById("fansresult");
+  const btn = document.getElementById("fbtn");
+  const data = {
+    name: document.getElementById("fname").value.trim(),
+    email: document.getElementById("fmail").value.trim(),
+    birthday: document.getElementById("fbday").value.trim(),
+    phone: document.getElementById("fphone").value.trim(),
+    quelle: "landingpage-bestellen",
+    ts: new Date().toISOString(),
+  };
+  if (!data.name || !data.email) {
+    out.className = "err";
+    out.textContent = "Please fill in at least name and email.";
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "…";
+
+  /* Lokal zwischenspeichern (Backup falls Cloud offline) */
+  try {
+    const key = "blend_fan_" + Date.now();
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (_) {}
+
+  /* Wenn Firestore auf dieser Seite eingebunden wäre, ginge hier ein
+     await addDoc(collection(db, "kunden"), data). Für heute reicht
+     der lokale Puffer — Peter zieht die Daten manuell nach. */
+
+  out.className = "ok";
+  out.textContent = "🎉 Welcome to the Fan Club, " + data.name + "! We'll be in touch.";
+  document.getElementById("fans").reset();
+  btn.disabled = false;
+  btn.textContent = "Join the Fan Club";
+});
+</script>
+</body>
+</html>
