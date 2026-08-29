@@ -1505,11 +1505,11 @@ function kalt(h){
 
 /* Thai ist die Arbeitssprache — Lexi fuehrt aus, Peter kontrolliert nur.
    Peter, 30.08.2026. */
-let L=localStorage.getItem("bl_lang")||"th", cur=null, curV=null;
+let L=localStorage.getItem("bl_lang_th")||"th", cur=null, curV=null;
 const app=document.getElementById("app"), foot=document.getElementById("foot");
 
 document.querySelectorAll(".langs button").forEach(b=>b.onclick=()=>{
-  L=b.dataset.l; localStorage.setItem("bl_lang",L);
+  L=b.dataset.l; localStorage.setItem("bl_lang_th",L);
   document.querySelectorAll(".langs button").forEach(x=>x.classList.toggle("on",x===b));
   render();
 });

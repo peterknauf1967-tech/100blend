@@ -133,9 +133,9 @@
 <header>
   <div><div class="logo"><a href="./standos.html" title="Zurück zu MIXO" style="text-decoration:none;color:inherit"><b style="letter-spacing:1px">MIXO</b></a> · 100<span>blend</span></div><div class="loc" id="locline">Stand —</div></div>
   <div class="langs">
-    <button class="lang on" data-l="de" onclick="setLang('de')">DE</button>
-    <button class="lang" data-l="th" onclick="setLang('th')">TH</button>
-    <button class="lang" data-l="en" onclick="setLang('en')">EN</button>
+    <button class="lang on" data-l="th" onclick="setLang('th')">🇹🇭 ไทย</button>
+    <button class="lang" data-l="de" onclick="setLang('de')">🇩🇪 DE</button>
+    <button class="lang" data-l="en" onclick="setLang('en')">🇬🇧 EN</button>
   </div>
   <div class="tabs">
     <button class="tab" id="syncchip" onclick="tab('tag')" title="Gemeinsamer Speicher"
@@ -428,6 +428,12 @@ const PREPN={
  "03":{th:"เตรียมน้ำใบเตยก่อน: ใบเตย 2–3 ใบ + น้ำ 150 มล. ปั่นแล้วกรอง",en:"Prep pandan water first: 2–3 leaves + 150 ml water, blend & strain."},
  "08":{th:"ฐาน + โมดูลตามผลเลือด (ดูคำแนะนำ) ของแข็ง (บีทรูท/ขิง/เมล็ดฟักทอง) ใส่ในของเหลวก่อน",en:"Base + modules per result (see consult). Hard items (beetroot/ginger/pumpkin seeds) into the liquid first."}
 };
+/* Der Smoothie-Name folgt der Arbeitssprache. Ohne das blieb die Kachel
+   deutsch, obwohl die Kasse auf Thai stand. Faellt auf Deutsch zurueck,
+   wenn keine Uebersetzung hinterlegt ist.
+   Die Tabellen ING/UNIT sind dagegen auf Deutsch als Ausgangssprache
+   gebaut — dort IST der Schluessel das deutsche Wort. */
+const mName=m=>(LANG==="th"?m.th:LANG==="en"?m.en:m.name)||m.name;
 const tIng=s=>LANG==="de"?s:((ING[s]||{})[LANG]||s);
 const tUnit=s=>LANG==="de"?s:((UNIT[s]||{})[LANG]||s);
 
@@ -4862,7 +4868,15 @@ if(!CFG.sync)CFG.sync=SYNC_STANDARD;
    Der Server erkennt doppelt gesendete Bons an der Bon-Nummer. */
 let WARTE=LS("kb_warte")||[];
 let SYNCSTAND={zeit:0,ok:null,knapp:[]};
-let LANG=CFG.lang||"de";
+/* Thai ist die Arbeitssprache am Stand — Lexi kassiert, Peter kontrolliert.
+   Peter, 30.08.2026: "in allen Bereichen Thai first".
+   Die einmalige Umstellung setzt eine schon gespeicherte deutsche
+   Einstellung genau einmal auf Thai; wer danach bewusst umschaltet,
+   behaelt seine Wahl. */
+if(!localStorage.getItem("kb_lang_th")){
+  CFG.lang="th"; SET("kb_cfg",CFG); localStorage.setItem("kb_lang_th","1");
+}
+let LANG=CFG.lang||"th";
 let CUST=LS("kb_cust")||[];
 let SALES=LS("kb_sales")||[];
 let order={};
@@ -4958,7 +4972,7 @@ function renderMenu(){
     <button class="item" onclick="add('${m.nr}')">
       <div class="bar" style="background:${FARBE(m.nr)}"></div>
       <div class="nr">${t('no')} ${m.nr}${m.bestaetigt?' <span class="stern">★</span>':''}</div>
-      <div class="nm">${m.name}</div>
+      <div class="nm">${mName(m)}</div>
       <div class="desc">${(DESC[m.nr]||{})[LANG]||m.th||""}</div>
       <div class="meta"><div>
         <div class="pr">${vk} ฿</div>
@@ -5062,7 +5076,7 @@ function renderOrder(){
     const auf=boosterAufpreis(r.k,r.g);
     return `
     <div class="oli">
-      <div class="t">${r.m.name}<br><small>${t('no')} ${r.m.nr} · ${GR_NAME[r.g]} · ${preisVon(r.m,r.g)} ฿${auf?` + ${auf} ฿`:""}</small>
+      <div class="t">${mName(r.m)}<br><small>${t('no')} ${r.m.nr} · ${GR_NAME[r.g]} · ${preisVon(r.m,r.g)} ฿${auf?` + ${auf} ฿`:""}</small>
         <div class="bchips">${chips}</div></div>
       <div class="qty"><button onclick="chg('${r.k}',-1)">−</button><b>${r.q}</b><button onclick="chg('${r.k}',1)">+</button></div>
       <div class="lp">${baht(zeilenPreis(r)*r.q)}</div>
@@ -5264,7 +5278,7 @@ function showPrep(){
     const m=r.m,z=m.z;
     const grp=k=>z[k]?`<div class="grp"><div class="gl">${t('grp_'+k)}</div><ul>${z[k].map(x=>`<li><span>${tIng(x[0])}</span><b>${tUnit(x[1])}</b></li>`).join("")}</ul></div>`:"";
     const pn=m.prep?(LANG==="de"?m.prep:((PREPN[m.nr]||{})[LANG]||m.prep)):"";
-    return `<h4>${r.q}× ${t('no')} ${m.nr} — ${m.name} <span class="tag" style="background:${COL.fl};color:${TC.fl}">${m.size}</span></h4>
+    return `<h4>${r.q}× ${t('no')} ${m.nr} — ${mName(m)} <span class="tag" style="background:${COL.fl};color:${TC.fl}">${m.size}</span></h4>
       ${pn?`<div class="note">🔪 ${pn}</div>`:""}
       ${grp('fl')}${grp('tk')}${grp('fest')}${grp('wirk')}
       <div class="note">${t('mix_line')}</div>`;
