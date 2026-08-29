@@ -476,7 +476,13 @@ const BOOSTER_FAKTOR = 2.0;   /* Aufschlag auf den Rohstoff. Niedriger als
 const BOOSTER_MIN    = 20;    /* Kleiner lohnt das Handling nicht. */
 
 const BOOSTER=[
- /* GESPERRT 30.08.2026 — nicht mehr "ungeklaert", sondern GEKLAERT und negativ:
+ /* PETER-ENTSCHEIDUNG 30.08.2026: "Dann nehmen wir Halal raus bei diesen
+    Smoothies mit Proteinpulver." Damit ist Whey wieder verkaufsfaehig — der
+    Halal-Anspruch gilt fuer diesen einen Becher nicht, statt dass das ganze
+    Produkt ausfaellt. Der Becher wird in der Kasse sichtbar markiert
+    (nichtHalal), damit niemand ihn versehentlich als Halal verkauft.
+
+    Der Befund selbst bleibt bestehen und ist der Grund fuer die Markierung:
     MATELL ist NICHT halal-zertifiziert. Suche in der CICOT-Datenbank
     (thic.or.th / halal.co.th) nach "matell" und "matell intertrade" = null
     Treffer, waehrend Kontrollsuchen (bamm 12, fitwhey 2, biovitt 12) sauber
@@ -484,16 +490,16 @@ const BOOSTER=[
     (Chulalongkorn, ALS, TISTR, Foodchain USA) enthalten keinen Halal-Punkt.
     ACHTUNG FALLE: halal.co.th/en/product/detail/757351 "Whey Protein Isolate"
     gehoert der Siam City Chemical Co. Ltd., NICHT MATELL.
-    Wir werben mit Halal — dann darf kein unzertifiziertes Molkenprotein in
-    den Verkaufsbecher. Die 908 g im Haus sind nicht verdorben, nur nicht
-    verkaufsfaehig; fuer Peters eigene Tests bleiben sie nutzbar.
+    Statt das Produkt zu streichen, nimmt Peter den Halal-Anspruch bei genau
+    diesen Bechern heraus. Die 908 g im Haus werden also verkauft — aber mit
+    Hinweis, nicht unter dem Halal-Versprechen.
     ERSATZ MIT BELEG: Biovitt WPI ungesuesst, halal 10G5680240662,
     อย. 10-1-03958-5-0123, gueltig bis 05.02.2027, ca. 1.399 THB/907 g
     = 1.540 THB/kg — billiger ALS MATELL (1.690 THB/kg) und zertifiziert.
     Details: konzept-bausteine/halal-und-rechtslage-booster-30-08.md */
  {code:"WY", de:"Whey Protein",   th:"เวย์โปรตีน",        en:"Whey protein",
-  gramm:{"12":20,"16":25,"22":30}, ekProG:1.436, offen:true,
-  sperre:"⚠ MATELL ist NICHT halal-zertifiziert (CICOT geprueft 30.08.) · Ersatz: Biovitt WPI ungesuesst"},
+  gramm:{"12":20,"16":25,"22":30}, ekProG:1.436, offen:false, nichtHalal:true,
+  sperre:"⚠ Becher mit Whey traegt KEINEN Halal-Anspruch (MATELL nicht zertifiziert) · Peter-Entscheidung 30.08. · zertifizierte Alternative: Biovitt WPI ungesuesst"},
 
  /* RECHTSFRAGE GEKLAERT 30.08.2026 — und zwar positiv: Ein frisch am Stand
     zubereitetes Getraenk braucht KEINE eigene อย.-Registrierung. Thai FDA
@@ -507,10 +513,17 @@ const BOOSTER=[
     Getraenke nennt fuer Kreatin-Monohydrat ausdruecklich hoechstens 2,5 g
     pro Tag. Formal bindet die Liste abgepackte Getraenke, nicht frisch
     Gemixtes — sie ist aber der Massstab, den ein Inspektor anlegt.
-    OFFEN BLEIBT NUR NOCH DER PREIS. */
+    PREIS DA SEIT 30.08.2026 (Peter muendlich): 1 kg = 400 THB = 0,40 THB/g.
+    Damit ist der letzte offene Punkt weg — Kreatin ist freigegeben.
+    Aufpreis: 2,5 g x 0,40 x Faktor 2,0 = 2 THB Rohkosten, es greift also der
+    Mindestaufpreis von 20 THB.
+    ⚠ BEDINGUNG AUS DER RECHTSPRUEFUNG: Die gekaufte Dose muss selbst ein
+    registriertes Produkt mit อย.-Nummer sein. Peter hat den Preis genannt,
+    nicht die Marke — beim Einkauf อย.-Nummer und Halal-Zertifikat vom
+    Etikett abfotografieren und hier eintragen. */
  {code:"KR", de:"Kreatin",        th:"ครีเอทีน",           en:"Creatine",
-  gramm:{"12":2.5,"16":2.5,"22":2.5}, ekProG:null, offen:true,
-  sperre:"⚠ Preis offen · Rechtslage geklaert (erlaubt, max 2,5 g/Portion)"},
+  gramm:{"12":2.5,"16":2.5,"22":2.5}, ekProG:0.40, offen:false,
+  sperre:"⚠ Beim Einkauf อย.-Nummer der Dose pruefen und eintragen (Rechtsbedingung)"},
 
  {code:"MC", de:"Matcha",         th:"มัทฉะ",              en:"Matcha",
   gramm:{"12":1.5,"16":2,"22":2.5}, ekProG:3.225, offen:false, sperre:""},
@@ -5522,14 +5535,26 @@ function renderOrder(){
     const aktiv=boosterCodes(r.k);
     const chips=boosterVerkaufbar().map(b=>{
       const an=aktiv.includes(b.code);
+      /* ⊘ am Chip: dieser Booster nimmt dem Becher den Halal-Anspruch.
+         Peter-Entscheidung 30.08.2026 — lieber den Anspruch fuer diesen einen
+         Becher herausnehmen als das Produkt streichen. Das Zeichen steht am
+         Chip UND als Zeile darunter, sobald er aktiv ist: am Tresen wird auf
+         die Chips getippt, nicht in Fussnoten gelesen. */
       return `<button class="bchip${an?" on":""}" onclick="togBoost('${r.k}','${b.code}')"
-        >${b[LANG]||b.de} +${boosterPreis(b,r.g)}฿</button>`;
+        >${b[LANG]||b.de}${b.nichtHalal?" ⊘":""} +${boosterPreis(b,r.g)}฿</button>`;
     }).join("");
+    const ohneHalal=aktiv.map(c=>boosterVon(c)).filter(b=>b&&b.nichtHalal);
+    const halalHinweis=ohneHalal.length
+      ? `<div style="margin-top:5px;font:700 11px/1.3 inherit;color:#a8471f">${
+          LANG==="th" ? "⊘ แก้วนี้ไม่ใช่ฮาลาล (เวย์โปรตีน)"
+        : LANG==="en" ? "⊘ This cup is not halal (whey protein)"
+        :               "⊘ Dieser Becher ist nicht Halal (Whey)"}</div>`
+      : "";
     const auf=boosterAufpreis(r.k,r.g);
     return `
     <div class="oli">
       <div class="t">${mName(r.m)}<br><small>${t('no')} ${r.m.nr} · ${GR_NAME[r.g]} · ${preisVon(r.m,r.g)} ฿${auf?` + ${auf} ฿`:""}</small>
-        <div class="bchips">${chips}</div></div>
+        <div class="bchips">${chips}</div>${halalHinweis}</div>
       <div class="qty"><button onclick="chg('${r.k}',-1)">−</button><b>${r.q}</b><button onclick="chg('${r.k}',1)">+</button></div>
       <div class="lp">${baht(zeilenPreis(r)*r.q)}</div>
     </div>`;}).join(""):`<div class="empty">${t('empty_order')}</div>`;
