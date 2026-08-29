@@ -1,300 +1,447 @@
 <!doctype html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>100blend · Order &amp; Fan Club</title>
-<meta name="description" content="100blend — No ice. No sugar. 100% natural. All fruits picked at the peak of ripeness. Join the fan club, see today's smoothie, order via Grab.">
+<title>100blend</title>
+<meta name="description" content="100blend — 100% fruit. No ice. No sugar. Pattaya.">
 <meta name="theme-color" content="#0E0E0B">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://100blend.com/order.html">
-<meta property="og:title" content="100blend — Order &amp; Fan Club">
-<meta property="og:description" content="No ice. No sugar. 100% natural. All fruits picked at the peak of ripeness.">
+<meta property="og:title" content="100blend">
+<meta property="og:description" content="100% fruit. No ice. No sugar.">
 <meta property="og:image" content="https://100blend.com/bilder/store_container-kiosk_100blend.png">
 <link rel="icon" href="./bilder/store_container-kiosk_100blend.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&family=Be+Vietnam+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@700&family=Be+Vietnam+Pro:wght@300;400;600;700&family=Noto+Sans+Thai:wght@400;700&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
     --black:#0E0E0B; --paper:#FBF7EE; --cream:#F4EEE2;
     --gold:#C2A14D; --gold-lt:#E8D08A; --gold-dk:#8E6F2C;
     --green:#2C5A3B; --green-dk:#15301F;
+    --melon:#F26D6D; --melon-dk:#B14545;
     --stone:#D8CFBE; --ink:#211B12;
     --serif: "Bodoni Moda", Georgia, serif;
-    --sans:  "Be Vietnam Pro", system-ui, sans-serif;
+    --sans:  "Be Vietnam Pro", "Noto Sans Thai", system-ui, sans-serif;
   }
-  html { scroll-behavior: smooth; }
-  body { font: 16px/1.55 var(--sans); color: var(--ink); background: var(--paper); }
-  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 20px 48px; }
-  .brand { text-align: center; padding: 20px 0 10px; }
-  .brand .logo { font: 700 42px/1 var(--serif); letter-spacing: -1px; color: var(--black); }
-  .brand .logo span { color: var(--gold-dk); }
-  .brand .tag {
-    margin-top: 8px; font: 400 12.5px/1.4 var(--sans); letter-spacing: 3px;
-    text-transform: uppercase; color: var(--gold-dk);
-  }
-  .motto {
-    margin: 20px 0 30px; padding: 22px 18px;
-    background: var(--black); color: var(--paper);
-    border-radius: 14px; text-align: center;
-  }
-  .motto .m1 { font: 700 20px/1.35 var(--serif); letter-spacing: .3px; }
-  .motto .m2 { margin-top: 6px; font: 300 13px/1.4 var(--sans); opacity: .82; letter-spacing: 1.5px; text-transform: uppercase; }
-
-  .card {
-    background: #fff; border: 1px solid var(--stone); border-radius: 14px;
-    padding: 20px; margin: 14px 0; box-shadow: 0 2px 8px rgba(0,0,0,.04);
-  }
-  .card h2 {
-    font: 700 18px/1.3 var(--serif); color: var(--green-dk);
-    margin-bottom: 12px; letter-spacing: .2px;
-  }
-  .card p { margin: 4px 0; }
-
-  /* Smoothie des Tages */
-  .today .name {
-    font: 700 26px/1.15 var(--serif); color: var(--black); margin: 4px 0 6px;
-  }
-  .today .why { font-size: 14px; color: #555; margin-bottom: 10px; }
-  .today .price {
-    display: inline-block; padding: 6px 14px;
-    background: var(--gold-lt); color: var(--gold-dk);
-    border-radius: 999px; font: 700 14px var(--sans); letter-spacing: 1px;
-  }
-  .today .badge {
-    display: inline-block; margin-bottom: 8px;
-    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--gold-dk); font-weight: 700;
+  html,body{height:100%}
+  body{
+    font: 16px/1.5 var(--sans); color: var(--ink);
+    background: linear-gradient(180deg, #FBF7EE 0%, #F4EEE2 100%);
+    min-height:100vh; overflow-x:hidden;
   }
 
-  /* Fan Registration Form */
-  form.fans { display: grid; gap: 10px; }
-  form.fans label { font-size: 12px; color: #555; }
-  form.fans input, form.fans select {
-    padding: 12px 14px; border: 1px solid var(--stone); border-radius: 10px;
-    font: 15px var(--sans); background: var(--cream); color: var(--ink);
+  /* Sprach-Flaggen — immer oben, immer sichtbar */
+  .langbar{
+    position:fixed; top:14px; right:14px; z-index:100;
+    display:flex; gap:6px; padding:6px 8px;
+    background:rgba(255,255,255,.85); backdrop-filter:blur(6px);
+    border:1px solid var(--stone); border-radius:999px;
+    box-shadow:0 2px 6px rgba(0,0,0,.06);
   }
-  form.fans input:focus, form.fans select:focus {
-    outline: 2px solid var(--gold); background: #fff;
+  .langbar button{
+    width:32px; height:32px; border:0; border-radius:50%;
+    background:transparent; cursor:pointer; font-size:22px;
+    line-height:1; padding:0; opacity:.45; transition:opacity .15s,transform .15s;
   }
-  form.fans .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  form.fans button {
-    padding: 14px; border: 0; border-radius: 10px; cursor: pointer;
-    background: var(--green); color: #fff; font: 700 15px var(--sans); letter-spacing: .5px;
-    margin-top: 6px;
-  }
-  form.fans button:hover { background: var(--green-dk); }
-  form.fans .privacy { font-size: 11px; color: #888; text-align: center; margin-top: 4px; }
-  #fansresult { margin-top: 10px; font-size: 14px; }
-  #fansresult.ok { color: var(--green-dk); }
-  #fansresult.err { color: #c33; }
+  .langbar button:hover{opacity:.85; transform:scale(1.08)}
+  .langbar button.active{opacity:1; outline:2px solid var(--gold);}
 
-  /* News */
-  ul.news { list-style: none; }
-  ul.news li {
-    padding: 10px 0; border-bottom: 1px dashed var(--stone);
-    font-size: 14px; line-height: 1.45;
+  /* Screens: Multi-Step, immer nur einer sichtbar */
+  .screen{
+    display:none; min-height:100vh; padding:70px 22px 40px;
+    max-width:520px; margin:0 auto;
+    flex-direction:column; align-items:center; justify-content:flex-start;
+    text-align:center; animation: fadeIn .35s ease;
   }
-  ul.news li:last-child { border: 0; }
-  ul.news li .date {
-    font: 700 11px var(--sans); letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--gold-dk); display: block;
-    margin-bottom: 2px;
+  .screen.active{display:flex}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+
+  .logo{font: 700 32px/1 var(--serif); letter-spacing:-1px; color:var(--black); margin-bottom:4px}
+  .logo span{color:var(--gold-dk)}
+  .tag{font: 400 11px/1.4 var(--sans); letter-spacing:3px; text-transform:uppercase; color:var(--gold-dk); margin-bottom:24px}
+
+  /* Hero-Screen 1 */
+  .hero-visual{
+    width: min(280px, 70vw); height: min(280px, 70vw);
+    margin: 10px auto 24px; position:relative;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .hero-visual svg{width:100%; height:100%; filter: drop-shadow(0 8px 20px rgba(178,66,66,.28))}
+  .hero-motto{
+    font: 700 26px/1.2 var(--serif); color:var(--black);
+    margin-bottom:8px; letter-spacing:.3px;
+  }
+  .hero-sub{
+    font: 300 14px/1.5 var(--sans); color:#666; letter-spacing:.5px;
+    text-transform:uppercase; margin-bottom:30px;
   }
 
-  /* Links Grid */
-  .links {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    margin: 12px 0;
+  .cta{
+    display:inline-block; padding:18px 32px; border:0; border-radius:999px;
+    background:var(--melon); color:#fff; cursor:pointer;
+    font: 700 17px var(--sans); letter-spacing:.5px;
+    box-shadow: 0 6px 20px rgba(242,109,109,.35);
+    transition:transform .12s, box-shadow .12s;
   }
-  .links a {
-    padding: 14px 12px; border: 1px solid var(--stone); border-radius: 10px;
-    background: #fff; text-decoration: none; color: var(--ink);
-    text-align: center; font: 600 14px var(--sans);
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-  }
-  .links a:hover { border-color: var(--gold); background: var(--cream); }
-  .links a .icon { font-size: 22px; }
-  .links a small { font: 400 11px var(--sans); color: #888; }
+  .cta:hover{transform:translateY(-2px); box-shadow: 0 10px 26px rgba(242,109,109,.45)}
+  .cta:active{transform:translateY(0)}
+  .cta.dark{background:var(--green); box-shadow: 0 6px 20px rgba(44,90,59,.3)}
+  .cta.dark:hover{box-shadow: 0 10px 26px rgba(44,90,59,.4)}
 
-  footer {
-    margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--stone);
-    text-align: center; font-size: 12px; color: #888;
+  .back{
+    background:transparent; border:0; color:#888; cursor:pointer;
+    font: 400 13px var(--sans); margin-top:18px; padding:8px 14px;
   }
-  footer .disclaimer { font-size: 10.5px; margin-top: 6px; }
+  .back:hover{color:var(--ink)}
+
+  /* Screen 2 – Reveal */
+  .offer-card{
+    background:#fff; border:1px solid var(--stone); border-radius:20px;
+    padding:24px; margin:20px 0; box-shadow:0 4px 14px rgba(0,0,0,.06);
+    width:100%;
+  }
+  .offer-visual{
+    width:180px; height:180px; margin:0 auto 16px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .offer-visual svg{width:100%; height:100%}
+  .offer-title{
+    font:700 22px/1.25 var(--serif); color:var(--melon-dk); margin-bottom:10px;
+  }
+  .offer-price{
+    display:inline-block; padding:6px 16px; margin:8px 0 14px;
+    background:var(--melon); color:#fff; border-radius:999px;
+    font:700 15px var(--sans); letter-spacing:.5px;
+  }
+  .offer-price s{color:rgba(255,255,255,.6); margin-right:8px; font-weight:400}
+  .offer-desc{font-size:15px; line-height:1.55; color:#333; margin-bottom:8px}
+  .offer-terms{font-size:12px; color:#888; margin-top:8px}
+
+  /* Screen 3 – Form */
+  form.mini{display:grid; gap:12px; width:100%; margin:16px 0}
+  form.mini label{font-size:12px; color:#666; text-align:left; margin-bottom:-6px}
+  form.mini input{
+    padding:14px 16px; border:1.5px solid var(--stone); border-radius:12px;
+    font:16px var(--sans); background:#fff; color:var(--ink); width:100%;
+  }
+  form.mini input:focus{outline:2px solid var(--gold); border-color:var(--gold)}
+  form.mini .hint{font-size:11px; color:#999; text-align:left}
+  .privacy-mini{font-size:11px; color:#999; margin-top:6px}
+
+  /* Screen 4 – Bon */
+  .bon{
+    background:#fff; border:2px dashed var(--gold);
+    border-radius:16px; padding:26px 20px; margin:16px 0; width:100%;
+  }
+  .bon-code{
+    font:700 32px var(--serif); color:var(--melon-dk); letter-spacing:4px;
+    margin:8px 0;
+  }
+  .bon-hint{font-size:13px; color:#666; margin-top:6px}
+  .success-emoji{font-size:56px; line-height:1; margin:8px 0 4px}
+
+  .links-mini{
+    display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap;
+  }
+  .links-mini a{
+    padding:10px 16px; border:1px solid var(--stone); border-radius:999px;
+    background:#fff; text-decoration:none; color:var(--ink);
+    font:600 13px var(--sans); display:inline-flex; align-items:center; gap:6px;
+  }
+  .links-mini a:hover{border-color:var(--gold); background:var(--cream)}
+
+  footer{
+    margin-top:auto; padding-top:24px;
+    font-size:11px; color:#aaa; text-align:center;
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="brand">
-    <div class="logo">100<span>blend</span></div>
-    <div class="tag">Pattaya · Jomtien · Grab</div>
+<!-- Sprach-Flaggen: 🇹🇭 🇬🇧 🇩🇪 -->
+<div class="langbar" role="group" aria-label="Language">
+  <button data-lang="th" aria-label="ภาษาไทย" title="ภาษาไทย">🇹🇭</button>
+  <button data-lang="en" aria-label="English"  title="English">🇬🇧</button>
+  <button data-lang="de" aria-label="Deutsch"  title="Deutsch">🇩🇪</button>
+</div>
+
+<!-- ============ SCREEN 1: HERO (verführung) ============ -->
+<section class="screen active" data-screen="1">
+  <div class="logo">100<span>blend</span></div>
+  <div class="tag" data-i18n="tag">Pattaya</div>
+
+  <div class="hero-visual">
+    <!-- Wassermelonen-Smoothie SVG (Glas + Rosa Farbverlauf + Minz-Blatt) -->
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="melon" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FF8A8A"/>
+          <stop offset="1" stop-color="#D64545"/>
+        </linearGradient>
+        <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff" stop-opacity=".55"/>
+          <stop offset="1" stop-color="#fff" stop-opacity=".08"/>
+        </linearGradient>
+      </defs>
+      <!-- Glas -->
+      <path d="M 60 40 L 140 40 L 132 170 Q 100 178 68 170 Z" fill="url(#melon)"/>
+      <path d="M 60 40 L 140 40 L 132 170 Q 100 178 68 170 Z" fill="url(#glass)"/>
+      <!-- Rand -->
+      <ellipse cx="100" cy="40" rx="40" ry="6" fill="#FFB0B0"/>
+      <ellipse cx="100" cy="40" rx="40" ry="6" fill="none" stroke="#B14545" stroke-width="1.2"/>
+      <!-- Kerne (Melone) -->
+      <ellipse cx="88" cy="70" rx="2.5" ry="4" fill="#4a2020" transform="rotate(-15 88 70)"/>
+      <ellipse cx="112" cy="90" rx="2.5" ry="4" fill="#4a2020" transform="rotate(20 112 90)"/>
+      <ellipse cx="95" cy="110" rx="2.5" ry="4" fill="#4a2020" transform="rotate(-10 95 110)"/>
+      <ellipse cx="115" cy="130" rx="2.5" ry="4" fill="#4a2020" transform="rotate(30 115 130)"/>
+      <ellipse cx="82" cy="140" rx="2.5" ry="4" fill="#4a2020" transform="rotate(-25 82 140)"/>
+      <!-- Strohhalm -->
+      <rect x="112" y="18" width="8" height="60" rx="3" fill="#2C5A3B" transform="rotate(12 116 48)"/>
+      <!-- Minze -->
+      <path d="M 65 30 Q 55 22 62 12 Q 72 18 65 30 Z" fill="#3A7A4C"/>
+      <path d="M 78 26 Q 74 16 84 12 Q 88 22 78 26 Z" fill="#4A8F5C"/>
+    </svg>
   </div>
 
-  <div class="motto">
-    <div class="m1">No Ice. No Sugar. 100% Natural.</div>
-    <div class="m2">All fruits picked at the peak of ripeness</div>
-  </div>
+  <div class="hero-motto" data-i18n="hero_motto">100% Frucht — Kein Wasser. Kein Eis. Kein Zucker.</div>
+  <div class="hero-sub" data-i18n="hero_sub">Sonnengereift · Pattaya</div>
 
-  <!-- Smoothie des Tages -->
-  <div class="card today">
-    <div class="badge">🌞 Today's Smoothie</div>
-    <div class="name" id="today-name">Mango pur — 100% fruit</div>
-    <div class="why" id="today-why">Chok Anan mango, fresh &amp; frozen. No milk, no water — just the fruit itself, ice-cold from within.</div>
-    <div class="price" id="today-price">149 ฿</div>
-  </div>
+  <button class="cta" onclick="go(2)" data-i18n="cta_reveal">🍉 Zeig mir mein Geschenk</button>
 
-  <!-- News zu 100blend -->
-  <div class="card">
-    <h2>Fresh from 100blend</h2>
-    <ul class="news" id="news">
-      <li>
-        <span class="date">Aug 2026</span>
-        Grand opening in Pattaya — first stand at the Lexis Suites location. Franchise partners across Thailand welcome.
-      </li>
-      <li>
-        <span class="date">This week</span>
-        New in the lab: Watermelon-Mint pure, Mango pur (100% fruit), Berry-Cacao-Almond Praliné. Watch the menu.
-      </li>
-      <li>
-        <span class="date">Coming soon</span>
-        Delivery via Grab across Pattaya. Fan Club members get advance notice.
-      </li>
-    </ul>
-  </div>
+  <footer>© 100blend · Luxfox Ltd</footer>
+</section>
 
-  <!-- Fan Club Registration -->
-  <div class="card">
-    <h2>Join the 100blend Fan Club</h2>
-    <p style="font-size:14px;color:#555;margin-bottom:12px">
-      Get today's smoothie for free on your birthday. Buy 10, get 1 free.
-      No spam, only what matters.
-    </p>
-    <form class="fans" id="fans" onsubmit="return false">
-      <label for="fname">Name</label>
-      <input type="text" id="fname" name="name" required autocomplete="name" placeholder="How should we call you?">
-      <div class="row2">
-        <div>
-          <label for="fmail">Email</label>
-          <input type="email" id="fmail" name="email" required autocomplete="email" placeholder="you@example.com">
-        </div>
-        <div>
-          <label for="fbday">Birthday (dd-mm)</label>
-          <input type="text" id="fbday" name="birthday" pattern="[0-9]{2}-[0-9]{2}" placeholder="24-08">
-        </div>
-      </div>
-      <label for="fphone">LINE / Phone (optional)</label>
-      <input type="text" id="fphone" name="phone" autocomplete="tel" placeholder="+66 …">
-      <button type="submit" id="fbtn">Join the Fan Club</button>
-      <div class="privacy">We never share your data. Unsubscribe anytime.</div>
-      <div id="fansresult" role="status" aria-live="polite"></div>
-    </form>
-  </div>
+<!-- ============ SCREEN 2: REVEAL (Angebot zeigen) ============ -->
+<section class="screen" data-screen="2">
+  <div class="logo">100<span>blend</span></div>
 
-  <!-- Sinnvolle Links -->
-  <div class="card">
-    <h2>Find &amp; follow us</h2>
-    <div class="links">
-      <a href="https://grab.com" target="_blank" rel="noopener">
-        <span class="icon">🛵</span>Order via Grab<small>coming soon</small>
-      </a>
-      <a href="https://100blend.com" target="_blank" rel="noopener">
-        <span class="icon">🌐</span>Main site<small>100blend.com</small>
-      </a>
-      <a href="https://www.instagram.com/luxfox_limited" target="_blank" rel="noopener">
-        <span class="icon">📸</span>Instagram<small>@luxfox_limited</small>
-      </a>
-      <a href="mailto:hello@100blend.com" target="_blank" rel="noopener">
-        <span class="icon">✉️</span>Contact us<small>hello@100blend.com</small>
-      </a>
+  <div class="offer-card">
+    <div class="offer-visual">
+      <!-- Kleineres Melonen-SVG -->
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="melon2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FF8A8A"/>
+            <stop offset="1" stop-color="#D64545"/>
+          </linearGradient>
+        </defs>
+        <path d="M 60 40 L 140 40 L 132 170 Q 100 178 68 170 Z" fill="url(#melon2)"/>
+        <ellipse cx="100" cy="40" rx="40" ry="6" fill="#FFB0B0"/>
+        <ellipse cx="88" cy="80" rx="2.5" ry="4" fill="#4a2020"/>
+        <ellipse cx="112" cy="105" rx="2.5" ry="4" fill="#4a2020"/>
+        <ellipse cx="95" cy="130" rx="2.5" ry="4" fill="#4a2020"/>
+        <path d="M 65 30 Q 55 22 62 12 Q 72 18 65 30 Z" fill="#3A7A4C"/>
+      </svg>
+    </div>
+    <div class="offer-title" data-i18n="offer_title">Wassermelone-Minze Pur (klein)</div>
+    <div class="offer-price"><s>79 ฿</s> <span data-i18n="offer_free">GRATIS</span></div>
+    <div class="offer-desc" data-i18n="offer_desc">
+      Halb gefroren, halb frisch. Eine Prise Salz wie im Thai-Nam-Som.
+      Kein zugesetztes Eis — die Frucht bringt die Kühle.
+    </div>
+    <div class="offer-terms" data-i18n="offer_terms">
+      Beim nächsten Besuch. Ein Smoothie pro Fan. Kein Ablaufdatum.
     </div>
   </div>
 
-  <footer>
-    100blend · Luxfox Limited (HK) · Pattaya, Thailand<br>
-    <span class="disclaimer">
-      All information subject to change. Prices in Thai Baht.
-      Ingredients disclosed on request. Halal-compatible where marked.
-    </span>
-  </footer>
+  <button class="cta" onclick="go(3)" data-i18n="cta_claim">Ja, ich hol ihn mir</button>
+  <button class="back" onclick="go(1)" data-i18n="back">← zurück</button>
+</section>
 
-</div>
+<!-- ============ SCREEN 3: FORM (minimal) ============ -->
+<section class="screen" data-screen="3">
+  <div class="logo">100<span>blend</span></div>
+  <div class="tag" data-i18n="form_intro">Fast fertig — nur 2 Angaben</div>
+
+  <form class="mini" id="fans" onsubmit="return false" autocomplete="on">
+    <label for="fname" data-i18n="label_name">Vorname</label>
+    <input type="text" id="fname" name="name" required autocomplete="given-name" placeholder="…">
+
+    <label for="fphone" data-i18n="label_line">LINE / Telefon</label>
+    <input type="text" id="fphone" name="phone" autocomplete="tel" placeholder="+66 …">
+    <div class="hint" data-i18n="hint_line">So schicken wir dir deinen Bon.</div>
+
+    <label for="fbday" data-i18n="label_bday">Geburtstag (optional, Tag-Monat)</label>
+    <input type="text" id="fbday" name="birthday" pattern="[0-9]{2}-[0-9]{2}" placeholder="24-08">
+    <div class="hint" data-i18n="hint_bday">Zum Geburtstag bekommst du einen Smoothie geschenkt.</div>
+
+    <button type="submit" class="cta dark" id="fbtn" data-i18n="cta_submit">Bon holen 🎁</button>
+    <div class="privacy-mini" data-i18n="privacy">Keine Werbung. Nur wenn's was zu feiern gibt.</div>
+  </form>
+
+  <button class="back" onclick="go(2)" data-i18n="back">← zurück</button>
+</section>
+
+<!-- ============ SCREEN 4: BON (Bestätigung) ============ -->
+<section class="screen" data-screen="4">
+  <div class="success-emoji">🎉</div>
+  <div class="logo">100<span>blend</span></div>
+  <div class="tag" data-i18n="bon_intro">Willkommen im Fan Club</div>
+
+  <div class="bon">
+    <div style="font-size:13px; color:#888; text-transform:uppercase; letter-spacing:2px" data-i18n="bon_show">Zeig diesen Code am Stand</div>
+    <div class="bon-code" id="boncode">FAN-0000</div>
+    <div class="bon-hint" data-i18n="bon_hint">1× Wassermelone-Minze Pur gratis</div>
+  </div>
+
+  <div style="font-size:14px; color:#555; margin:14px 0 6px" data-i18n="find_us">Wo du uns findest</div>
+  <div class="links-mini">
+    <a href="https://www.instagram.com/luxfox_limited" target="_blank" rel="noopener">📸 Instagram</a>
+    <a href="https://100blend.com" target="_blank" rel="noopener">🌐 100blend.com</a>
+  </div>
+
+  <button class="back" onclick="go(1)" data-i18n="back_home">← Startseite</button>
+</section>
 
 <script>
-/* Smoothie des Tages — für heute noch statisch (Firestore-Anbindung folgt).
-   Rotiert automatisch je Wochentag durch die reinen Frucht-Rezepte,
-   damit die Landingpage auch ohne Cloud-Update täglich frisch wirkt. */
-(function () {
-  const daily = [
-    { name: "Mango pur — 100% fruit",
-      why: "Chok Anan mango, fresh & frozen. No milk, no water — just the fruit itself, ice-cold from within.",
-      price: "149 ฿" },
-    { name: "Watermelon-Mint pure",
-      why: "Half frozen, half fresh. A pinch of salt like Thai nam som. No ice added — the fruit brings the cold.",
-      price: "129 ฿" },
-    { name: "Pineapple pure — 100% fruit",
-      why: "Sappalos frozen & fresh, lime, mint, Ceylon cinnamon. Bright, tropical, nothing added.",
-      price: "149 ฿" },
-    { name: "Orange Sunrise",
-      why: "Fresh-pressed orange & mango, ginger, orange zest. Vitamin C the way nature does it.",
-      price: "159 ฿" },
-    { name: "Strawberry-Banana-Milk",
-      why: "Royal Project N° 80 strawberries, banana, cold milk. Classic, honest, no sugar added.",
-      price: "149 ฿" },
-    { name: "Beere-Kakao-Mandel Praliné",
-      why: "Berry mix, cacao, roasted almonds. The praline principle in a cup — no added sugar, just fruit + nuts.",
-      price: "169 ฿" },
-    { name: "Espresso-Banane-Kakao",
-      why: "Bluekoff Dark Roast espresso, banana, cacao, oat milk, tofu. Your morning in a glass.",
-      price: "169 ฿" },
-  ];
-  const idx = new Date().getDay();
-  const t = daily[idx] || daily[0];
-  document.getElementById("today-name").textContent = t.name;
-  document.getElementById("today-why").textContent = t.why;
-  document.getElementById("today-price").textContent = t.price;
-})();
+/* =========================================================
+   SPRACHEN — Thai (default in TH), English, Deutsch
+   Auto aus Browser · via Flaggen umschaltbar · localStorage merken
+   ========================================================= */
+const STRINGS = {
+  th: {
+    tag: "พัทยา",
+    hero_motto: "ผลไม้ 100% ไม่มีน้ำ ไม่มีน้ำแข็ง ไม่มีน้ำตาล",
+    hero_sub: "สุกจากแดด · พัทยา",
+    cta_reveal: "🍉 ดูของขวัญของฉัน",
+    offer_title: "แตงโม-มินต์ ปั่นสด (แก้วเล็ก)",
+    offer_free: "ฟรี",
+    offer_desc: "ครึ่งแช่แข็ง ครึ่งสด เกลือเล็กน้อยแบบน้ำส้ม ไม่เติมน้ำแข็ง — ผลไม้เย็นในตัวเอง",
+    offer_terms: "รับได้ครั้งถัดไป · 1 แก้วต่อแฟน · ไม่มีวันหมดอายุ",
+    cta_claim: "ใช่ ฉันเอา",
+    back: "← ย้อนกลับ",
+    form_intro: "เกือบเสร็จแล้ว — แค่ 2 ช่อง",
+    label_name: "ชื่อ",
+    label_line: "LINE / โทรศัพท์",
+    hint_line: "เราจะส่งคูปองไปให้",
+    label_bday: "วันเกิด (ไม่บังคับ · วัน-เดือน)",
+    hint_bday: "วันเกิดของคุณ รับสมูทตี้ฟรี 1 แก้ว",
+    cta_submit: "รับคูปอง 🎁",
+    privacy: "ไม่มีสแปม แค่เมื่อมีเรื่องน่าฉลอง",
+    bon_intro: "ยินดีต้อนรับสู่แฟนคลับ",
+    bon_show: "แสดงรหัสนี้ที่ร้าน",
+    bon_hint: "แตงโม-มินต์ ปั่นสด ฟรี 1 แก้วเล็ก",
+    find_us: "พบเราได้ที่",
+    back_home: "← กลับหน้าแรก",
+  },
+  en: {
+    tag: "Pattaya",
+    hero_motto: "100% Fruit — No Water. No Ice. No Sugar.",
+    hero_sub: "Sun-ripened · Pattaya",
+    cta_reveal: "🍉 Show my gift",
+    offer_title: "Watermelon-Mint Pure (small)",
+    offer_free: "FREE",
+    offer_desc: "Half frozen, half fresh. A pinch of salt like Thai nam som. No ice added — the fruit brings the cold.",
+    offer_terms: "On your next visit. One per fan. No expiry.",
+    cta_claim: "Yes, I want it",
+    back: "← back",
+    form_intro: "Almost done — just 2 fields",
+    label_name: "First name",
+    label_line: "LINE / Phone",
+    hint_line: "So we can send you the coupon.",
+    label_bday: "Birthday (optional · day-month)",
+    hint_bday: "On your birthday you get a smoothie on us.",
+    cta_submit: "Get my coupon 🎁",
+    privacy: "No spam. Only when there's something to celebrate.",
+    bon_intro: "Welcome to the Fan Club",
+    bon_show: "Show this code at the stand",
+    bon_hint: "1× small Watermelon-Mint Pure — free",
+    find_us: "Find us here",
+    back_home: "← Home",
+  },
+  de: {
+    tag: "Pattaya",
+    hero_motto: "100% Frucht — Kein Wasser. Kein Eis. Kein Zucker.",
+    hero_sub: "Sonnengereift · Pattaya",
+    cta_reveal: "🍉 Zeig mir mein Geschenk",
+    offer_title: "Wassermelone-Minze Pur (klein)",
+    offer_free: "GRATIS",
+    offer_desc: "Halb gefroren, halb frisch. Eine Prise Salz wie im Thai-Nam-Som. Kein zugesetztes Eis — die Frucht bringt die Kühle.",
+    offer_terms: "Beim nächsten Besuch. Ein Smoothie pro Fan. Kein Ablaufdatum.",
+    cta_claim: "Ja, ich hol ihn mir",
+    back: "← zurück",
+    form_intro: "Fast fertig — nur 2 Angaben",
+    label_name: "Vorname",
+    label_line: "LINE / Telefon",
+    hint_line: "So schicken wir dir deinen Bon.",
+    label_bday: "Geburtstag (optional · Tag-Monat)",
+    hint_bday: "Zum Geburtstag bekommst du einen Smoothie geschenkt.",
+    cta_submit: "Bon holen 🎁",
+    privacy: "Keine Werbung. Nur wenn's was zu feiern gibt.",
+    bon_intro: "Willkommen im Fan Club",
+    bon_show: "Zeig diesen Code am Stand",
+    bon_hint: "1× Wassermelone-Minze Pur (klein) gratis",
+    find_us: "Wo du uns findest",
+    back_home: "← Startseite",
+  },
+};
 
-/* Fan Club — schreibt später in Firestore Collection "kunden".
-   Ohne Firestore-Backend läuft der Submit als "wir haben deine Anmeldung"
-   und speichert zusätzlich lokal, damit nichts verloren geht. */
-document.getElementById("fans").addEventListener("submit", async (e) => {
-  const out = document.getElementById("fansresult");
-  const btn = document.getElementById("fbtn");
+function detectLang(){
+  const saved = localStorage.getItem("blend_lang");
+  if (saved && STRINGS[saved]) return saved;
+  const nav = (navigator.language || "en").toLowerCase();
+  if (nav.startsWith("th")) return "th";
+  if (nav.startsWith("de")) return "de";
+  return "en";
+}
+
+function setLang(lang){
+  if (!STRINGS[lang]) lang = "en";
+  document.documentElement.lang = lang;
+  localStorage.setItem("blend_lang", lang);
+  const dict = STRINGS[lang];
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.getAttribute("data-i18n");
+    if (dict[key]) el.textContent = dict[key];
+  });
+  document.querySelectorAll(".langbar button").forEach(b => {
+    b.classList.toggle("active", b.dataset.lang === lang);
+  });
+}
+
+document.querySelectorAll(".langbar button").forEach(b => {
+  b.addEventListener("click", () => setLang(b.dataset.lang));
+});
+setLang(detectLang());
+
+/* =========================================================
+   SCREEN-NAVIGATION (Multi-Step, kein Reload)
+   ========================================================= */
+function go(n){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  const target = document.querySelector('.screen[data-screen="'+n+'"]');
+  if (target) target.classList.add("active");
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* =========================================================
+   FORMULAR — schreibt lokal (Firestore folgt),
+   erzeugt Bon-Code und wechselt zu Screen 4
+   ========================================================= */
+document.getElementById("fans").addEventListener("submit", () => {
   const data = {
     name: document.getElementById("fname").value.trim(),
-    email: document.getElementById("fmail").value.trim(),
-    birthday: document.getElementById("fbday").value.trim(),
     phone: document.getElementById("fphone").value.trim(),
-    quelle: "landingpage-bestellen",
+    birthday: document.getElementById("fbday").value.trim(),
+    quelle: "landingpage-order",
+    lang: document.documentElement.lang,
     ts: new Date().toISOString(),
   };
-  if (!data.name || !data.email) {
-    out.className = "err";
-    out.textContent = "Please fill in at least name and email.";
-    return;
-  }
-  btn.disabled = true;
-  btn.textContent = "…";
+  if (!data.name) return;
 
-  /* Lokal zwischenspeichern (Backup falls Cloud offline) */
   try {
     const key = "blend_fan_" + Date.now();
     localStorage.setItem(key, JSON.stringify(data));
   } catch (_) {}
 
-  /* Wenn Firestore auf dieser Seite eingebunden wäre, ginge hier ein
-     await addDoc(collection(db, "kunden"), data). Für heute reicht
-     der lokale Puffer — Peter zieht die Daten manuell nach. */
+  /* Bon-Code aus Timestamp — kurz, sichtbar, eindeutig */
+  const code = "FAN-" + Date.now().toString(36).slice(-5).toUpperCase();
+  document.getElementById("boncode").textContent = code;
 
-  out.className = "ok";
-  out.textContent = "🎉 Welcome to the Fan Club, " + data.name + "! We'll be in touch.";
-  document.getElementById("fans").reset();
-  btn.disabled = false;
-  btn.textContent = "Join the Fan Club";
+  go(4);
 });
 </script>
 </body>
