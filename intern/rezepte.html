@@ -1,0 +1,1400 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root{
+  --bg:#faf8f5; --card:#fff; --ink:#1a1a1a; --muted:#6b6b6b;
+  --line:#e6e2dc; --accent:#e2543f; --ok:#2f8f5b;
+  --A:#4a9d5f; --B:#c88a2e; --C:#8b5cf6; --X:#8b8b8b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans Thai",sans-serif;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+header{
+  position:sticky; top:0; z-index:10; background:var(--bg);
+  border-bottom:1px solid var(--line); padding:12px 16px;
+  display:flex; align-items:center; gap:12px;
+}
+.brand{font-weight:800; font-size:19px; letter-spacing:-.02em}
+.brand span{color:var(--accent)}
+.langs{margin-left:auto; display:flex; gap:4px}
+.langs button{
+  border:1px solid var(--line); background:var(--card); color:var(--muted);
+  padding:7px 11px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;
+}
+.langs button.on{background:var(--ink); color:#fff; border-color:var(--ink)}
+main{padding:16px; max-width:760px; margin:0 auto}
+
+/* ---- Kachel-Grid ---- */
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px}
+.tile{
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  padding:14px; text-align:left; cursor:pointer; display:block; width:100%;
+  font:inherit; color:inherit; transition:transform .08s;
+}
+.tile:active{transform:scale(.97)}
+.tile .no{font-size:30px; font-weight:800; line-height:1; letter-spacing:-.03em}
+.tile .nm{margin-top:6px; font-weight:600; font-size:14px}
+/* Thai gleichrangig — gleiche Groesse, gleiches Gewicht, gleiche Farbe.
+   Peter, 21.08.2026: "Ich möchte das gleichwertig haben, so dass sich
+   keiner benachteiligt fühlt. Gleiches gilt bei ALLEN Rezepten."
+   Vorher stand Thai hier in Grau und 13 statt 14 px - eine Kachel, die
+   dem Thai-Leser sagt, seine Zeile sei die Fussnote zur deutschen. */
+.tile .th{font-weight:600; font-size:14px; margin-top:2px; min-height:19px}
+.tile .foot{margin-top:10px; display:flex; align-items:center; gap:6px}
+.pill{font-size:11px; font-weight:800; color:#fff; padding:2px 7px; border-radius:99px}
+.alg{margin-left:auto; font-size:15px; letter-spacing:1px}
+
+/* ---- Rezept-Ansicht ---- */
+.back{
+  border:none; background:none; color:var(--accent); font:700 15px/1 inherit;
+  padding:6px 0 14px; cursor:pointer; display:flex; align-items:center; gap:6px;
+}
+.rhead{display:flex; align-items:flex-start; gap:14px; margin-bottom:6px}
+.rno{
+  flex:0 0 auto; width:56px; height:56px; border-radius:14px; background:var(--ink); color:#fff;
+  display:grid; place-items:center; font-size:24px; font-weight:800;
+}
+.rname{font-size:22px; font-weight:800; line-height:1.2; letter-spacing:-.02em}
+.rth{color:var(--muted); font-size:15px; margin-top:2px}
+.warn{
+  background:#fff6e8; border:1px solid #f0d9ae; color:#8a5a10;
+  padding:10px 12px; border-radius:10px; font-size:13px; margin:14px 0;
+}
+h2{font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+   margin:24px 0 10px; font-weight:800}
+.zut{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.zut div{display:flex; align-items:center; gap:10px; padding:11px 13px; border-top:1px solid var(--line)}
+.zut div:first-child{border-top:none}
+.code{
+  flex:0 0 auto; font:800 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:#f0ede8; border-radius:6px; padding:6px 8px; letter-spacing:.5px;
+}
+.zn{flex:1; min-width:0}
+.zn b{font-weight:600; display:block}
+/* Zweite Sprache gleichrangig - gleiche Groesse, gleiche Farbe.
+   Peter 21.08.2026: gleiches gilt bei ALLEN Rezepten. Vorher stand die
+   Thai-Zeile hier grau und 13 statt 15 px unter der deutschen. */
+.zn i{font-style:normal; font-size:15px; display:block; margin-top:1px}
+/* THAI IST DIE ARBEITSSPRACHE. Peter, 30.08.2026: "Lexi ist Ausfuehrende,
+   Thai muss vorne stehen, ich hab nur eine Kontrollfunktion."
+   Thai steht deshalb oben UND groesser als die Kontrollzeile darunter. */
+html[lang="th"] .zn b,
+html[lang="th"] ol.steps b{font-size:19px; line-height:1.4}
+html[lang="th"] .zn i,
+html[lang="th"] ol.steps i{font-size:14px; color:var(--muted); font-weight:600}
+html[lang="th"] .rname{font-size:25px}
+.zg{font-weight:800; white-space:nowrap}
+
+/* ---- Schritte mit Nummernkreis ---- */
+ol.steps{list-style:none; margin:0; padding:0; counter-reset:s}
+ol.steps li{
+  counter-increment:s; position:relative; padding:0 0 20px 48px; min-height:34px;
+}
+ol.steps li::before{
+  content:counter(s,decimal-leading-zero);
+  position:absolute; left:0; top:0; width:34px; height:34px; border-radius:50%;
+  background:var(--card); border:2px solid var(--ink); color:var(--ink);
+  display:grid; place-items:center; font-weight:800; font-size:14px;
+}
+ol.steps li::after{
+  content:""; position:absolute; left:16px; top:38px; bottom:2px; width:2px; background:var(--line);
+}
+ol.steps li:last-child{padding-bottom:0}
+ol.steps li:last-child::after{display:none}
+ol.steps b{display:block; font-weight:700; padding-top:6px}
+ol.steps i{font-style:normal; font-size:15px; font-weight:700; display:block; margin-top:2px}
+/* KENNZEICHNUNG — Worte statt Pflaenzchen. Peter, 22.08.2026: er hat erst
+   nach Wochen erfahren, dass das Pflaenzchen vegan bedeutet. Was der
+   Betreiber nicht weiss, weiss der Gast nie. */
+.kenn{display:inline-block; font:800 11px/1.5 inherit; letter-spacing:.04em;
+      border:1.5px solid var(--ink); border-radius:6px; padding:1px 7px; margin-right:5px}
+.kenn.vegan{background:#e8f3ea}
+.kenn.vegetarisch{background:#f2f0e6}
+.kenn.fisch{background:var(--ink); color:#fff}
+.kenn.kof{background:#fdf4f3; border-color:#c0392b; color:#c0392b}
+.allerg{display:block; margin-top:5px; font-size:13px; color:var(--muted)}
+.kennzeile{margin-top:7px}
+.tile .alg{margin-left:auto; letter-spacing:0}
+.tile .alg .kenn{font-size:10px; margin-right:0}
+/* VORSTUFEN-VERLINKUNG — Peter, 21.08.2026: "Kannst du mir die Kacheln
+   vom grünen Tee zum Rezept Grüner Tee verlinken? Und bei den anderen
+   selbstgemachten Flüssigkeiten auch."
+   Zutaten, die wir selbst herstellen, sind antippbar und fuehren auf die
+   Herstellungskarte. Der Pfeil rechts sagt, dass da noch etwas kommt -
+   ohne ihn tippt niemand darauf, weil die Zeile aussieht wie jede andere. */
+.zut div.mach{cursor:pointer; background:#f2f9f4}
+.zut div.mach:active{background:#e3f1e8}
+.mach .pfeil{font-weight:800; color:var(--accent); white-space:nowrap; font-size:13px}
+.vhead{display:flex; align-items:center; gap:12px; margin-bottom:10px}
+.vcode{font:800 18px ui-monospace,Menlo,monospace; background:var(--accent); color:#fff;
+       border-radius:9px; padding:6px 11px}
+.vname{font-weight:800; font-size:20px; line-height:1.2}
+.vname span{display:block; font-weight:800; font-size:20px}
+.vkurz{background:#eaf5ee; border-left:4px solid var(--accent); border-radius:0 10px 10px 0;
+       padding:10px 12px; margin-bottom:8px; font-weight:600}
+.vwarn{background:#fdf4f3; border:1px solid #f0cdc8; border-left:4px solid #c0392b;
+       border-radius:0 10px 10px 0; padding:10px 12px; margin-bottom:10px}
+.vwarum{background:#f7f7f5; border-radius:10px; padding:10px 12px; margin-top:8px}
+.voffen{border:1px dashed #c8862a; background:#fdfaf4; border-radius:10px;
+        padding:10px 12px; margin-top:8px}
+.vzeile{display:block; margin-bottom:5px}
+.kalt{font-weight:900; border:1.5px solid var(--ink); border-radius:4px; padding:0 4px}
+.tip{background:#eef7f1; border:1px solid #cfe8da; color:#1f5c3c;
+     padding:10px 12px; border-radius:10px; font-size:14px; margin-top:6px}
+footer{color:var(--muted); font-size:12px; text-align:center; padding:32px 16px 40px}
+</style>
+<meta name="robots" content="noindex,nofollow">
+<title>MIXO Rezepte</title>
+<meta name="theme-color" content="#1a1a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MIXO Rezepte">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+</head>
+<body>
+
+<header>
+  <div class="brand">100<span>blend</span></div>
+  <div class="langs">
+    <button data-l="th" class="on">🇹🇭 ไทย</button>
+    <button data-l="de">🇩🇪 DE</button>
+    <button data-l="en">🇬🇧 EN</button>
+  </div>
+</header>
+
+<main id="app"></main>
+<footer id="foot"></footer>
+
+<script>
+/* ============================================================
+   DATEN — hier pflegen. Alles andere bleibt, wie es ist.
+   stufe: A=79฿  B=99฿  C=149฿  X=noch offen
+   alg:   🥜 Nuss · 🌱 Soja · 🥛 Milch
+   zut:   [Code, Gramm/ml, DE, TH, EN]
+   ============================================================ */
+const REZEPTE = [
+{n:"01", stufe:"X", de:"Bangkok Wake-Up", th:"บางกอก เวค-อัพ", en:"Bangkok Wake-Up",
+ alg:"🌱",
+ zut:[
+   ["TE", 150,"Grüner Tee, kalt (ungesüßt)","ชาเขียวเย็น (ไม่หวาน)","Green tea, cold (unsweetened)"],
+   ["TO", 120,"Seidentofu (2×2 cm Würfel)","เต้าหู้นิ่ม (หั่น 2×2 ซม.)","Silken tofu (2×2 cm cubes)"],
+   ["PF",  40,"Passionsfrucht (frisch)","เสาวรส (สด)","Passion fruit (fresh)"],
+   ["AN",  25,"Ananas (frisch)","สับปะรด (สด)","Pineapple (fresh)"],
+   ["ZG",  15,"Zitronengras, weiches Inneres (≈1 Stängel)","ตะไคร้ ส่วนในที่นิ่ม (ราว 1 ต้น)","Lemongrass (soft core)"],
+   ["GA",   3,"Galgant (Kha), ≈1 dünne Scheibe","ข่า หั่นบาง (ราว 1 แผ่น)","Galangal (thin slice)"],
+   ["SK",  40,"Sonnenblumenkerne (roh)","เมล็ดทานตะวัน (ดิบ)","Sunflower seeds (raw)"],
+   ["PF",  20,"Passionsfrucht (gefroren)","เสาวรส (แช่แข็ง)","Passion fruit (frozen)"],
+   ["AN",  25,"Ananas (gefroren)","สับปะรด (แช่แข็ง)","Pineapple (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Grüner Tee, kalt","① ใส่ของเหลวก่อน: ชาเขียวเย็น","① Liquids first: Green tea, cold"],
+   ["② Frisches & Weiches: Seidentofu, Passionsfrucht, Ananas, Zitronengras, weiches Inneres, Galgant","② ของสดและของนิ่ม: เต้าหู้นิ่ม · เสาวรส · สับปะรด · ตะไคร้ ส่วนในที่นิ่ม · ข่า หั่นบาง","② Fresh & soft: Silken tofu, Passion fruit, Pineapple, Lemongrass, Galangal"],
+   ["③ Trockenes darüber: Sonnenblumenkerne","③ ใส่ของแห้งทับ: เมล็ดทานตะวัน","③ Dry on top: Sunflower seeds"],
+   ["④ Gefrorenes ganz oben: Passionsfrucht, Ananas","④ ของแช่แข็งไว้บนสุด: เสาวรส · สับปะรด","④ Frozen last, on top: Passion fruit, Pineapple"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Kernmilch muss WIRKLICH glatt sein, bevor das Pack reinkommt — sonst knirscht es zwischen den Zähnen. TEE: grüner Tee, nicht Jasmintee — das Grasig-Herbe trägt Zitronengras und Galgant, Jasmin würde mit ihnen um dieselbe Duftebene streiten. ⚠ Beim Verkosten gegeneinander probieren, dann ist es entschieden. Tee lose aufgießen und KALT stellen: abgefüllter Thai-Grüntee ist fast immer gezuckert und darf nicht in den Becher.",
+      "ต้องปั่นนมเมล็ดให้เนียนจริง ๆ ก่อนใส่ผลไม้ ไม่งั้นจะสากลิ้น · ใช้ชาเขียว ไม่ใช่ชามะลิ — รสฝาดอ่อน ๆ ช่วยหนุนตะไคร้กับข่า ส่วนมะลิจะตีกับกลิ่นสมุนไพร · ชงเองแล้วแช่เย็น ห้ามใช้ชาเขียวขวดสำเร็จ เพราะเติมน้ำตาลเกือบทุกยี่ห้อ",
+      "Seed milk must be truly smooth before the pack goes in — otherwise it feels gritty. TEA: green, not jasmine — the grassy astringency carries lemongrass and galangal, jasmine would fight them on the same aromatic level. Brew loose leaf and chill: bottled Thai green tea is almost always sweetened."]},
+
+{n:"02", stufe:"X", de:"Muay Thai Power", th:"มวยไทย พาวเวอร์", en:"Muay Thai Power",
+ alg:"🌱",
+ zut:[
+   ["KW", 150,"Kokoswasser (Nam Hom)","น้ำมะพร้าว","Coconut water"],
+   ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
+   ["TO", 120,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
+   ["MS",  30,"Mangostan (frisch)","มังคุด (สด)","Mangosteen (fresh)"],
+   ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["KE",  40,"Kürbiskerne (roh, eingeweicht)","เมล็ดฟักทอง (ดิบ แช่น้ำ)","Pumpkin seeds (raw, soaked)"],
+   ["MS",  30,"Mangostan (gefroren)","มังคุด (แช่แข็ง)","Mangosteen (frozen)"],
+   ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser","① ใส่ของเหลวก่อน: น้ำมะพร้าว","① Liquids first: Coconut water"],
+   ["② Frisches & Weiches: Minze, gezählt, Seidentofu, Mangostan, Banane","② ของสดและของนิ่ม: ใบสะระแหน่ เด็ดใบ · เต้าหู้นิ่ม · มังคุด · กล้วย","② Fresh & soft: Mint, counted, Silken tofu, Mangosteen, Banana"],
+   ["③ Trockenes darüber: Kürbiskerne","③ ใส่ของแห้งทับ: เมล็ดฟักทอง","③ Dry on top: Pumpkin seeds"],
+   ["④ Gefrorenes ganz oben: Mangostan, Banane","④ ของแช่แข็งไว้บนสุด: มังคุด · กล้วย","④ Frozen last, on top: Mangosteen, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Upsell „Power+\": 20 g Proteinpulver (PR) am Ende kurz einmixen.",
+      "ออปชัน \"Power+\": ใส่เวย์โปรตีน 20 กรัม ตอนท้าย ปั่นสั้น ๆ",
+      "Upsell \"Power+\": blend in 20 g protein powder (PR) at the end."]},
+
+{n:"03", stufe:"X", de:"Siam Serenity", th:"สยาม เซเรนิตี้", en:"Siam Serenity",
+ alg:"🌱",
+ zut:[
+   ["WA", 150,"Wasser (für Pandan-Wasser)","น้ำ (สำหรับน้ำใบเตย)","Water (for pandan water)"],
+   ["TO", 120,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
+   ["BA",  30,"Banane, reif (frisch)","กล้วยสุก (สด)","Ripe banana (fresh)"],
+   ["PD",   6,"Pandanblätter (≈3 Blätter)","ใบเตย ทำน้ำใบเตย (ราว 3 ใบ)","Pandan leaves (for pandan water)"],
+   ["SK",  40,"Sonnenblumenkerne (roh)","เมล็ดทานตะวัน (ดิบ)","Sunflower seeds (raw)"],
+   ["ZI", 0.5,"Ceylon-Zimt — abwiegen, nicht schätzen","อบเชยซีลอน — ต้องชั่ง ไม่กะ","Ceylon cinnamon — weighed, not guessed"],
+   ["BA",  20,"Banane, reif (gefroren)","กล้วยสุก (แช่แข็ง)","Ripe banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Wasser","① ใส่ของเหลวก่อน: น้ำ","① Liquids first: Water"],
+   ["② Frisches & Weiches: Seidentofu, Banane, reif","② ของสดและของนิ่ม: เต้าหู้นิ่ม · กล้วยสุก","② Fresh & soft: Silken tofu, Ripe banana"],
+   ["③ Trockenes darüber: Pandanblätter, Sonnenblumenkerne, Ceylon-Zimt","③ ใส่ของแห้งทับ: ใบเตย ทำน้ำใบเตย · เมล็ดทานตะวัน · อบเชยซีลอน","③ Dry on top: Pandan leaves, Sunflower seeds, Ceylon cinnamon"],
+   ["④ Gefrorenes ganz oben: Banane, reif","④ ของแช่แข็งไว้บนสุด: กล้วยสุก","④ Frozen last, on top: Ripe banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Pandan-Wasser morgens auf Vorrat machen (hält im Kühlschrank 1 Tag) — spart 2 Minuten pro Becher.",
+      "ทำน้ำใบเตยไว้ตอนเช้า (เก็บตู้เย็นได้ 1 วัน) ประหยัดเวลา 2 นาทีต่อแก้ว",
+      "Prepare pandan water in the morning (keeps 1 day chilled) — saves 2 min per cup."]},
+
+{n:"04", stufe:"X", de:"Pure Thai Cleanse", th:"เพียว ไทย คลีนส์", en:"Pure Thai Cleanse",
+ alg:"🌱",
+ zut:[
+   ["WA", 150,"Wasser (kalt)","น้ำเย็น","Water (cold)"],
+   ["LS",  10,"Limettensaft (1 Limette)","น้ำมะนาว (1 ลูก)","Lime juice (1 lime)"],
+   ["TO", 120,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
+   ["DW",  40,"Drachenfrucht weiß (frisch)","แก้วมังกรขาว (สด)","White dragon fruit (fresh)"],
+   ["WS",  40,"Wasserspinat, zarte Blätter","ผักบุ้ง (ใบอ่อน)","Water spinach (tender leaves)"],
+   ["IG",   3,"Ingwer (≈1 cm)","ขิง (ประมาณ 1 ซม.)","Ginger (approx. 1 cm)"],
+   ["SK",  40,"Sonnenblumenkerne (roh)","เมล็ดทานตะวัน (ดิบ)","Sunflower seeds (raw)"],
+   ["DW",  40,"Drachenfrucht weiß (gefroren)","แก้วมังกรขาว (แช่แข็ง)","White dragon fruit (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Wasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำเย็น · น้ำมะนาว","① Liquids first: Water, Lime juice"],
+   ["② Frisches & Weiches: Seidentofu, Drachenfrucht weiß, Wasserspinat, zarte Blätter, Ingwer","② ของสดและของนิ่ม: เต้าหู้นิ่ม · แก้วมังกรขาว · ผักบุ้ง · ขิง","② Fresh & soft: Silken tofu, White dragon fruit, Water spinach, Ginger"],
+   ["③ Trockenes darüber: Sonnenblumenkerne","③ ใส่ของแห้งทับ: เมล็ดทานตะวัน","③ Dry on top: Sunflower seeds"],
+   ["④ Gefrorenes ganz oben: Drachenfrucht weiß","④ ของแช่แข็งไว้บนสุด: แก้วมังกรขาว","④ Frozen last, on top: White dragon fruit"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Nur zarte Wasserspinat-Blätter, keine Stängel — Stängel machen ihn faserig und grasig.",
+      "ใช้เฉพาะใบอ่อนของผักบุ้ง ไม่ใส่ก้าน ก้านทำให้เป็นเส้นใยและมีกลิ่นหญ้า",
+      "Only tender water spinach leaves, no stems — stems make it fibrous and grassy."]},
+
+{n:"05", stufe:"C", de:"Anti-Age Roselle-Beere", th:"แอนตี้เอจ กระเจี๊ยบ-เบอร์รี", en:"Anti-Age Roselle-Berry",
+ alg:"",
+ zut:[
+   ["KW", 120,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
+   ["HT",  60,"Hibiskustee, kalt (aus getrockneten Blüten)","ชากระเจี๊ยบเย็น (ชงจากดอกแห้ง)","Hibiscus tea, chilled (from dried flowers)"],
+   ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["GU",  60,"Guave — Vitamin C (statt Acerola-Pulver)","ฝรั่ง — วิตามินซี","Guava — vitamin C (instead of acerola powder)"],
+   ["ER",  60,"Erdbeere (gefroren)","สตรอว์เบอร์รี (แช่แข็ง)","Strawberry (frozen)"],
+   ["MB",  40,"Maulbeere (gefroren)","หม่อน (แช่แข็ง)","Mulberry (frozen)"],
+   ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
+   ["AX","6 mg · BOOSTER","Astaxanthin — NUR auf Bestellung, Aufpreis","แอสตาแซนทิน — เฉพาะเมื่อลูกค้าสั่ง (คิดเงินเพิ่ม)","Astaxanthin — on request only, surcharge"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser, Hibiskustee, kalt","① ใส่ของเหลวก่อน: น้ำมะพร้าว · ชากระเจี๊ยบเย็น","① Liquids first: Coconut water, Hibiscus tea, chilled"],
+   ["② Frisches & Weiches: Banane, Guave","② ของสดและของนิ่ม: กล้วย · ฝรั่ง","② Fresh & soft: Banana, Guava"],
+   ["④ Gefrorenes ganz oben: Erdbeere, Maulbeere, Banane","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รี · หม่อน · กล้วย","④ Frozen last, on top: Strawberry, Mulberry, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["NUR wenn Booster bestellt: Astaxanthin zugeben, 5 Sek. kurz mixen","เฉพาะเมื่อสั่งบูสเตอร์: ใส่ แอสตาแซนทิน ปั่นสั้น ๆ 5 วินาที","Only if booster ordered: add Astaxanthin, blend 5 s"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Hibiskustee am Vortag ansetzen: 4–5 getrocknete Blüten auf 1 L Wasser, 10 Min ziehen lassen, abseihen, kalt stellen. Die Blüten kommen NIE trocken in den Mixer. ⚠ Beim ersten Ansatz abschmecken — für 60 ml im Becher darf der Aufguss kräftiger sein. Guave ersetzt das Acerola-Pulver: mehr Vitamin C, lokal, ein Bruchteil des Preises. Astaxanthin NIE ins Standardrezept — nur als bezahlter Booster.",
+      "ชงชากระเจี๊ยบไว้ล่วงหน้า 1 วัน: ดอกแห้ง 4–5 ดอก ต่อน้ำ 1 ลิตร แช่ 10 นาที กรอง แล้วแช่เย็น · ห้ามใส่ดอกแห้งลงเครื่องปั่นโดยตรง · ครั้งแรกให้ชิมดู — สำหรับ 60 มล. ในแก้ว ชาเข้มกว่านี้ได้ · ฝรั่งแทนผงอะเซโรลา: วิตามินซีสูงกว่า หาในท้องถิ่นได้ ราคาถูกกว่ามาก · แอสตาแซนทินใส่เฉพาะเมื่อลูกค้าสั่งเท่านั้น",
+      "Brew the hibiscus tea a day ahead: 4–5 dried flowers per litre, steep 10 min, strain, chill. Dried flowers never go into the blender. Guava replaces acerola powder: more vitamin C, local, a fraction of the cost. Astaxanthin never in the base recipe — paid booster only."]},
+
+{n:"06", stufe:"C", de:"Anti-Age Beeren-Kollagen", th:"แอนตี้เอจ เบอร์รี-คอลลาเจน", en:"Anti-Age Berry-Collagen",
+ alg:"🥛",
+ zut:[
+   ["KW",  80,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
+   ["JO",  80,"Joghurt (natur)","โยเกิร์ตรสธรรมชาติ","Plain yogurt"],
+   ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["BM", 150,"Beeren-Mix (gefroren)","เบอร์รีรวม (แช่แข็ง)","Mixed berries (frozen)"],
+   ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
+   ["KL",  10,"Marine-Kollagen (Halal)","คอลลาเจนทะเล (ฮาลาล)","Marine collagen (halal)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den schlanken (dicke Masse, wenig Flüssigkeit)","โถปั่น: ใช้โถทรงสูงแคบ (เนื้อข้น ของเหลวน้อย)","BLENDER JAR: the slim one (thick mix, little liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser","① ใส่ของเหลวก่อน: น้ำมะพร้าว","① Liquids first: Coconut water"],
+   ["② Frisches & Weiches: Joghurt, Banane","② ของสดและของนิ่ม: โยเกิร์ตรสธรรมชาติ · กล้วย","② Fresh & soft: Plain yogurt, Banana"],
+   ["④ Gefrorenes ganz oben: Beeren-Mix, Banane","④ ของแช่แข็งไว้บนสุด: เบอร์รีรวม · กล้วย","④ Frozen last, on top: Mixed berries, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["NUR wenn Booster bestellt: Marine-Kollagen zugeben, 5 Sek. kurz mixen","เฉพาะเมื่อสั่งบูสเตอร์: ใส่ คอลลาเจนทะเล ปั่นสั้น ๆ 5 วินาที","Only if booster ordered: add Marine collagen, blend 5 s"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Kollagen IMMER in die Flüssigkeit, nie auf die gefrorene Frucht — sonst klumpt es. CoQ10 ist raus (Entscheidung 12.08.: zu teuer, in Thailand kaum zu bekommen, für den Gast unsichtbar).",
+      "ใส่คอลลาเจนลงในของเหลวเสมอ อย่าโรยบนผลไม้แช่แข็ง ไม่อย่างนั้นจะจับตัวเป็นก้อน · เอา CoQ10 ออกแล้ว (ตัดสินใจ 12.08. ราคาแพงเกินไป หาซื้อในไทยได้ยาก และลูกค้ามองไม่เห็นความต่าง)",
+      "Always add collagen to the liquid, never onto frozen fruit — it clumps. CoQ10 removed (decision 12.08.)."]},
+
+{n:"07", stufe:"C", de:"Anti-Age Kakao-Magnesium", th:"แอนตี้เอจ โกโก้-แมกนีเซียม", en:"Anti-Age Cacao-Magnesium",
+ alg:"",
+ zut:[
+   ["KO", 200,"Kokosmilch (oder Thai-Sojamilch SM 🌱)","กะทิ (หรือ นมถั่วเหลือง SM 🌱)","Coconut milk (or Thai soy milk SM 🌱)"],
+   ["ST",  15,"Süßtamarinde (Makham Wan)","มะขามหวาน","Sweet tamarind"],
+   ["BA",  45,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["KK",  10,"Kakao (roh, Thai/Chumphon)","ผงโกโก้ดิบ (ชุมพร)","Raw cacao (Thai/Chumphon)"],
+   ["KE",  12,"Kürbiskerne (Magnesium, eingeweicht)","เมล็ดฟักทอง (แมกนีเซียม แช่น้ำ)","Pumpkin seeds (magnesium, soaked)"],
+   ["BA",  35,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch","① ใส่ของเหลวก่อน: กะทิ","① Liquids first: Coconut milk"],
+   ["② Frisches & Weiches: Süßtamarinde, Banane","② ของสดและของนิ่ม: มะขามหวาน · กล้วย","② Fresh & soft: Sweet tamarind, Banana"],
+   ["③ Trockenes darüber: Kakao, Kürbiskerne","③ ใส่ของแห้งทับ: ผงโกโก้ดิบ · เมล็ดฟักทอง","③ Dry on top: Raw cacao, Pumpkin seeds"],
+   ["④ Gefrorenes ganz oben: Banane","④ ของแช่แข็งไว้บนสุด: กล้วย","④ Frozen last, on top: Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Kürbiskerne über Nacht einweichen, sonst „Grus\" unterm Gebiss. Resveratrol/Traubenkern ist raus (Entscheidung 12.08.): Der Kakao trägt die Polyphenol-Story allein und kostet ein Zehntel.",
+      "แช่เมล็ดฟักทองข้ามคืน ไม่อย่างนั้นจะสากติดฟัน · เอาเรสเวอราทรอลและสารสกัดเมล็ดองุ่นออกแล้ว (ตัดสินใจ 12.08.) โกโก้ให้สารโพลีฟีนอลได้ด้วยตัวเองอยู่แล้ว และราคาถูกกว่าสิบเท่า",
+      "Soak pumpkin seeds overnight or it turns gritty. Resveratrol removed (decision 12.08.) — cacao carries the polyphenol story alone at a tenth of the cost."]},
+
+{n:"08", stufe:"C", de:"Blutwert-Bespoke", th:"สูตรเฉพาะตามผลเลือด", en:"Blood-Value Bespoke",
+ alg:"🥛",
+ zut:[
+   ["KW", 120,"Kokoswasser ODER Joghurt 🥛","น้ำมะพร้าว หรือ โยเกิร์ต 🥛","Coconut water OR yogurt 🥛"],
+   ["BA",  45,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["ST",  15,"Süßtamarinde (Makham Wan)","มะขามหวาน","Sweet tamarind"],
+   ["BA",  35,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
+   ["BM",  80,"Beeren-Mix ODER Mango MG (gefroren)","เบอร์รีรวม หรือ มะม่วง MG (แช่แข็ง)","Mixed berries OR mango MG (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser ODER Joghurt 🥛","① ใส่ของเหลวก่อน: น้ำมะพร้าว หรือ โยเกิร์ต 🥛","① Liquids first: Coconut water OR yogurt 🥛"],
+   ["② Frisches & Weiches: Banane, Süßtamarinde","② ของสดและของนิ่ม: กล้วย · มะขามหวาน","② Fresh & soft: Banana, Sweet tamarind"],
+   ["④ Gefrorenes ganz oben: Banane, Beeren-Mix ODER Mango MG","④ ของแช่แข็งไว้บนสุด: กล้วย · เบอร์รีรวม หรือ มะม่วง MG","④ Frozen last, on top: Banana, Mixed berries OR mango MG"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["MODULE (Gramm): Eisen = SP 40 + RB 50 + OR 60 · Magnesium = KE 12 + KK 6 · Omega-3 = SB 10 · Protein = TO/JO 60 (+PR 20) · Vitamin C = GU 60 · Verdauung = PY 80 + IG 3. Alles Lebensmittel — keine Supplements, keine Aussage über Krankheiten.",
+      "โมดูล (กรัม): ธาตุเหล็ก = SP 40 + RB 50 + OR 60 · แมกนีเซียม = KE 12 + KK 6 · โอเมก้า-3 = SB 10 · โปรตีน = TO/JO 60 (+PR 20) · วิตามินซี = GU 60 · ระบบย่อย = PY 80 + IG 3",
+      "MODULES (grams): iron = SP 40 + RB 50 + OR 60 · magnesium = KE 12 + KK 6 · omega-3 = SB 10 · protein = TO/JO 60 (+PR 20) · vitamin C = GU 60 · digestion = PY 80 + IG 3. Food only — no supplements, no disease claims."]},
+
+{n:"09", stufe:"A", de:"Mango Tango", th:"มะม่วง แทงโก้", en:"Mango Tango",
+ alg:"🥛",
+ zut:[
+   ["KM", 150,"Kuhmilch","นมวัว","Cow milk"],
+   ["MG",  75,"Mango (frisch)","มะม่วง (สด)","Mango (fresh)"],
+   ["BA",  35,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["MG",  80,"Mango (gefroren)","มะม่วง (แช่แข็ง)","Mango (frozen)"],
+   ["BA",  25,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kuhmilch","① ใส่ของเหลวก่อน: นมวัว","① Liquids first: Cow milk"],
+   ["② Frisches & Weiches: Mango, Banane","② ของสดและของนิ่ม: มะม่วง · กล้วย","② Fresh & soft: Mango, Banana"],
+   ["④ Gefrorenes ganz oben: Mango, Banane","④ ของแช่แข็งไว้บนสุด: มะม่วง · กล้วย","④ Frozen last, on top: Mango, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Flüssigkeit immer zuerst — sonst dreht der Mixer im Leeren und die Klinge blockiert.",
+      "ใส่ของเหลวก่อนเสมอ ไม่งั้นใบมีดจะหมุนฟรีและติดขัด",
+      "Always liquid first — otherwise the blade spins empty and jams."]},
+
+{n:"10", stufe:"B", de:"Dragon Fruit Pink Pitaya", th:"แก้วมังกร พิงค์ พิทายา", en:"Dragon Fruit Pink Pitaya",
+ alg:"",
+ zut:[
+   ["KO", 150,"Kokosmilch","กะทิ","Coconut milk"],
+   ["BA",  35,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["DR",  75,"Drachenfrucht rot (frisch)","แก้วมังกรแดง (สด)","Red dragon fruit (fresh)"],
+   ["ER",  10,"Erdbeere für Aroma (optional)","สตรอว์เบอร์รี 1 ลูก (ถ้าต้องการกลิ่น)","1 strawberry for aroma (optional)"],
+   ["BA",  25,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
+   ["DR",  75,"Drachenfrucht rot (gefroren)","แก้วมังกรแดง (แช่แข็ง)","Red dragon fruit (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch","① ใส่ของเหลวก่อน: กะทิ","① Liquids first: Coconut milk"],
+   ["② Frisches & Weiches: Banane, Drachenfrucht rot, Erdbeere für Aroma","② ของสดและของนิ่ม: กล้วย · แก้วมังกรแดง · สตรอว์เบอร์รี 1 ลูก","② Fresh & soft: Banana, Red dragon fruit, 1 strawberry for aroma"],
+   ["④ Gefrorenes ganz oben: Banane, Drachenfrucht rot","④ ของแช่แข็งไว้บนสุด: กล้วย · แก้วมังกรแดง","④ Frozen last, on top: Banana, Red dragon fruit"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Der Foto-Smoothie: nicht übermixen, sonst wird das Pink stumpf. Im durchsichtigen Becher servieren.",
+      "แก้วนี้เน้นสีสวยสำหรับถ่ายรูป อย่าปั่นนานเกินไป สีชมพูจะซีด · เสิร์ฟในแก้วใส",
+      "The photo smoothie: don't over-blend or the pink goes dull. Serve in the clear cup."]},
+
+{n:"11", stufe:"B", de:"Avocado Sinh Tố Bơ", th:"อะโวคาโด ซิงโต๋ บ๋อ", en:"Avocado Sinh Tố Bơ",
+ alg:"🥛",
+ zut:[
+   ["KM", 150,"Kuhmilch (oder Kokosmilch KO / Reismilch)","นมวัว (หรือ กะทิ KO / นมข้าว)","Cow milk (or coconut KO / rice milk)"],
+   ["ST",  15,"Süßtamarinde (Makham Wan)","มะขามหวาน","Sweet tamarind"],
+   ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["AV", 120,"Avocado (frisch)","อะโวคาโด (สด)","Avocado (fresh)"],
+   ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kuhmilch","① ใส่ของเหลวก่อน: นมวัว","① Liquids first: Cow milk"],
+   ["② Frisches & Weiches: Süßtamarinde, Banane, Avocado","② ของสดและของนิ่ม: มะขามหวาน · กล้วย · อะโวคาโด","② Fresh & soft: Sweet tamarind, Banana, Avocado"],
+   ["④ Gefrorenes ganz oben: Banane","④ ของแช่แข็งไว้บนสุด: กล้วย","④ Frozen last, on top: Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["KEIN Zucker, KEINE Kondensmilch — das ist der 100blend-Twist. Die Süße kommt aus Banane + Süßtamarinde. Wenn ein Gast reklamiert „zu wenig süß\": 5 g Süßtamarinde mehr, nie Zucker.",
+      "ไม่ใส่น้ำตาล ไม่ใส่นมข้นหวาน — นี่คือจุดต่างของ 100blend · ความหวานมาจากกล้วย + มะขามหวาน · ถ้าลูกค้าบอกไม่หวานพอ ใส่มะขามหวานเพิ่ม 5 กรัม ห้ามใส่น้ำตาล",
+      "NO sugar, NO condensed milk — that's the 100blend twist. Sweetness comes from banana + tamarind. If a guest wants sweeter: 5 g more tamarind, never sugar."]},
+
+{n:"12", stufe:"A", de:"Watermelon-Mint Cooler", th:"แตงโม-มินต์ คูลเลอร์", en:"Watermelon-Mint Cooler",
+ alg:"",
+ zut:[
+   ["KW", 200,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
+   ["LS",  10,"Limettensaft (½ Limette)","น้ำมะนาว (½ ลูก)","Lime juice (½ lime)"],
+   ["WM",  70,"Wassermelone (frisch)","แตงโม (สด)","Watermelon (fresh)"],
+   ["MI",   2,"Minze, gezählt (12-15 Blätter)","ใบสะระแหน่ เด็ดใบ (12-15 ใบ)","Mint, counted (12-15 leaves)"],
+   ["WM",  70,"Wassermelone (gefroren)","แตงโม (แช่แข็ง)","Watermelon (frozen)"],
+   ["ER",  20,"Erdbeere (gefroren)","สตรอว์เบอร์รี (แช่แข็ง)","Strawberry (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำมะพร้าว · น้ำมะนาว","① Liquids first: Coconut water, Lime juice"],
+   ["② Frisches & Weiches: Wassermelone, Minze, gezählt","② ของสดและของนิ่ม: แตงโม · ใบสะระแหน่ เด็ดใบ","② Fresh & soft: Watermelon, Mint, counted"],
+   ["④ Gefrorenes ganz oben: Wassermelone, Erdbeere","④ ของแช่แข็งไว้บนสุด: แตงโม · สตรอว์เบอร์รี","④ Frozen last, on top: Watermelon, Strawberry"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Nicht zu lange mixen — Wassermelone wird sonst schaumig und wässrig.",
+      "อย่าปั่นนานเกินไป แตงโมจะเป็นฟองและเหลว",
+      "Don't over-blend — watermelon turns foamy and watery."]},
+
+{n:"15", stufe:"C", de:"Wassermelone-Limette-Minze", th:"แตงโม-มะนาว-สะระแหน่", en:"Watermelon-Lime-Mint",
+ alg:"",
+ zut:[
+   ["LS",  21,"Limettensaft (¾ Limette)","น้ำมะนาว (¾ ลูก)","Lime juice (¾ lime)"],
+   ["MI",   2,"Minze, gezählt (12-15 Blätter)","ใบสะระแหน่ เด็ดใบ (12-15 ใบ)","Mint, counted (12-15 leaves)"],
+   ["WM", 196,"Wassermelone FRISCH (Saft + Aroma)","แตงโมสด (น้ำ + กลิ่น)","Watermelon FRESH (juice + aroma)"],
+   ["WM", 252,"Wassermelone GEFROREN (die Kälte)","แตงโมแช่แข็ง (ความเย็น)","Watermelon FROZEN (the cold)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den schlanken (dicke Masse, wenig Flüssigkeit)","โถปั่น: ใช้โถทรงสูงแคบ (เนื้อข้น ของเหลวน้อย)","BLENDER JAR: the slim one (thick mix, little liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Limettensaft","① ใส่ของเหลวก่อน: น้ำมะนาว","① Liquids first: Lime juice"],
+   ["② Frisches & Weiches: Minze, gezählt, Wassermelone","② ของสดและของนิ่ม: ใบสะระแหน่ เด็ดใบ · แตงโมสด","② Fresh & soft: Mint, counted, Watermelon"],
+   ["④ Gefrorenes ganz oben: Wassermelone","④ ของแช่แข็งไว้บนสุด: แตงโมแช่แข็ง","④ Frozen last, on top: Watermelon"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["GEFROREN + FRISCH kombiniert: die gefrorene Hälfte kühlt, die frische bringt Saft und Aroma — deshalb kein Wasser und kein Eis nötig. Nur 5–8 Sekunden mixen, sonst wird es schaumig.",
+      "ใช้แช่แข็งคู่กับของสด: ครึ่งที่แช่แข็งให้ความเย็น ครึ่งที่สดให้น้ำและกลิ่น จึงไม่ต้องใส่น้ำและไม่ต้องใส่น้ำแข็ง · ปั่นแค่ 5–8 วินาที ไม่อย่างนั้นจะเป็นฟอง · แช่แข็งแค่พอใช้ในวันนั้น อย่าเก็บนานเป็นสัปดาห์",
+      "The frozen melon IS the cold source — no ice needed. Freeze only a day's worth, not for weeks."]},
+
+{n:"16", stufe:"A", de:"Ananas-Passionsfrucht-Kokos", th:"สัปปะรด-เสาวรส-มะพร้าว", en:"Pineapple-Passion Fruit-Coconut",
+ alg:"",
+ zut:[
+   ["KW",179.9,"Kokoswasser (frisch aus der Nuss)","น้ำมะพร้าวสด","Coconut water (fresh from the nut)"],
+   ["PF",  47,"Passionsfrucht-Mark (mit Kernen)","เนื้อเสาวรส (มีเมล็ด)","Passion fruit pulp (with seeds)"],
+   ["AN",  47,"Ananas FRISCH (Aroma + Beweglichkeit)","สัปปะรดสด (กลิ่นและช่วยให้ปั่นลง)","Pineapple FRESH (aroma and flow)"],
+   ["AN",199.1,"Ananas GEFROREN (die Kälte)","สัปปะรดแช่แข็ง (ความเย็น)","Pineapple FROZEN (the cold)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser","① ใส่ของเหลวก่อน: น้ำมะพร้าวสด","① Liquids first: Coconut water"],
+   ["② Frisches & Weiches: Passionsfrucht-Mark, Ananas","② ของสดและของนิ่ม: เนื้อเสาวรส · สัปปะรดสด","② Fresh & soft: Passion fruit pulp, Pineapple"],
+   ["④ Gefrorenes ganz oben: Ananas","④ ของแช่แข็งไว้บนสุด: สัปปะรดแช่แข็ง","④ Frozen last, on top: Pineapple"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["⚠ WIEDERHOLUNG mit GEÄNDERTEM REZEPT. Der Ansatz vom 19.08. klemmte und lief erst mit 42 g mehr Flüssigkeit - die Probe war dadurch um 17 % verdünnt, Säure und Süße zählen nicht. Jetzt ist die Flüssigkeit IM Rezept: Kokoswasser hoch, gefrorene Ananas um denselben Betrag runter. Der Becher bleibt 473 g, es kommt kein Wasser dazu - deshalb diesmal NICHTS nachgießen. Wenn es trotzdem klemmt: Menge notieren und melden, nicht schätzen. Kein Eis: das Kokoswasser ist die Flüssigkeit, die gefrorene Ananas die Kälte. Passionsfrucht-Kerne NICHT absieben, das Knacken ist das Erkennungsmerkmal. Passionsfrucht-Kerne NICHT absieben, das Knacken ist das Erkennungsmerkmal.",
+      "ทำซ้ำ แต่สูตรเปลี่ยนแล้ว · ครั้งวันที่ 19.08. เครื่องปั่นไม่ลง ต้องเติมของเหลวเพิ่ม 42 กรัม ตัวอย่างจึงเจือจางไป 17 % ความเปรี้ยวและความหวานครั้งนั้นใช้ไม่ได้ · ตอนนี้ของเหลวอยู่ในสูตรแล้ว: เพิ่มน้ำมะพร้าว และลดสับปะรดแช่แข็งลงเท่ากัน · แก้วยังคง 473 กรัม ไม่มีน้ำเพิ่ม ครั้งนี้จึงห้ามเติมอะไรทั้งสิ้น · ถ้ายังปั่นไม่ลง ให้จดปริมาณที่ต้องใช้แล้วแจ้ง อย่ากะเอา · ไม่ใส่น้ำแข็ง: น้ำมะพร้าวคือของเหลว สับปะรดแช่แข็งคือความเย็น · ห้ามกรองเมล็ดเสาวรสออก เสียงกรุบคือเอกลักษณ์ของแก้วนี้",
+      "Three ingredients, no water, no ice. Do NOT sieve the passion fruit seeds."]},
+
+{n:"17", stufe:"A", de:"Banane-Kakao-Protein", th:"กล้วย-โกโก้-โปรตีน", en:"Banana-Cacao-Protein",
+ alg:"🌱",
+ zut:[
+   ["MM",198.8,"Mandelmilch fertig aus der Flasche — FLASCHE SCHÜTTELN","นมอัลมอนด์สำเร็จรูปจากขวด — เขย่าขวดก่อน","Bottled almond milk - SHAKE THE BOTTLE"],
+   ["TO",  60,"Seidentofu (Protein + Cremigkeit, schmeckt man nicht)","เต้าหู้อ่อน (โปรตีนและความครีมมี่ ไม่มีรสเต้าหู้)","Silken tofu (protein and creaminess, not tasted)"],
+   ["BA",101.2,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["KK",  12,"Kakao ungesüßt","ผงโกโก้ไม่หวาน","Unsweetened cacao"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (hebt den Kakao)","เกลือ — ต้องชั่ง ไม่กะ (ช่วยชูรสโกโก้)","Salt — weighed, not guessed (lifts the cacao)"],
+   ["HS",  21,"Hanfsamen geschält (das Protein)","เมล็ดกัญชงกะเทาะเปลือก (โปรตีน)","Hulled hemp seeds (the protein)"],
+   ["BA",  80,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Mandelmilch fertig aus der Flasche","① ใส่ของเหลวก่อน: นมอัลมอนด์สำเร็จรูปจากขวด","① Liquids first: Bottled almond milk - SHAKE THE BOTTLE"],
+   ["② Frisches & Weiches: Seidentofu, Banane","② ของสดและของนิ่ม: เต้าหู้อ่อน · กล้วยแช่แข็ง","② Fresh & soft: Silken tofu, Banana"],
+   ["③ Trockenes darüber: Kakao ungesüßt, Salz, Hanfsamen geschält","③ ใส่ของแห้งทับ: ผงโกโก้ไม่หวาน · เกลือ · เมล็ดกัญชงกะเทาะเปลือก","③ Dry on top: Unsweetened cacao, Salt, Hulled hemp seeds"],
+   ["④ Gefrorenes ganz oben: Banane","④ ของแช่แข็งไว้บนสุด: กล้วยแช่แข็ง","④ Frozen last, on top: Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["PROTEIN-SMOOTHIE der Karte. Die Recherche nennt Schokolade + Kern/Nuss + Banane als die beliebteste Proteinkombination - hier mit Hanfsamen (31 % Protein) und Seidentofu statt Erdnussbutter, weil beides im Haus ist und Hanf keinen Eigengeschmack aufdrängt. ⚠ EHRLICHE ZAHL: das ergibt rund 13 g Protein, nicht die 25-40 g der US-Rezepte - dafür fehlt Proteinpulver. Wer mehr will: 10 g Marine-Kollagen dazu (+9 g), dann ~22 g. Kakao IMMER zuerst in der Flüssigkeit lösen, sonst bleiben Klumpen. Die 0,2 g Salz sind kein Fehler - sie machen den Kakao tiefer. ABWIEGEN, nicht mit den Fingern schaetzen: eine Fingerprise streut zwischen 0,1 und 0,5 g, und bei 0,5 g schmeckt der Becher salzig. Kakao kostet 1.000 THB/kg: 8 g sind bewusst knapp und reichen voellig.",
+      "สมูทตี้โปรตีนประจำเมนู · จากการค้นข้อมูล ช็อกโกแลต + ถั่วหรือเมล็ด + กล้วย คือสูตรโปรตีนที่นิยมที่สุด ที่นี่ใช้เมล็ดกัญชง (โปรตีน 31 %) และเต้าหู้อ่อน แทนเนยถั่ว เพราะมีอยู่แล้วทั้งคู่ และกัญชงไม่มีรสของตัวเองมากลบ · ตัวเลขตามจริง: ได้โปรตีนราว 13 กรัม ไม่ใช่ 25-40 กรัม แบบสูตรอเมริกัน เพราะเราไม่ใส่ผงโปรตีน · ถ้าต้องการมากกว่านี้ ใส่มารีนคอลลาเจน 10 กรัม (เพิ่ม 9 กรัม) รวมเป็นราว 22 กรัม · ละลายโกโก้ในของเหลวก่อนเสมอ ไม่อย่างนั้นจะเป็นก้อน · เกลือ 0,2 กรัม ไม่ใช่ความผิดพลาด มันทำให้โกโก้ลึกขึ้น · ต้องชั่ง อย่าหยิบด้วยนิ้ว: หยิบมือหนึ่งได้ตั้งแต่ 0,1 ถึง 0,5 กรัม และที่ 0,5 กรัม แก้วจะเค็ม · โกโก้ราคา 1.000 บาทต่อกิโล 8 กรัม จึงตั้งใจให้น้อยและเพียงพอแล้ว",
+      "ALWAYS dissolve the cacao in the liquid first. The pinch of salt deepens the chocolate."]},
+
+{n:"18", stufe:"A", de:"Drachenfrucht-Banane-Limette", th:"แก้วมังกร-กล้วย-มะนาว", en:"Dragon Fruit-Banana-Lime",
+ alg:"",
+ zut:[
+   ["KW", 134,"Kokoswasser (frisch aus der Nuss)","น้ำมะพร้าวสด","Coconut water (fresh from the nut)"],
+   ["LS", 9.8,"Limettensaft","น้ำมะนาว","Lime juice"],
+   ["BA", 110,"Banane FRISCH, reif — NICHT aus der Truhe","กล้วยสด สุก (ไม่แช่แข็ง)","Banana FRESH, ripe — NOT from the freezer"],
+   ["DR", 109,"Drachenfrucht rot (frisch)","แก้วมังกรแดงแช่แข็ง (สด)","Red dragon fruit (fresh)"],
+   ["DR", 110,"Drachenfrucht rot (gefroren)","แก้วมังกรแดงแช่แข็ง (แช่แข็ง)","Red dragon fruit (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำมะพร้าวสด · น้ำมะนาว","① Liquids first: Coconut water, Lime juice"],
+   ["② Frisches & Weiches: Banane , reif, Drachenfrucht rot","② ของสดและของนิ่ม: กล้วยสด สุก · แก้วมังกรแดงแช่แข็ง","② Fresh & soft: Banana , ripe, Red dragon fruit"],
+   ["④ Gefrorenes ganz oben: Drachenfrucht rot","④ ของแช่แข็งไว้บนสุด: แก้วมังกรแดงแช่แข็ง","④ Frozen last, on top: Red dragon fruit"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Der Foto-Becher der Karte: leuchtendes Pink ganz ohne Farbstoff. Drachenfrucht schmeckt für sich sehr mild - die Banane gibt Suesse und Koerper, die Limette den Kick. Ohne Limette wirkt der Becher flach.",
+      "แก้วสำหรับถ่ายรูปของเมนูนี้ สีชมพูสดโดยไม่ใช้สีผสมอาหารเลย · แก้วมังกรรสอ่อนมากในตัวเอง กล้วยให้ความหวานและเนื้อสัมผัส มะนาวให้รสจัด · ถ้าไม่ใส่มะนาว แก้วนี้จะจืดชืด",
+      "The photo cup: vivid pink, no dye. Dragon fruit is mild on its own - banana gives body, lime gives the kick."]},
+
+{n:"19", stufe:"A", de:"Ananas-Gurke-Minze", th:"สัปปะรด-แตงกวา-สะระแหน่", en:"Pineapple-Cucumber-Mint",
+ alg:"",
+ zut:[
+   ["KW", 105,"Kokoswasser (frisch aus der Nuss)","น้ำมะพร้าวสด","Coconut water (fresh from the nut)"],
+   ["LS",  14,"Limettensaft","น้ำมะนาว","Lime juice"],
+   ["MI",   2,"Minze, gezählt (12-15 Blätter)","ใบสะระแหน่ เด็ดใบ (12-15 ใบ)","Mint, counted (12-15 leaves)"],
+   ["GK", 140,"Gurke mit Schale","แตงกวาทั้งเปลือก","Cucumber with skin"],
+   ["AN", 105,"Ananas (frisch)","สัปปะรดแช่แข็ง (สด)","Pineapple (fresh)"],
+   ["AN", 105,"Ananas (gefroren)","สัปปะรดแช่แข็ง (แช่แข็ง)","Pineapple (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำมะพร้าวสด · น้ำมะนาว","① Liquids first: Coconut water, Lime juice"],
+   ["② Frisches & Weiches: Minze, gezählt, Gurke mit Schale, Ananas","② ของสดและของนิ่ม: ใบสะระแหน่ เด็ดใบ · แตงกวาทั้งเปลือก · สัปปะรดแช่แข็ง","② Fresh & soft: Mint, counted, Cucumber with skin, Pineapple"],
+   ["④ Gefrorenes ganz oben: Ananas","④ ของแช่แข็งไว้บนสุด: สัปปะรดแช่แข็ง","④ Frozen last, on top: Pineapple"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["IN DER PRAXIS BESTAETIGT — Peter, 16.08.2026: der war super lecker. Gurke MIT Schale, sonst wird der Becher blass. Minze wiegen, nicht Blaetter zaehlen: 3 g sind der verkostete Wert, 2 g die leisere Variante wenn die Gurke sehr mild ist. Der leichteste Becher der Karte.",
+      "ยืนยันจากการชิมจริง — ปีเตอร์ 16.08.2026: อร่อยมาก · แตงกวาใส่ทั้งเปลือก ไม่อย่างนั้นแก้วจะสีซีด · ชั่งสะระแหน่ อย่านับใบ: 3 กรัม คือค่าที่ชิมแล้ว ส่วน 2 กรัม คือแบบอ่อนลง ใช้เมื่อแตงกวารสอ่อนมาก · เป็นแก้วที่เบาที่สุดในเมนู",
+      "Cucumber WITH the skin - that is where the green comes from. Weigh the mint, do not count leaves."]},
+
+{n:"20", stufe:"A", de:"Mango-Joghurt-Zitrone", th:"มะม่วง-โยเกิร์ต-เลมอน", en:"Mango-Yogurt-Lemon",
+ alg:"🥛",
+ zut:[
+   ["MM",126.1,"Mandelmilch fertig (Großhandel — so getestet 20.08., deutlich nussig) — FLASCHE SCHÜTTELN","นมอัลมอนด์สำเร็จรูป (ทดสอบแล้ว 20.08. กลิ่นถั่วชัดเจน) — เขย่าขวดก่อน","Bottled almond milk (wholesale - as tested 20.08., clearly nutty) - SHAKE THE BOTTLE"],
+   ["ZT", 9.3,"Zitronensaft","น้ำเลมอน","Lemon juice"],
+   ["JO", 139,"Naturjoghurt ungesüßt","โยเกิร์ตรสธรรมชาติ","Plain unsweetened yogurt"],
+   ["MG",98.9,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["MG", 100,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Mandelmilch fertig, Zitronensaft","① ใส่ของเหลวก่อน: นมอัลมอนด์สำเร็จรูป · น้ำเลมอน","① Liquids first: Bottled almond milk, Lemon juice"],
+   ["② Frisches & Weiches: Naturjoghurt ungesüßt, Mango","② ของสดและของนิ่ม: โยเกิร์ตรสธรรมชาติ · มะม่วงแช่แข็ง","② Fresh & soft: Plain unsweetened yogurt, Mango"],
+   ["④ Gefrorenes ganz oben: Mango","④ ของแช่แข็งไว้บนสุด: มะม่วงแช่แข็ง","④ Frozen last, on top: Mango"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["⚠ JOGHURT BAUT KEINEN WIRBEL – deshalb gestuft mixen: erst ein Drittel der Mango, dann der Rest. Die Mandelmilch ist im Rezept bereits erhöht und die Mango um denselben Betrag gesenkt, also NICHT nachgießen. Die zusätzliche Milch ist kein Verdünner, sondern Geschmack. Zitrone statt Limette: sie passt runder zu Mango und Joghurt und hält die Frucht hell statt schwer. ⚠ OFFEN: ob Milch aus GERÖSTETEN Mandeln mehr kann. Vorgeschichte vom 20.08. steht im Geschmackstest.",
+      "โยเกิร์ตไม่ทำให้เกิดวังน้ำวน จึงต้องปั่นเป็นขั้น: ใส่มะม่วง 1 ใน 3 ก่อน แล้วค่อยใส่ที่เหลือ · ในสูตรเพิ่มนมอัลมอนด์และลดมะม่วงลงเท่ากันไว้แล้ว จึงห้ามเติมเพิ่ม · นมที่เพิ่มไม่ใช่ตัวเจือจาง แต่คือรสชาติ · ใช้เลมอนแทนมะนาว เข้ากับมะม่วงและโยเกิร์ตได้กลมกล่อมกว่า และทำให้ผลไม้สดใส ไม่หนัก · ยังไม่ทดสอบ: นมจากอัลมอนด์คั่วจะดีกว่าหรือไม่ · ประวัติวันที่ 20.08. อยู่ในบันทึกการชิม",
+      "Asia's best-selling smoothie - with no added sugar. Lemon, not lime: it rounds off mango and yogurt better."]},
+
+{n:"13", stufe:"X", de:"Leber-Morgen Vital 🔒", th:"ตับ-เช้า ไวทัล 🔒", en:"Liver-Morning Vital 🔒",
+ alg:"🥛",
+ zut:[
+   ["WA",  80,"Wasser","น้ำ","Water"],
+   ["LS",  15,"Limettensaft (¾–1 Limette)","น้ำมะนาว (¾–1 ลูก)","Lime juice (¾–1 lime)"],
+   ["JO", 100,"Naturjoghurt (ungesüßt)","โยเกิร์ตรสธรรมชาติ (ไม่หวาน)","Plain yogurt (unsweetened)"],
+   ["GK",  40,"Gurke mit Schale","แตงกวา (ทั้งเปลือก)","Cucumber with skin"],
+   ["IG",   5,"Ingwer (frisch)","ขิงสด","Fresh ginger"],
+   ["MG",  30,"Mango (frisch)","มะม่วง (สด)","Mango (fresh)"],
+   ["PP", 0.1,"Schwarzer Pfeffer — nur 2 Mühlendrehungen, er gehört zum Kurkuma dazu","พริกไทยดำ — บิดโรงบด 2 ครั้งเท่านั้น ใส่คู่กับขมิ้น","Black pepper — just 2 turns of the mill, it belongs with the turmeric"],
+   ["KU", 0.4,"Kurkuma NUR eine Messerspitze (≈⅛ TL) — der Becher soll schmecken, nicht nach Kurkuma","ขมิ้นแค่ปลายมีด (≈⅛ ช้อนชา) — แก้วนี้ต้องอร่อย ไม่ใช่ต้องได้กลิ่นขมิ้น","Turmeric a knife-tip ONLY (≈⅛ tsp) — the cup should taste good, not taste of turmeric"],
+   ["BK",  60,"Brokkoli (kurz gedämpft, gefroren)","บรอกโคลี (นึ่งแล้วแช่แข็ง)","Broccoli (steamed, frozen)"],
+   ["MG",  30,"Mango (gefroren)","มะม่วง (แช่แข็ง)","Mango (frozen)"],
+   ["BM",  70,"Beeren / weiße Erdbeeren (gefroren)","เบอร์รี / สตรอว์เบอร์รีขาว (แช่แข็ง)","Berries / white strawberries (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Wasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำ · น้ำมะนาว","① Liquids first: Water, Lime juice"],
+   ["② Frisches & Weiches: Naturjoghurt, Gurke mit Schale, Ingwer, Mango","② ของสดและของนิ่ม: โยเกิร์ตรสธรรมชาติ · แตงกวา · ขิงสด · มะม่วง","② Fresh & soft: Plain yogurt, Cucumber with skin, ginger, Mango"],
+   ["③ Trockenes darüber: Schwarzer Pfeffer, Kurkuma NUR eine Messerspitze","③ ใส่ของแห้งทับ: พริกไทยดำ · ขมิ้นแค่ปลายมีด","③ Dry on top: Black pepper, Turmeric a knife-tip ONLY"],
+   ["④ Gefrorenes ganz oben: Brokkoli, Mango, Beeren / weiße Erdbeeren","④ ของแช่แข็งไว้บนสุด: บรอกโคลี · มะม่วง · เบอร์รี / สตรอว์เบอร์รีขาว","④ Frozen last, on top: Broccoli, Mango, Berries / white strawberries"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["🔒 NICHT im Verkaufsmenü — Peters persönlicher Smoothie. GESCHMACK GEHT VOR (Peter 24.08.): Kurkuma von 1 g auf 0,4 g gesenkt, Pfeffer von 0,3 g auf 0,1 g. Der Pfeffer geht mit, weil er nur wegen des Kurkumas drin ist — Piperin macht Curcumin verfügbar. Bliebe er oben, wäre er das dominierende Gewürz im Becher. KEINE Banane, KEIN Zucker (Diabetes), KEIN Grapefruit/Pomelo (Eliquis). Wenn noch zu grasig, in dieser Reihenfolge: Gurke schälen · Beeren auf 80 g · Brokkoli auf 40 g. Brokkoli zuletzt, er ist der eigentliche Grund für den grünen Ton.",
+      "🔒 ไม่อยู่ในเมนูขาย — สูตรส่วนตัวของปีเตอร์ · รสชาติมาก่อน (ปีเตอร์ 24.08.): ลดขมิ้นจาก 1 กรัม เหลือ 0,4 กรัม และลดพริกไทยจาก 0,3 กรัม เหลือ 0,1 กรัม · พริกไทยลดตามไปด้วย เพราะมันอยู่ในสูตรเพราะขมิ้นเท่านั้น — สารไพเพอรีนช่วยให้ร่างกายดูดซึมเคอร์คูมินได้ · ถ้าคงพริกไทยไว้เท่าเดิม มันจะกลายเป็นเครื่องเทศที่เด่นที่สุดในแก้ว · ไม่ใส่กล้วย ไม่ใส่น้ำตาล (เบาหวาน) ไม่ใส่ส้มโอหรือเกรปฟรุต (ยาอีลิควิส) · ถ้ายังรสเขียวเกินไป ให้แก้ตามลำดับนี้: ปอกเปลือกแตงกวา · เพิ่มเบอร์รี่เป็น 80 กรัม · ลดบรอกโคลีเหลือ 40 กรัม · ลดบรอกโคลีเป็นข้อสุดท้าย เพราะมันคือต้นเหตุจริงของรสเขียว",
+      "🔒 NOT on the sales menu — Peter's personal smoothie. TASTE COMES FIRST (Peter 24.08.): turmeric cut from 1 g to 0.4 g, pepper from 0.3 g to 0.1 g. The pepper goes down with it because it is only in the recipe for the turmeric — piperine makes curcumin available. Left high, it would be the dominant spice in the cup. NO banana, NO sugar (diabetes), NO grapefruit or pomelo (Eliquis). If still too grassy, in this order: peel the cucumber · berries to 80 g · broccoli to 40 g. Broccoli last — it is the real reason for the green note."]},
+
+{n:"21", stufe:"X", de:"Erdbeere-Banane (Hafer)", th:"สตรอว์เบอร์รี่-กล้วย (นมข้าวโอ๊ต)", en:"Strawberry-Banana (oat)",
+ alg:"",
+ zut:[
+   ["HM", 165,"Hafermilch (frisch angesetzt)","นมข้าวโอ๊ต (ทำเอง)","Oat milk (freshly made)"],
+   ["BA",  88,"Banane FRISCH, reif — NICHT aus der Truhe","กล้วยสด สุก (ไม่แช่แข็ง)","Banana FRESH, ripe — NOT from the freezer"],
+   ["ER", 220,"Erdbeere GEFROREN (Royal Project Nr. 80)","สตรอว์เบอร์รี่แช่แข็ง (โครงการหลวง เบอร์ 80)","Strawberry FROZEN"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den schlanken (dicke Masse, wenig Flüssigkeit)","โถปั่น: ใช้โถทรงสูงแคบ (เนื้อข้น ของเหลวน้อย)","BLENDER JAR: the slim one (thick mix, little liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Hafermilch","① ใส่ของเหลวก่อน: นมข้าวโอ๊ต","① Liquids first: Oat milk"],
+   ["② Frisches & Weiches: Banane , reif","② ของสดและของนิ่ม: กล้วยสด สุก","② Fresh & soft: Banana , ripe"],
+   ["④ Gefrorenes ganz oben: Erdbeere","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รี่แช่แข็ง","④ Frozen last, on top: Strawberry"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["⚠ GEÄNDERT am 22.08. nach Lexys Verkostung: „zu sauer, ich schmecke kaum Erdbeere heraus.“ Die LIMETTE IST RAUS – 11 g auf 473 g waren der größte Säurebringer, und Säure überdeckt auch das Fruchtaroma. Der alte Tip hatte es vorhergesagt: „zu viel = die Erdbeere verschwindet.“ Die schwache Erdbeere liegt NICHT an der Menge – 220 g sind die höchste aller Rezepte – sondern an der Reife: Erdbeeren reifen nach dem Pflücken nicht nach. Grün gepflückt bleibt sauer, auch im Froster. Nur EINE Änderung, damit man sie zuordnen kann. Ob Salz zusätzlich hilft, klärt der Salz-Test.",
+      "แก้ไข 22.08. หลังเล็กซี่ชิม: “เปรี้ยวเกินไป แทบไม่ได้รสสตรอว์เบอร์รี่” · เอามะนาวออก – 11 กรัม ต่อ 473 กรัม คือตัวทำให้เปรี้ยวที่สุด และความเปรี้ยวก็กลบกลิ่นรสผลไม้ด้วย · ทิปเก่าเคยเตือนไว้แล้ว: “ใส่มากไปสตรอว์เบอร์รี่จะหาย” · รสสตรอว์เบอร์รี่ที่อ่อน ไม่ได้เพราะปริมาณ – 220 กรัม มากที่สุดในทุกสูตร – แต่เพราะความสุก: สตรอว์เบอร์รี่ไม่สุกต่อหลังเก็บ เก็บตอนเขียวก็เปรี้ยวตลอด แม้แช่แข็ง · แก้อย่างเดียว จะได้รู้ว่าอะไรทำให้ต่าง · เกลือจะช่วยไหม ดูจากการทดสอบเกลือ",
+      "CHANGED 22.08. after Lexy tasted it: “too sour, hardly any strawberry.” The LIME IS OUT. Strawberries are non-climacteric – they never ripen after picking, so berries harvested green stay sour, freezer or not. The weak flavour is a ripeness problem, not a quantity problem. One change only."]},
+
+{n:"22", stufe:"X", de:"Erdbeere-Hibiskus", th:"สตรอว์เบอร์รี-กระเจี๊ยบ", en:"Strawberry-Hibiscus",
+ alg:"",
+ zut:[
+   ["HT", 165,"Hibiskustee, kalt (aus getrockneten Blüten)","ชากระเจี๊ยบเย็น (ชงจากดอกแห้ง)","Hibiscus tea, chilled"],
+   ["BA",  66,"Banane FRISCH, reif — gibt Körper UND Beweglichkeit","กล้วยสด สุก — ให้เนื้อและช่วยให้ปั่นลง","Banana FRESH, ripe — body and flow"],
+   ["ER", 242,"Erdbeere GEFROREN (Royal Project Nr. 80)","สตรอว์เบอร์รี่แช่แข็ง (โครงการหลวง เบอร์ 80)","Strawberry FROZEN"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den schlanken (dicke Masse, wenig Flüssigkeit)","โถปั่น: ใช้โถทรงสูงแคบ (เนื้อข้น ของเหลวน้อย)","BLENDER JAR: the slim one (thick mix, little liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Hibiskustee, kalt","① ใส่ของเหลวก่อน: ชากระเจี๊ยบเย็น","① Liquids first: Hibiscus tea, chilled"],
+   ["② Frisches & Weiches: Banane , reif","② ของสดและของนิ่ม: กล้วยสด สุก","② Fresh & soft: Banana , ripe"],
+   ["④ Gefrorenes ganz oben: Erdbeere","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รี่แช่แข็ง","④ Frozen last, on top: Strawberry"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Der KICK ist der Hibiskus: herb-säuerlich wie Cranberry, tiefrot, und er kostet 0,2 g getrocknete Blüten je Becher. Krachiap kennt in Thailand jeder — aber als Smoothie steht er auf keiner Karte in Pattaya. Tee am Vortag ansetzen (4–5 Blüten auf 1 L, 10 Min ziehen, abseihen, kalt stellen). ⚠ Ungetestet: wenn zu sauer, Banane auf 90 g; wenn zu dünn, Tee auf 120 ml.",
+      "จุดเด่นคือกระเจี๊ยบ: เปรี้ยวอมฝาดคล้ายแครนเบอร์รี่ สีแดงเข้ม และใช้ดอกแห้งแค่ 0,2 กรัมต่อแก้ว · คนไทยรู้จักกระเจี๊ยบดี แต่ยังไม่มีร้านไหนในพัทยาทำเป็นสมูทตี้ · ชงชาไว้ล่วงหน้า 1 วัน (ดอก 4–5 ดอก ต่อน้ำ 1 ลิตร แช่ 10 นาที กรอง แล้วแช่เย็น) · ยังไม่ได้ทดสอบ: ถ้าเปรี้ยวเกินไป เพิ่มกล้วยเป็น 90 กรัม ถ้าเหลวเกินไป เพิ่มชาเป็น 120 มล.",
+      "The KICK is hibiscus: tart like cranberry, deep red, and it costs 0.2 g of dried flowers per cup. Everyone in Thailand knows krachiap — but nobody sells it as a smoothie."]},
+
+{n:"23", stufe:"X", de:"Beere-Hanf-Banane", th:"เบอร์รี-เมล็ดกัญชง-กล้วย", en:"Berry-Hemp-Banana",
+ alg:"",
+ zut:[
+   ["HM", 168,"Hafermilch (frisch angesetzt)","นมข้าวโอ๊ต (ทำเอง)","Oat milk (freshly made)"],
+   ["BA",  78,"Banane FRISCH, reif — NICHT aus der Truhe","กล้วยสด สุก (ไม่แช่แข็ง)","Banana FRESH, ripe — NOT from the freezer"],
+   ["HS",  20,"Hanfsamen geschält (weiß) — trocken in den Mixer","เมล็ดกัญชงกะเทาะเปลือก — ใส่แห้งได้เลย","Hulled hemp seeds — straight in, no soaking"],
+   ["BM", 145,"Beeren-Mix GEFROREN","เบอร์รีรวมแช่แข็ง","Mixed berries FROZEN"],
+   ["JB",  62,"Schwarze Johannisbeere GEFROREN","ลูกเกดดำแช่แข็ง","Blackcurrant FROZEN"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Hafermilch","① ใส่ของเหลวก่อน: นมข้าวโอ๊ต","① Liquids first: Oat milk"],
+   ["② Frisches & Weiches: Banane , reif","② ของสดและของนิ่ม: กล้วยสด สุก","② Fresh & soft: Banana , ripe"],
+   ["③ Trockenes darüber: Hanfsamen geschält","③ ใส่ของแห้งทับ: เมล็ดกัญชงกะเทาะเปลือก","③ Dry on top: Hulled hemp seeds"],
+   ["④ Gefrorenes ganz oben: Beeren-Mix, Schwarze Johannisbeere","④ ของแช่แข็งไว้บนสุด: เบอร์รีรวมแช่แข็ง · ลูกเกดดำแช่แข็ง","④ Frozen last, on top: Mixed berries, Blackcurrant"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Zwei Kicks: die Schwarze Johannisbeere bringt die Säure, die einen Beeren-Mix aus der Beliebigkeit holt (Note 4 im Test), der weiße Hanf die nussige Tiefe plus Protein und Omega-3. Hanf muss NICHT eingeweicht werden, er ist weich — aber er muss WIRKLICH glatt gemixt sein, bevor das Gefrier-Pack dazukommt, sonst knirscht es. ⚠ Ungetestet: wenn zu sauer, Johannisbeere auf 40 g.",
+      "จุดเด่นสองอย่าง: ลูกเกดดำให้ความเปรี้ยวที่ทำให้เบอร์รี่รวมไม่จืดชืด (ได้ 4 คะแนนในการทดสอบ) และเมล็ดกัญชงขาวให้รสมันลึก พร้อมโปรตีนและโอเมก้า-3 · กัญชงไม่ต้องแช่น้ำ เพราะนิ่มอยู่แล้ว แต่ต้องปั่นให้เนียนจริง ๆ ก่อนใส่ของแช่แข็ง ไม่อย่างนั้นจะสากติดฟัน · ยังไม่ได้ทดสอบ: ถ้าเปรี้ยวเกินไป ลดลูกเกดดำเหลือ 40 กรัม",
+      "Two kicks: blackcurrant brings the acidity that lifts a berry mix out of blandness, hemp brings nutty depth plus protein and omega-3. Hemp needs no soaking but must be truly smooth before the frozen pack goes in."]},
+
+{n:"25", stufe:"X", de:"Johannisbeere-Mango-Minze", th:"แบล็คเคอร์แรนต์-มะม่วง-สะระแหน่", en:"Blackcurrant-Mango-Mint",
+ alg:"🌱",
+ zut:[
+   ["KW", 215,"Kokoswasser (frisch aus der Nuss)","น้ำมะพร้าวสด","Coconut water (fresh from the nut)"],
+   ["MI",   2,"Minze, gezählt (12-15 Blätter)","ใบสะระแหน่ เด็ดใบ (12-15 ใบ)","Mint, counted (12-15 leaves)"],
+   ["MG",  50,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["BA",  45,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["MG",  55,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"],
+   ["JB",  65,"Schwarze Johannisbeere GEFROREN (die Säure + die Farbe)","ลูกเกดดำแช่แข็ง (ความเปรี้ยวและสี)","Blackcurrant FROZEN (the acidity and colour)"],
+   ["BA",  40,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser","① ใส่ของเหลวก่อน: น้ำมะพร้าวสด","① Liquids first: Coconut water"],
+   ["② Frisches & Weiches: Minze, gezählt, Mango, Banane","② ของสดและของนิ่ม: ใบสะระแหน่ เด็ดใบ · มะม่วงแช่แข็ง · กล้วยแช่แข็ง","② Fresh & soft: Mint, counted, Mango, Banana"],
+   ["④ Gefrorenes ganz oben: Mango, Schwarze Johannisbeere, Banane","④ ของแช่แข็งไว้บนสุด: มะม่วงแช่แข็ง · ลูกเกดดำแช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Mango, Blackcurrant, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["NEU 20.08., noch nie gemixt. Die schwarze Johannisbeere lag mit über 1 kg im Bestand und kam in KEINEM Rezept vor. Die Paarung Johannisbeere + Mango + Minze ist keine Erfindung von mir, sie ist zweifach belegt (Little Sugar Snaps, Blackcurrant Foundation). Johannisbeere ist sehr sauer - die Mango ist die Gegenkraft, nicht Deko. ⚠ Wenn es zu sauer wird: Banane auf 110 g hoch, Johannisbeere auf 45 g runter, und den Wert hier eintragen. Bewusst flüssiger angesetzt als Nr. 16 (46 % gießbar statt 30 %), weil Nr. 16 genau daran klemmte.",
+      "ใหม่ 20.08. ยังไม่เคยปั่น · ลูกเกดดำมีอยู่ในสต๊อกกว่า 1 กิโล แต่ไม่ได้อยู่ในสูตรไหนเลย · การจับคู่ ลูกเกดดำ + มะม่วง + สะระแหน่ ไม่ใช่ความคิดของผมเอง มีที่มาสองแหล่ง (Little Sugar Snaps, Blackcurrant Foundation) · ลูกเกดดำเปรี้ยวมาก มะม่วงคือแรงถ่วงดุล ไม่ใช่ของประดับ · ถ้าเปรี้ยวเกินไป: เพิ่มกล้วยเป็น 110 กรัม ลดลูกเกดดำเหลือ 45 กรัม แล้วจดค่าที่ได้ไว้ตรงนี้ · ตั้งใจให้เหลวกว่าเบอร์ 16 (เทได้ 46 % แทนที่จะเป็น 30 %) เพราะเบอร์ 16 ติดขัดตรงนี้พอดี",
+      "NEW 20.08., never blended. Blackcurrant is very tart - the mango is the counterweight. Deliberately wetter than No. 16."]},
+
+{n:"26", stufe:"A", de:"Erdbeere-Banane", th:"สตรอว์เบอร์รี่-กล้วย", en:"Strawberry-Banana",
+ alg:"🥛",
+ zut:[
+   ["MM",94.1,"Mandelmilch fertig (Großhandel) — FLASCHE SCHÜTTELN","นมอัลมอนด์ — ถ้าใช้สำเร็จรูป: เขย่าขวดก่อน","Almond milk - if bottled: SHAKE THE BOTTLE"],
+   ["JO", 150,"Joghurt natur (die Cremigkeit)","โยเกิร์ตรสธรรมชาติ (ความครีมมี่)","Plain yoghurt (the creaminess)"],
+   ["BA",  58,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen","เกลือ — ต้องชั่ง ไม่กะ","Salt - weighed, not guessed"],
+   ["ER",125.9,"Erdbeere GEFROREN (Royal Project Nr. 80)","สตรอว์เบอร์รี่แช่แข็ง (โครงการหลวง เบอร์ 80)","Strawberry FROZEN"],
+   ["BA",  45,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den schlanken (dicke Masse, wenig Flüssigkeit)","โถปั่น: ใช้โถทรงสูงแคบ (เนื้อข้น ของเหลวน้อย)","BLENDER JAR: the slim one (thick mix, little liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Mandelmilch fertig","① ใส่ของเหลวก่อน: นมอัลมอนด์","① Liquids first: Almond milk - if bottled: SHAKE THE BOTTLE"],
+   ["② Frisches & Weiches: Joghurt natur, Banane","② ของสดและของนิ่ม: โยเกิร์ตรสธรรมชาติ · กล้วยแช่แข็ง","② Fresh & soft: Plain yoghurt, Banana"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt - weighed, not guessed"],
+   ["④ Gefrorenes ganz oben: Erdbeere, Banane","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รี่แช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Strawberry, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["DER WELTWEITE KLASSIKER, und das ist kein Bauchgefühl: Banane ist die beliebteste Smoothie-Zutat der USA, Erdbeere Platz 2 - und genau diese Kombination ist als \"Angel Food\" der meistverkaufte Smoothie bei Smoothie King, der größten US-Kette. Wenn EIN Smoothie auf die Karte muss, dann dieser. Der Limettensaft ist nicht für die Säure da, sondern damit die Erdbeere rot bleibt statt braun zu werden.",
+      "คลาสสิกระดับโลก และไม่ใช่แค่ความรู้สึก: กล้วยคือวัตถุดิบสมูทตี้ที่นิยมที่สุดในอเมริกา สตรอว์เบอร์รี่อันดับ 2 · และคู่นี้เองคือ Angel Food สมูทตี้ที่ขายดีที่สุดของ Smoothie King เชนใหญ่ที่สุดในอเมริกา · ถ้าเมนูจะมีสมูทตี้ได้แก้วเดียว ต้องแก้วนี้ · น้ำมะนาวใส่เพื่อให้สตรอว์เบอร์รี่คงสีแดงไม่คล้ำ ไม่ใช่เพื่อความเปรี้ยว",
+      "THE global classic. Banana is the #1 smoothie flavour in the US, strawberry #2, and this exact pairing is Smoothie King's best seller."]},
+
+{n:"27", stufe:"A", de:"Erdbeere-Mango-Banane", th:"สตรอว์เบอร์รี่-มะม่วง-กล้วย", en:"Strawberry-Mango-Banana",
+ alg:"🌱",
+ zut:[
+   ["KW",198.7,"Kokoswasser (frisch aus der Nuss)","น้ำมะพร้าวสด","Coconut water (fresh from the nut)"],
+   ["MG",  50,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["BA",  40,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["ER",104.3,"Erdbeere GEFROREN (Royal Project Nr. 80)","สตรอว์เบอร์รี่แช่แข็ง (โครงการหลวง เบอร์ 80)","Strawberry FROZEN"],
+   ["MG",  50,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"],
+   ["BA",  30,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser","① ใส่ของเหลวก่อน: น้ำมะพร้าวสด","① Liquids first: Coconut water"],
+   ["② Frisches & Weiches: Mango, Banane","② ของสดและของนิ่ม: มะม่วงแช่แข็ง · กล้วยแช่แข็ง","② Fresh & soft: Mango, Banana"],
+   ["④ Gefrorenes ganz oben: Erdbeere, Mango, Banane","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รี่แช่แข็ง · มะม่วงแช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Strawberry, Mango, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Die meistkopierte Erdbeer-Kombination im Netz - Erdbeere, Mango und Banane tauchen bei einem Dutzend unabhängiger Rezeptseiten in genau dieser Dreierform auf. Mango ist zusätzlich die Leitfrucht Thailands (Mango Tango, Bangkok) und die meistverkaufte Sorte bei Jamba Juice. Kein Joghurt, keine Milch: Kokoswasser hält ihn leicht und tropisch statt cremig - das ist der Unterschied zu Nr. 26.",
+      "สูตรสตรอว์เบอร์รี่ที่ถูกทำตามมากที่สุดในอินเทอร์เน็ต — สตรอว์เบอร์รี่ มะม่วง และกล้วย ปรากฏเป็นสามอย่างนี้พอดีในเว็บสูตรอาหารอิสระนับสิบแห่ง · มะม่วงยังเป็นผลไม้หลักของไทย (Mango Tango, กรุงเทพฯ) และเป็นรสที่ขายดีที่สุดของ Jamba Juice · ไม่ใส่โยเกิร์ต ไม่ใส่นม: น้ำมะพร้าวทำให้เบาและออกเขตร้อน แทนที่จะครีมมี่ — นี่คือความต่างจากเบอร์ 26",
+      "The most-replicated strawberry combination online. Coconut water keeps it light and tropical instead of creamy."]},
+
+{n:"28", stufe:"B", de:"Beauty Glow — Erdbeere-Ananas-Mango", th:"บิวตี้โกลว์ — สตรอว์เบอร์รี่-สับปะรด-มะม่วง", en:"Beauty Glow - Strawberry-Pineapple-Mango",
+ alg:"",
+ zut:[
+   ["KW",198.7,"Kokoswasser (frisch aus der Nuss)","น้ำมะพร้าวสด","Coconut water (fresh from the nut)"],
+   ["AN",  50,"Ananas (frisch)","สับปะรดแช่แข็ง (สด)","Pineapple (fresh)"],
+   ["MG",  30,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["ER",99.3,"Erdbeere GEFROREN (Royal Project Nr. 80)","สตรอว์เบอร์รี่แช่แข็ง (โครงการหลวง เบอร์ 80)","Strawberry FROZEN"],
+   ["AN",  50,"Ananas (gefroren)","สับปะรดแช่แข็ง (แช่แข็ง)","Pineapple (frozen)"],
+   ["MG",  35,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"],
+   ["KL",  10,"Marine-Kollagen (Halal)","คอลลาเจนทางทะเล (ฮาลาล)","Marine collagen (Halal)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser","① ใส่ของเหลวก่อน: น้ำมะพร้าวสด","① Liquids first: Coconut water"],
+   ["② Frisches & Weiches: Ananas, Mango","② ของสดและของนิ่ม: สับปะรดแช่แข็ง · มะม่วงแช่แข็ง","② Fresh & soft: Pineapple, Mango"],
+   ["④ Gefrorenes ganz oben: Erdbeere, Ananas, Mango","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รี่แช่แข็ง · สับปะรดแช่แข็ง · มะม่วงแช่แข็ง","④ Frozen last, on top: Strawberry, Pineapple, Mango"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["NUR wenn Booster bestellt: Marine-Kollagen zugeben, 5 Sek. kurz mixen","เฉพาะเมื่อสั่งบูสเตอร์: ใส่ คอลลาเจนทางทะเล ปั่นสั้น ๆ 5 วินาที","Only if booster ordered: add Marine collagen, blend 5 s"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["BEAUTY-SMOOTHIE der Karte. Die drei Früchte sind nicht nach Farbe gewählt, sondern weil jede in der Recherche einzeln als Hautzutat genannt wird: Ananas liefert Vitamin C, das der Körper zur Kollagenbildung braucht; Erdbeere enthält Ellagsäure, die den Kollagenabbau bremst; Mango bringt Carotinoide, die für den Glow genannt werden. Kokoswasser statt Milch, weil Hydration Teil der Wirkung ist. ⚠ WELLNESS-SPRACHE, KEIN HEILVERSPRECHEN - nach außen nur \"für Haut und Frische\", nie eine Wirkung behaupten. Kollagen IMMER zuerst in der Flüssigkeit lösen, sonst klumpt es.",
+      "สมูทตี้เพื่อความงามประจำเมนู · ผลไม้สามอย่างนี้ไม่ได้เลือกตามสี แต่เพราะแต่ละอย่างถูกระบุแยกกันว่าดีต่อผิว: สับปะรดให้วิตามินซี ซึ่งร่างกายต้องใช้สร้างคอลลาเจน · สตรอว์เบอร์รี่มีกรดเอลลาจิก ซึ่งชะลอการสลายคอลลาเจน · มะม่วงให้แคโรทีนอยด์ ที่ถูกพูดถึงเรื่องผิวเปล่งปลั่ง · ใช้น้ำมะพร้าวแทนนม เพราะการเติมน้ำให้ร่างกายเป็นส่วนหนึ่งของผล · ใช้ภาษาแบบเวลเนส ห้ามอ้างสรรพคุณรักษา — พูดกับลูกค้าได้แค่ว่า เพื่อผิวและความสดชื่น ห้ามอ้างผลลัพธ์ · ละลายคอลลาเจนในของเหลวก่อนเสมอ ไม่อย่างนั้นจะจับตัวเป็นก้อน",
+      "The BEAUTY smoothie. Pineapple for vitamin C, strawberry for ellagic acid, mango for carotenoids. Dissolve the collagen in the liquid first."]},
+
+{n:"29", stufe:"A", de:"Orange Sunrise", th:"ออเรนจ์ ซันไรส์", en:"Orange Sunrise",
+ alg:"🌱",
+ zut:[
+   ["OS", 214,"Orangensaft FRISCH GEPRESST (nicht bis zum letzten Tropfen auspressen)","น้ำส้มคั้นสดใหม่ (อย่าคั้นจนหมดเกลี้ยง จะขม)","Orange juice FRESHLY PRESSED (do not squeeze to the last drop)"],
+   ["OZ",   1,"Orangenzeste — NUR das Orange, kein Weiß (hier sitzt der Duft)","ผิวส้มขูด — เอาแต่ส่วนสีส้ม ไม่เอาสีขาว (กลิ่นอยู่ตรงนี้)","Orange zest - ONLY the orange part, no white (the aroma lives here)"],
+   ["IG",   3,"Ingwer frisch","ขิงสด","Fresh ginger"],
+   ["MG",  45,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["SA",0.25,"Salz — abwiegen, nicht schätzen","เกลือ — ต้องชั่ง ไม่กะ","Salt - weighed, not guessed"],
+   ["OG", 165,"Orangensaft GEFROREN (die Kälte kommt aus der Orange selbst)","น้ำส้มแช่แข็ง (ความเย็นมาจากส้มเอง)","Orange juice FROZEN (the cold comes from the orange itself)"],
+   ["MG",  45,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Orangensaft GEPRESST","① ใส่ของเหลวก่อน: น้ำส้มคั้นสดใหม่","① Liquids first: Orange juice FRESHLY PRESSED"],
+   ["② Frisches & Weiches: Orangenzeste, Ingwer, Mango","② ของสดและของนิ่ม: ผิวส้มขูด · ขิงสด · มะม่วงแช่แข็ง","② Fresh & soft: Orange zest - ONLY the orange part, no white, ginger, Mango"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt - weighed, not guessed"],
+   ["④ Gefrorenes ganz oben: Orangensaft, Mango","④ ของแช่แข็งไว้บนสุด: น้ำส้มแช่แข็ง · มะม่วงแช่แข็ง","④ Frozen last, on top: Orange juice, Mango"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["NEU 20.08., noch nie gemixt. DREI Antworten auf Peters Frage. (1) Mixbar: NICHT gefrorene Orangenspalten nehmen - die weißen Häute sind bitter und werden mitgemixt. Stattdessen eigenen Saft flach einfrieren und brechen: 100 % Frucht, kein Wasser, kein Eiszusatz, und die Kälte kommt aus der Orange selbst. Die Mango gibt den Körper, den Saft allein nie hat. (2) Was ballert: die ZESTE. Das Aroma der Orange sitzt zu über 90 % als Limonen im Schalenöl, nicht im Saft - deshalb riecht geschälte Orange stärker als gepresste. 1 g Abrieb macht mehr aus als 100 g mehr Saft. (3) Das Salz ist keine Erfindung: Thai-Saftstände geben ins Nam Som traditionell Sirup MIT einer Prise Salz. Wir behalten das Salz und lassen den Zucker weg. ⚠ Nicht bis zum letzten Tropfen pressen - der letzte Druck holt die Bitterstoffe aus der weißen Haut.",
+      "ใหม่ 20.08. ยังไม่เคยปั่น · สามคำตอบต่อคำถามของปีเตอร์ · (1) ปั่นได้หรือไม่: อย่าใช้ส้มแช่แข็งทั้งกลีบ เยื่อขาวจะขมและถูกปั่นไปด้วย ให้แช่แข็งน้ำส้มที่คั้นเองเป็นแผ่นบางแล้วหักใช้แทน: ผลไม้ 100 % ไม่มีน้ำ ไม่มีน้ำแข็งเพิ่ม และความเย็นมาจากส้มเอง · มะม่วงให้เนื้อสัมผัสที่น้ำส้มอย่างเดียวไม่มีวันมี · (2) อะไรคือตัวชูรส: ผิวส้มขูด กลิ่นส้มกว่า 90 % คือลิโมนีนในน้ำมันที่เปลือก ไม่ใช่ในน้ำ ส้มที่ปอกจึงหอมกว่าส้มที่คั้น · ผิวขูด 1 กรัม ได้ผลมากกว่าน้ำส้มเพิ่ม 100 กรัม · (3) เกลือไม่ใช่สิ่งที่เราคิดขึ้นเอง: ร้านน้ำส้มไทยใส่น้ำเชื่อมพร้อมเกลือหยิบมือในน้ำส้มมาแต่ไหนแต่ไร เราเก็บเกลือไว้และตัดน้ำตาลออก · อย่าคั้นจนหมดเกลี้ยง แรงบีบครั้งสุดท้ายจะดึงความขมจากเยื่อขาวออกมา",
+      "NEW 20.08., never blended. Do NOT use frozen orange segments - the white membranes are bitter. Freeze your own juice instead. The aroma of an orange is over 90 % limonene in the PEEL oil, not in the juice - 1 g of zest beats 100 g more juice. The salt is traditional in Thai nam som; we keep the salt and drop the sugar."]},
+
+{n:"24", stufe:"A", de:"Ananas-Ingwer-Limette (Health)", th:"สัปปะรด-ขิง-มะนาว", en:"Pineapple-Ginger-Lime",
+ alg:"",
+ zut:[
+   ["KW",203.2,"Kokoswasser (frisch aus der Nuss)","น้ำมะพร้าว (จากลูกสด)","Coconut water (fresh from the nut)"],
+   ["LS",  13,"Limettensaft (½ Limette)","น้ำมะนาว (ครึ่งลูก)","Lime juice (½ lime)"],
+   ["IG", 1.9,"Ingwer frisch, geschält und gerieben","ขิงสด ปอกเปลือกแล้วขูด","Fresh ginger, peeled and grated"],
+   ["AN",  76,"Ananas FRISCH (Aroma + Beweglichkeit)","สับปะรดสด (กลิ่นและช่วยให้ปั่นลง)","Pineapple FRESH (aroma and flow)"],
+   ["AN",179.2,"Ananas GEFROREN (die Kälte)","สับปะรดแช่แข็ง (ความเย็น)","Pineapple FROZEN (the cold)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำมะพร้าว · น้ำมะนาว","① Liquids first: Coconut water, Lime juice"],
+   ["② Frisches & Weiches: Ingwer , geschält und gerieben, Ananas","② ของสดและของนิ่ม: ขิงสด ปอกเปลือกแล้วขูด · สับปะรดสด","② Fresh & soft: ginger, peeled and grated, Pineapple"],
+   ["④ Gefrorenes ganz oben: Ananas","④ ของแช่แข็งไว้บนสุด: สับปะรดแช่แข็ง","④ Frozen last, on top: Pineapple"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Der einzige auf der Karte mit echter Schärfe — der KICK ist der Ingwer, und er wärmt im Hals nach. ⚠ 5 g ist der Startwert und die wichtigste Zahl dieses Rezepts: 3 g merkt kaum jemand, 8 g vertreiben Gäste. Beim Verkosten in 2-g-Schritten herantasten und den gefundenen Wert hier eintragen. Ingwer IMMER frisch reiben, nie vorher schneiden — das Aroma ist nach einer Stunde weg.",
+      "แก้วเดียวในเมนูที่เผ็ดร้อนจริง — จุดเด่นคือขิง ที่ยังอุ่นคอหลังกลืน · 5 กรัม คือค่าเริ่มต้นและเป็นตัวเลขที่สำคัญที่สุดของสูตรนี้: 3 กรัม แทบไม่มีใครรู้สึก 8 กรัม ไล่ลูกค้าหนี · ตอนชิมให้ค่อย ๆ ปรับทีละ 2 กรัม แล้วจดค่าที่ได้ไว้ตรงนี้ · ขูดขิงสดทุกครั้ง ห้ามหั่นทิ้งไว้ก่อน กลิ่นจะหายไปภายในหนึ่งชั่วโมง",
+      "The only one on the card with real heat — the KICK is ginger and it warms the throat afterwards. 5 g is the starting value and the most important number in this recipe. Always grate ginger fresh."]},
+
+{n:"30", stufe:"A", de:"Espresso-Banane-Kakao", th:"เอสเปรสโซ-กล้วย-โกโก้", en:"Espresso-Banana-Cacao",
+ alg:"🌱",
+ zut:[
+   ["HM", 170,"Hafermilch — FLASCHE SCHÜTTELN","นมข้าวโอ๊ต — เขย่าขวดก่อน","Oat milk - SHAKE THE BOTTLE"],
+   ["KF",  55,"Espresso — KALT, doppelter Bezug (nie heiß in den Mixer)","เอสเปรสโซ — เย็น 1 ช็อตคู่ (ห้ามใส่ตอนร้อน)","Espresso - COLD, double shot (never hot into the blender)"],
+   ["TO",  60,"Seidentofu (Cremigkeit, schmeckt man nicht)","เต้าหู้อ่อน (ความครีมมี่ ไม่มีรสเต้าหู้)","Silken tofu (creaminess, not tasted)"],
+   ["BA", 100,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["KK",   8,"Kakao ungesüßt","ผงโกโก้ไม่หวาน","Unsweetened cacao"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (nimmt dem Kaffee die Bitterkeit)","เกลือ — ต้องชั่ง ไม่กะ (ลดความขมของกาแฟ)","Salt - weighed, not guessed (takes the bitterness off the coffee)"],
+   ["BA",  80,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Hafermilch","① ใส่ของเหลวก่อน: นมข้าวโอ๊ต","① Liquids first: Oat milk - SHAKE THE BOTTLE"],
+   ["② Frisches & Weiches: Espresso, Seidentofu, Banane","② ของสดและของนิ่ม: เอสเปรสโซ · เต้าหู้อ่อน · กล้วยแช่แข็ง","② Fresh & soft: Espresso - COLD, double shot, Silken tofu, Banana"],
+   ["③ Trockenes darüber: Kakao ungesüßt, Salz","③ ใส่ของแห้งทับ: ผงโกโก้ไม่หวาน · เกลือ","③ Dry on top: Unsweetened cacao, Salt - weighed, not guessed"],
+   ["④ Gefrorenes ganz oben: Banane","④ ของแช่แข็งไว้บนสุด: กล้วยแช่แข็ง","④ Frozen last, on top: Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["NEU 21.08., noch nie gemixt. Der naheliegende Kaffee-Smoothie: Kaffee, Schokolade und Banane sind die Kombination, die weltweit auf jeder Frühstückskarte steht. Die ganze Süße kommt aus der gefrorenen Banane — deshalb muss sie reif sein, eine grüne Banane macht diesen Becher bitter. Das Salz ist kein Zierrat: es dämpft die Bitterkeit des Kaffees hörbar, das ist derselbe Trick, den Barista mit einer Prise im Filterkaffee anwenden. ⚠ KOFFEIN: gehört auf die Karte, nicht für Kinder, Hinweis für Schwangere. ⚠ Espresso morgens für den ganzen Tag vorbereiten und kalt stellen — siehe Vorstufen-Karte KF.",
+      "ใหม่ 21.08. ยังไม่เคยปั่น · กาแฟ ช็อกโกแลต และกล้วย คือส่วนผสมที่อยู่ในเมนูเช้าทั่วโลก · ความหวานทั้งหมดมาจากกล้วยแช่แข็ง กล้วยต้องสุก ถ้าดิบแก้วนี้จะขม · เกลือไม่ใช่ของประดับ มันลดความขมของกาแฟได้จริง · คาเฟอีน: ต้องระบุบนเมนู ไม่เหมาะกับเด็ก มีคำเตือนสำหรับหญิงตั้งครรภ์ · ชงเอสเปรสโซตอนเช้าสำหรับทั้งวันแล้วแช่เย็น ดูการ์ด KF",
+      "NEW 21.08., never blended. Coffee, chocolate and banana is the combination on breakfast menus worldwide. All the sweetness comes from the frozen banana - it must be ripe. The salt dampens the coffee's bitterness, the same trick baristas use with a pinch in filter coffee. CAFFEINE: must be on the menu card, not for children."]},
+
+{n:"31", stufe:"A", de:"Avocado-Espresso (Cà phê bơ)", th:"อะโวคาโด-เอสเปรสโซ", en:"Avocado-Espresso",
+ alg:"🌱",
+ zut:[
+   ["HM", 173,"Hafermilch — FLASCHE SCHÜTTELN","นมข้าวโอ๊ต — เขย่าขวดก่อน","Oat milk - SHAKE THE BOTTLE"],
+   ["KF",  55,"Espresso — KALT, doppelter Bezug","เอสเปรสโซ — เย็น 1 ช็อตคู่","Espresso - COLD, double shot"],
+   ["AV",  95,"Avocado FRISCH, reif (das Fett und die Beweglichkeit)","อะโวคาโดสด สุก (ไขมันและช่วยให้ปั่นลง)","Avocado FRESH, ripe (the fat and the flow)"],
+   ["BA",  80,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen","เกลือ — ต้องชั่ง ไม่กะ","Salt - weighed, not guessed"],
+   ["BA",  70,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Hafermilch","① ใส่ของเหลวก่อน: นมข้าวโอ๊ต","① Liquids first: Oat milk - SHAKE THE BOTTLE"],
+   ["② Frisches & Weiches: Espresso, Avocado , reif, Banane","② ของสดและของนิ่ม: เอสเปรสโซ · อะโวคาโดสด สุก · กล้วยแช่แข็ง","② Fresh & soft: Espresso - COLD, double shot, Avocado , ripe, Banana"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt - weighed, not guessed"],
+   ["④ Gefrorenes ganz oben: Banane","④ ของแช่แข็งไว้บนสุด: กล้วยแช่แข็ง","④ Frozen last, on top: Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["NEU 21.08., noch nie gemixt. Kein Experiment, sondern ein Klassiker der Region: Avocado mit Kaffee wird in Vietnam als cà phê bơ und in Indonesien als es alpukat kopi seit Jahrzehnten getrunken — dort mit gezuckerter Kondensmilch. Wir lassen den Zucker weg und holen die Süße aus der gefrorenen Banane. Das ist der Becher, der uns von jedem anderen Stand in Pattaya unterscheidet, und Avocado steht mit Nr. 11 ohnehin schon im Einkauf. ⚠ Avocado MUSS reif sein — eine harte Avocado schmeckt nach nichts und macht den Becher grasig. Daumendruck am Stielansatz: gibt leicht nach = reif. ⚠ KOFFEIN auf die Karte.",
+      "ใหม่ 21.08. ยังไม่เคยปั่น · ไม่ใช่การทดลอง แต่เป็นของคลาสสิกในภูมิภาค เวียดนามเรียก cà phê bơ อินโดนีเซียเรียก es alpukat kopi ดื่มกันมาหลายสิบปี ที่นั่นใส่นมข้นหวาน เราตัดน้ำตาลออกและเอาความหวานจากกล้วยแช่แข็งแทน · อะโวคาโดต้องสุก ถ้าแข็งจะไม่มีรสและเหม็นเขียว กดที่ขั้วเบา ๆ ถ้านิ่มคือสุก · อะโวคาโดมีอยู่ในรายการสั่งซื้ออยู่แล้วจากสูตรเบอร์ 11 · ต้องระบุคาเฟอีนบนเมนู",
+      "NEW 21.08., never blended. Not an experiment but a regional classic: avocado with coffee is drunk in Vietnam as ca phe bo and in Indonesia as es alpukat kopi, there with sweetened condensed milk. We drop the sugar and take the sweetness from the frozen banana. The avocado MUST be ripe."]},
+
+{n:"32", stufe:"A", de:"Passionsfrucht grün-Mango-Kokos", th:"เสาวรสเขียว-มะม่วง-กะทิ", en:"Green Passion-Mango-Coconut",
+ alg:"",
+ zut:[
+   ["KO", 173,"Kokosmilch (der Aromaträger — Fett bindet das Passionsfrucht-Aroma)","กะทิ (ตัวพากลิ่น — ไขมันจับกลิ่นเสาวรส)","Coconut milk (the aroma carrier)"],
+   ["PG",  70,"Passionsfrucht GRÜN, mit Kernen — NICHT absieben","เสาวรสสีเขียว พร้อมเมล็ด — ห้ามกรอง","Passion fruit GREEN, with seeds — do NOT strain"],
+   ["MG", 115,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (dämpft die Säure)","เกลือ — ต้องชั่ง ไม่กะ (ลดความเปรี้ยว)","Salt — weighed, not guessed"],
+   ["MG", 115,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch","① ใส่ของเหลวก่อน: กะทิ","① Liquids first: Coconut milk"],
+   ["② Frisches & Weiches: Passionsfrucht GRÜN, mit Kernen, Mango","② ของสดและของนิ่ม: เสาวรสสีเขียว พร้อมเมล็ด · มะม่วงแช่แข็ง","② Fresh & soft: Passion fruit GREEN, with seeds, Mango"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Mango","④ ของแช่แข็งไว้บนสุด: มะม่วงแช่แข็ง","④ Frozen last, on top: Mango"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["DER KICK IST DIE GRÜNE PASSIONSFRUCHT — und sie ist das Gegenteil der Erdbeere, an der wir uns heute die Zähne ausgebissen haben: sie bringt das Aroma MIT der Säure, nicht ohne. ⚠ Peters Urteil vom 23.08. („mehr Säure, aber auch viel mehr Aroma\") widerspricht der Katalognotiz vom 14.08., die die ROTE als die aromatischere führte — beide nebeneinander gegenprüfen, bevor über den Preis entschieden wird. RECHNUNG: grün kostet 271 ฿ je kg Fruchtmark gegen 158 bei rot, also 72 % mehr; das gleicht sich aus, sobald 58 % der Menge für dasselbe Aroma reichen. KERNE BLEIBEN DRIN — das Knacken ist das Erkennungsmerkmal, und die Kerne tragen den größten Teil der Ballaststoffe: rohe Passionsfruchtkerne liegen bei 64,8 g je 100 g, Kerne und Mark zusammen bei 53,5 g. Wer absiebt, siebt genau das weg. KOKOSMILCH IST KEIN FÜLLER, sondern der Aromaträger: Fett bindet die fettlöslichen Aromastoffe und hält sie länger im Mund — genau das, was die fettarme Hafermilch bei Nr. 21 nicht konnte. ⚠ NEU 23.08., noch nie gemixt. Salz-Test durchführen: bei dieser Säure ist Salz der stärkste Hebel.",
+      "จุดเด่นคือเสาวรสสีเขียว และมันตรงข้ามกับสตรอว์เบอร์รี่ที่เรามีปัญหาวันนี้: มันให้กลิ่นรสมาพร้อมความเปรี้ยว ไม่ใช่เปรี้ยวเพียงอย่างเดียว · คำตัดสินของปีเตอร์ 23.08. (“เปรี้ยวกว่า แต่ก็หอมกว่ามาก”) ขัดกับบันทึกในคู่มือเมื่อ 14.08. ที่ระบุว่าพันธุ์สีม่วงหอมกว่า — ต้องชิมเทียบกันก่อนตัดสินเรื่องราคา · ตัวเลข: สีเขียวราคา 271 บาทต่อกิโลเนื้อ ส่วนสีม่วง 158 บาท แพงกว่า 72 % จะคุ้มกันถ้าใช้เพียง 58 % ของปริมาณก็ได้กลิ่นเท่าเดิม · ห้ามกรองเมล็ดออก — เสียงกรุบคือเอกลักษณ์ และเมล็ดคือส่วนที่มีใยอาหารมากที่สุด: เมล็ดดิบ 64,8 กรัม ต่อ 100 กรัม เมล็ดรวมเนื้อ 53,5 กรัม · ใครกรอง ก็กรองสิ่งนี้ทิ้ง · กะทิไม่ใช่ตัวเติม แต่เป็นตัวพากลิ่น: ไขมันจับกลิ่นที่ละลายในไขมันและเก็บไว้ในปากนานกว่า — สิ่งที่นมข้าวโอ๊ตไขมันต่ำทำไม่ได้ในเบอร์ 21 · ใหม่ 23.08. ยังไม่เคยปั่น · ให้ทำการทดสอบเกลือ: ที่ความเปรี้ยวระดับนี้ เกลือคือตัวช่วยที่แรงที่สุด",
+      "THE KICK IS THE GREEN PASSION FRUIT — the opposite of the strawberry problem: it brings the aroma WITH the acid, not without it. Seeds stay in: raw passion fruit seeds carry 64.8 g dietary fibre per 100 g, seeds and pulp together 53.5 g. Straining removes exactly that. Coconut milk is not a filler but the aroma carrier — fat binds the fat-soluble aromatics. NEW 23.08., never blended."]},
+
+{n:"33", stufe:"A", de:"Mango-Ananas-Mandelmilch", th:"มะม่วง-สับปะรด-นมอัลมอนด์", en:"Mango-Pineapple-Almond",
+ alg:"",
+ zut:[
+   ["MM", 180,"Mandelmilch — Karton pruefen: steht SOJAPROTEIN drauf, siehe Hinweis","นมอัลมอนด์ — ตรวจกล่อง: ถ้ามีโปรตีนถั่วเหลือง ดูคำเตือน","Almond milk — check the carton for added soy protein"],
+   ["MG",  85,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["AN",57.7,"Ananas (frisch)","สับปะรดแช่แข็ง (สด)","Pineapple (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schaetzen","เกลือ — ต้องชั่ง ไม่กะ","Salt — weighed, not guessed"],
+   ["MG",  90,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"],
+   ["AN",  60,"Ananas (gefroren)","สับปะรดแช่แข็ง (แช่แข็ง)","Pineapple (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Mandelmilch","① ใส่ของเหลวก่อน: นมอัลมอนด์","① Liquids first: Almond milk"],
+   ["② Frisches & Weiches: Mango, Ananas","② ของสดและของนิ่ม: มะม่วงแช่แข็ง · สับปะรดแช่แข็ง","② Fresh & soft: Mango, Pineapple"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Mango, Ananas","④ ของแช่แข็งไว้บนสุด: มะม่วงแช่แข็ง · สับปะรดแช่แข็ง","④ Frozen last, on top: Mango, Pineapple"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["MANGO FUEHRT, ANANAS GIBT DEN KICK — 175 g gegen 117,7 g, also rund 1,5 : 1. Andersherum kippt der Becher in die Saeure, und die duenne Mandelmilch faengt das nicht auf. WARUM 180 g FLUESSIG: alle Basis-Rezepte liegen bei 35-48 % Fluessigkeit; Nr. 16 (Ananas-Passionsfrucht-Kokos, Peters bester mit 9 Punkten) liegt bei 38 % — genau darauf ist dieser hier gesetzt. ⚠ KARTON PRUEFEN: unsere Mandelmilch ist V-Soy, also von einem Soja-Hersteller. Steht Sojaprotein in der Zutatenliste, kann die Ananas-Saeure es ausflocken — dieselbe Regel wie bei Nr. 20 und Nr. 21. Reine Mandelmilch hat zu wenig Protein dafuer und ist unproblematisch. ⚠ PROTEIN-ZUSATZ NICHT ZU DIESEM BECHER: Ananas enthaelt Bromelain, und Einfrieren zerstoert das Enzym nicht (nur Hitze tut das). Bromelain spaltet Protein in bittere Bruchstuecke. Wer Protein bestellt, bekommt es besser in Nr. 17. ⚠ SCHWACHSTELLE: Mandelmilch ist fettarm, und die Mango-Aromastoffe sind fettloeslich — dasselbe Nadeloehr, an dem Nr. 21 mit Hafermilch gescheitert ist. Wenn der Becher flach schmeckt, liegt es daran, nicht an der Menge. Gegenprobe: dieselbe Rezeptur mit Kokosmilch statt Mandelmilch nebeneinander verkosten. ⚠ NEU 24.08.2026, noch nie gemixt. Erst mit dem Verkostungsbogen bewerten, dann auf die Karte.",
+      "มะม่วงเป็นตัวนำ สับปะรดเป็นตัวชูรส — 175 กรัม ต่อ 117,7 กรัม ประมาณ 1,5 : 1 · ถ้าสลับกัน แก้วจะเปรี้ยวเกินไป และนมอัลมอนด์ที่บางเกินจะรับไม่ไหว · ทำไมของเหลว 180 กรัม: สูตรพื้นฐานทุกสูตรอยู่ที่ 35-48 % ของเหลว ส่วนเบอร์ 16 (สับปะรด-เสาวรส-กะทิ สูตรที่ปีเตอร์ให้คะแนนสูงสุด 9 คะแนน) อยู่ที่ 38 % — สูตรนี้ตั้งตามนั้น · ตรวจกล่องนม: นมอัลมอนด์ของเราคือ V-Soy ซึ่งเป็นผู้ผลิตถั่วเหลือง ถ้าในส่วนผสมมีโปรตีนถั่วเหลือง ความเปรี้ยวของสับปะรดอาจทำให้แตกตัว — กฎเดียวกับเบอร์ 20 และ 21 · นมอัลมอนด์แท้มีโปรตีนน้อยเกินกว่าจะเกิดปัญหา · ห้ามเติมโปรตีนในแก้วนี้: สับปะรดมีเอนไซม์โบรมีเลน และการแช่แข็งไม่ทำลายเอนไซม์ (มีแต่ความร้อนที่ทำลายได้) โบรมีเลนย่อยโปรตีนจนเกิดรสขม · ถ้าลูกค้าสั่งโปรตีน ให้แนะนำเบอร์ 17 แทน · จุดอ่อน: นมอัลมอนด์ไขมันต่ำ แต่กลิ่นมะม่วงละลายในไขมัน — คอขวดเดียวกับที่ทำให้เบอร์ 21 ที่ใช้นมข้าวโอ๊ตล้มเหลว · ถ้ารสจืด สาเหตุคือเรื่องนี้ ไม่ใช่ปริมาณ · ให้ชิมเทียบกับสูตรเดียวกันที่ใช้กะทิแทนนมอัลมอนด์ · ใหม่ 24.08.2026 ยังไม่เคยปั่น · ต้องให้คะแนนด้วยแบบฟอร์มชิมก่อน แล้วค่อยขึ้นเมนู",
+      "MANGO LEADS, PINEAPPLE GIVES THE KICK — 175 g against 117.7 g, about 1.5 : 1. Reversed, the cup tips into acid and thin almond milk cannot carry it. Check the carton: our almond milk is V-Soy, a soy maker. If soy protein is listed, the pineapple acid can flocculate it — same rule as Nr. 20 and 21. No protein add-on in this cup: pineapple carries bromelain, freezing does not destroy it, and it splits protein into bitter fragments. Weak spot: almond milk is low in fat and mango aromatics are fat-soluble — the same bottleneck that sank Nr. 21 with oat milk. Compare side by side against the same recipe with coconut milk. NEW 24.08.2026, never blended."]},
+
+{n:"34", stufe:"A", de:"Erdbeere-Banane-Milch", th:"สตรอว์เบอร์รี-กล้วย-นมวัว", en:"Strawberry-Banana-Milk",
+ alg:"",
+ zut:[
+   ["KM", 200,"Kuhmilch EISKALT — das Fett trägt das Erdbeeraroma","นมวัว เย็นจัด — ไขมันคือตัวพากลิ่นสตรอว์เบอร์รี","Cow milk ICE-COLD — the fat carries the strawberry aroma"],
+   ["BA",52.7,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (der stärkste Hebel gegen Säure)","เกลือ — ต้องชั่ง ไม่กะ (ตัวช่วยที่แรงที่สุดในการลดความเปรี้ยว)","Salt — weighed, not guessed (the strongest lever against acid)"],
+   ["ER", 180,"Erdbeere GEFROREN — direkt aus dem Beutel, NICHT auftauen","สตรอว์เบอร์รีแช่แข็ง — เทจากถุงโดยตรง ห้ามละลาย","Strawberry FROZEN — straight from the bag, do NOT thaw"],
+   ["BA",  40,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den schlanken (dicke Masse, wenig Flüssigkeit)","โถปั่น: ใช้โถทรงสูงแคบ (เนื้อข้น ของเหลวน้อย)","BLENDER JAR: the slim one (thick mix, little liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kuhmilch EISKALT","① ใส่ของเหลวก่อน: นมวัว เย็นจัด","① Liquids first: Cow milk ICE-COLD"],
+   ["② Frisches & Weiches: Banane","② ของสดและของนิ่ม: กล้วยแช่แข็ง","② Fresh & soft: Banana"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Erdbeere, Banane","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รีแช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Strawberry, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["DAS IST PETERS EIGENES HAUSREZEPT, nur ohne den Zucker. Er hat am 22.08. selbst gesagt, dass seine Fassung — Milch, Erdbeeren, Zucker — besser war als unsere Nr. 21. Er hatte recht, und der Grund ist Chemie: das Milchfett bindet die fettlöslichen Erdbeer-Aromastoffe, Zucker maskiert die Säure UND trägt Aroma. Nr. 21 hatte beides nicht — fettarme Hafermilch und obendrein zugesetzte Limette. Zwei Vorteile weniger, ein Nachteil mehr. DER ZUCKER FEHLT NICHT: er ist als Zutat verboten, steht aber am Tresen als kostenlose Zugabe. Im Becher übernimmt die gefrorene Banane seine Aufgabe. KEINE LIMETTE, KEINE ZITRONE. Bei Beeren nie — das war der zweite Fehler bei Nr. 21. NICHT VEGAN. Die pflanzliche Antwort auf denselben Becher ist Nr. 35 mit Kokosmilch. ⚠ NEU 24.08.2026, noch nie gemixt. Erst mit dem Verkostungsbogen bewerten.",
+      "นี่คือสูตรที่ปีเตอร์ทำเองที่บ้าน เพียงแต่ไม่ใส่น้ำตาล · เมื่อ 22.08. เขาบอกเองว่าสูตรของเขา — นม สตรอว์เบอร์รี น้ำตาล — อร่อยกว่าเบอร์ 21 ของเรา · เขาพูดถูก และเหตุผลคือเคมี: ไขมันนมจับกลิ่นสตรอว์เบอร์รีที่ละลายในไขมัน ส่วนน้ำตาลกลบความเปรี้ยวและพากลิ่นไปด้วย · เบอร์ 21 ไม่มีทั้งสองอย่าง — ใช้นมข้าวโอ๊ตไขมันต่ำ แถมยังเติมมะนาวเข้าไปอีก · ได้เปรียบน้อยลงสองข้อ เสียเปรียบเพิ่มหนึ่งข้อ · น้ำตาลไม่ได้หายไป: ห้ามใส่เป็นส่วนผสม แต่มีให้ฟรีที่เคาน์เตอร์ · ในแก้วนี้กล้วยแช่แข็งทำหน้าที่แทน · ห้ามใส่มะนาวหรือเลมอน · กับผลไม้ตระกูลเบอร์รีห้ามเด็ดขาด — นั่นคือความผิดพลาดข้อที่สองของเบอร์ 21 · ไม่ใช่วีแกน · สูตรจากพืชล้วนที่ให้ผลแบบเดียวกันคือเบอร์ 35 ที่ใช้กะทิ · ใหม่ 24.08.2026 ยังไม่เคยปั่น · ต้องให้คะแนนด้วยแบบฟอร์มชิมก่อน",
+      "THIS IS PETER'S OWN HOME RECIPE, only without the sugar. On 22.08. he said his version — milk, strawberries, sugar — beat our Nr. 21, and he was right: milk fat binds the fat-soluble strawberry aromatics, sugar masks acid AND carries aroma. Nr. 21 had neither, plus added lime. The sugar is not missing — it is banned as an ingredient but free at the counter; here frozen banana does its job. NO lime, no lemon — never with berries. NOT vegan; Nr. 35 is the plant version. NEW 24.08.2026, never blended."]},
+
+{n:"35", stufe:"A", de:"Erdbeere-Kokos", th:"สตรอว์เบอร์รี-กะทิ", en:"Strawberry-Coconut",
+ alg:"",
+ zut:[
+   ["KO", 140,"Kokosmilch — der Fettträger, ersetzt hier das Milchfett","กะทิ — ตัวพาไขมัน ใช้แทนไขมันนมวัว","Coconut milk — the fat carrier, replacing milk fat here"],
+   ["MM", 120,"Mandelmilch EISKALT — macht es gießbar, ohne zu beschweren","นมอัลมอนด์ เย็นจัด — ทำให้เทได้โดยไม่หนักเกินไป","Almond milk ICE-COLD — makes it pourable without weighing it down"],
+   ["BA",27.7,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (der stärkste Hebel gegen Säure)","เกลือ — ต้องชั่ง ไม่กะ (ตัวช่วยที่แรงที่สุดในการลดความเปรี้ยว)","Salt — weighed, not guessed (the strongest lever against acid)"],
+   ["ER", 160,"Erdbeere GEFROREN — direkt aus dem Beutel, NICHT auftauen","สตรอว์เบอร์รีแช่แข็ง — เทจากถุงโดยตรง ห้ามละลาย","Strawberry FROZEN — straight from the bag, do NOT thaw"],
+   ["BA",  25,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch, Mandelmilch EISKALT","① ใส่ของเหลวก่อน: กะทิ · นมอัลมอนด์ เย็นจัด","① Liquids first: Coconut milk, Almond milk ICE-COLD"],
+   ["② Frisches & Weiches: Banane","② ของสดและของนิ่ม: กล้วยแช่แข็ง","② Fresh & soft: Banana"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Erdbeere, Banane","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รีแช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Strawberry, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["DIE VEGANE ANTWORT AUF NR. 21. Dort ist die Erdbeere an fettarmer Hafermilch gescheitert — Lexy: „zu sauer, ich schmecke kaum Erdbeere heraus.\" Kokosmilch bringt genau das zurück, was fehlte: Fett. Es bindet die Aromastoffe und hält sie länger im Mund. WARUM ZWEI MILCHSORTEN: Kokosmilch allein wäre zu schwer und zu teuer, und sie baut im Mixer keinen Wirbel — für die 42-%-Regel zählt sie nur zu 0,6. Die Mandelmilch macht die Masse beweglich, ohne Fett zu verdünnen. KOKOS UND ERDBEERE ist in Thailand kein Experiment, sondern eine vertraute Kombination — das senkt die Hürde bei thailändischen Gästen, und Lexi ist unsere Kontrollinstanz dafür. KEINE LIMETTE. Wer hier Säure zugibt, wiederholt Nr. 21. ⚠ NEU 24.08.2026, noch nie gemixt. Direkt gegen Nr. 34 verkosten: gleiche Frucht, einmal Milchfett, einmal Kokosfett. Der Vergleich beantwortet die Fettfrage ein für alle Mal.",
+      "นี่คือคำตอบแบบวีแกนของเบอร์ 21 · ที่นั่นสตรอว์เบอร์รีพ่ายให้กับนมข้าวโอ๊ตไขมันต่ำ — เลกซี่บอกว่า “เปรี้ยวเกินไป แทบไม่ได้กลิ่นสตรอว์เบอร์รีเลย” · กะทินำสิ่งที่ขาดไปกลับมา นั่นคือไขมัน · มันจับกลิ่นและเก็บไว้ในปากได้นานกว่า · ทำไมต้องใช้นมสองชนิด: ใช้กะทิอย่างเดียวจะหนักและแพงเกินไป และมันไม่สร้างวังวนในโถปั่น — ตามกฎ 42 % กะทินับเพียง 0,6 เท่านั้น · นมอัลมอนด์ทำให้เนื้อเคลื่อนตัวได้โดยไม่เจือจางไขมัน · กะทิกับสตรอว์เบอร์รีไม่ใช่การทดลองในเมืองไทย แต่เป็นคู่ที่คุ้นเคย — ช่วยลดกำแพงสำหรับลูกค้าคนไทย และเลกซี่คือคนตรวจสอบเรื่องนี้ให้เรา · ห้ามใส่มะนาว · ใครเติมความเปรี้ยวตรงนี้ ก็คือทำซ้ำความผิดพลาดของเบอร์ 21 · ใหม่ 24.08.2026 ยังไม่เคยปั่น · ให้ชิมเทียบกับเบอร์ 34 โดยตรง: ผลไม้เดียวกัน ข้างหนึ่งไขมันนม อีกข้างไขมันกะทิ · การเทียบนี้จะตอบคำถามเรื่องไขมันได้เด็ดขาด",
+      "THE VEGAN ANSWER TO NR. 21, where strawberry failed on low-fat oat milk — Lexy: too sour, barely any strawberry. Coconut milk returns exactly what was missing: fat. Two milks because coconut alone is too heavy, too costly, and builds no vortex — it counts only 0.6 towards the 42 % rule; almond milk keeps the mass moving without diluting the fat. Coconut and strawberry is familiar in Thailand, which lowers the barrier for Thai guests. NO lime. NEW 24.08.2026, never blended — taste it side by side against Nr. 34 to settle the fat question."]},
+
+{n:"36", stufe:"A", de:"Erdbeere-Schoko-Mandel", th:"สตรอว์เบอร์รี-ช็อกโกแลต-อัลมอนด์", en:"Strawberry-Chocolate-Almond",
+ alg:"",
+ zut:[
+   ["MM", 200,"Mandelmilch EISKALT — die nussige Note, die beide Verkoster gelobt haben","นมอัลมอนด์ เย็นจัด — กลิ่นถั่วที่ผู้ชิมทั้งสองคนชม","Almond milk ICE-COLD — the nutty note both tasters praised"],
+   ["BA",52.7,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["KK",  10,"Kakao ungesüßt — er dämpft die Säure und macht die Beere runder","ผงโกโก้ไม่หวาน — ลดความเปรี้ยวและทำให้เบอร์รีกลมกล่อมขึ้น","Unsweetened cocoa — it damps the acid and rounds the berry"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (der stärkste Hebel gegen Säure)","เกลือ — ต้องชั่ง ไม่กะ (ตัวช่วยที่แรงที่สุดในการลดความเปรี้ยว)","Salt — weighed, not guessed (the strongest lever against acid)"],
+   ["ER", 170,"Erdbeere GEFROREN — direkt aus dem Beutel, NICHT auftauen","สตรอว์เบอร์รีแช่แข็ง — เทจากถุงโดยตรง ห้ามละลาย","Strawberry FROZEN — straight from the bag, do NOT thaw"],
+   ["BA",  40,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Mandelmilch EISKALT","① ใส่ของเหลวก่อน: นมอัลมอนด์ เย็นจัด","① Liquids first: Almond milk ICE-COLD"],
+   ["② Frisches & Weiches: Banane","② ของสดและของนิ่ม: กล้วยแช่แข็ง","② Fresh & soft: Banana"],
+   ["③ Trockenes darüber: Kakao ungesüßt, Salz","③ ใส่ของแห้งทับ: ผงโกโก้ไม่หวาน · เกลือ","③ Dry on top: Unsweetened cocoa, Salt"],
+   ["④ Gefrorenes ganz oben: Erdbeere, Banane","④ ของแช่แข็งไว้บนสุด: สตรอว์เบอร์รีแช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Strawberry, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["DAS IST PETERS EIGENER WUNSCH, wörtlich aus dem Verkostungsbogen vom 20.08.: „Etwas mehr Nuss oder Schoko könnte sehr gut passen.\" Hier ist beides drin. UND ES LÖST NEBENBEI DAS ERDBEERPROBLEM. Kakao bringt Bitterstoffe, und Bitter dämpft die Wahrnehmung von Säure — derselbe Effekt wie Salz, nur über einen anderen Weg. Genau die Säure war Lexys Einwand gegen Nr. 21. KAKAO ZUERST UND VOLLSTÄNDIG LÖSEN. Wer ihn zusammen mit der gefrorenen Frucht einwirft, bekommt Kakaonester, die auf der Zunge sandig sind — das schlägt sofort auf „Belag auf der Zunge\" und „pelzig\" im Bogen durch. VEGAN, ENTHÄLT MANDEL. Die Kennzeichnung fällt automatisch aus den Zutaten. ⚠ NEU 24.08.2026, noch nie gemixt. ⚠ OFFEN: ob 10 g Kakao reichen oder die Beere zudecken — das entscheidet der erste Ansatz, nicht die Rechnung.",
+      "นี่คือสิ่งที่ปีเตอร์ขอเอง คำต่อคำจากแบบฟอร์มชิมเมื่อ 20.08.: “ถ้าเพิ่มกลิ่นถั่วหรือช็อกโกแลตอีกนิด น่าจะเข้ากันมาก” · ในแก้วนี้มีทั้งสองอย่าง · และมันแก้ปัญหาสตรอว์เบอร์รีไปในตัว · โกโก้ให้ความขม และความขมลดการรับรู้ความเปรี้ยว — กลไกเดียวกับเกลือ เพียงแต่คนละเส้นทาง · ความเปรี้ยวคือสิ่งที่เลกซี่ติงในเบอร์ 21 พอดี · ต้องละลายโกโก้ก่อนและให้หมดจริง ๆ · ใครใส่พร้อมผลไม้แช่แข็งจะได้ก้อนโกโก้ที่สากลิ้น — และจะไปโผล่ทันทีในช่อง “ความรู้สึกเคลือบลิ้น” และ “ฝาดคอ” ของแบบฟอร์ม · วีแกน มีอัลมอนด์ · ฉลากคำนวณจากส่วนผสมโดยอัตโนมัติ · ใหม่ 24.08.2026 ยังไม่เคยปั่น · ยังไม่รู้: โกโก้ 10 กรัม พอดีหรือจะกลบเบอร์รี — ต้องตัดสินจากการปั่นครั้งแรก ไม่ใช่จากการคำนวณ",
+      "PETER'S OWN REQUEST, verbatim from the 20.08. sheet: more nut or chocolate would fit very well. Both are here — and it solves the strawberry problem on the way: cocoa brings bitterness, and bitterness damps the perception of acid, the same effect as salt by another route. Dissolve the cocoa FIRST and completely; thrown in with frozen fruit it leaves sandy nests that show up instantly under coating and furriness on the sheet. VEGAN, contains almond. NEW 24.08.2026, never blended. OPEN: whether 10 g cocoa is enough or buries the berry."]},
+
+{n:"37", stufe:"A", de:"Erdbeere-Mango-Joghurt", th:"สตรอว์เบอร์รี-มะม่วง-โยเกิร์ต", en:"Strawberry-Mango-Yoghurt",
+ alg:"",
+ zut:[
+   ["MM", 130,"Mandelmilch EISKALT — sie bringt den Wirbel, den der Joghurt nicht baut","นมอัลมอนด์ เย็นจัด — สร้างวังวนที่โยเกิร์ตทำไม่ได้","Almond milk ICE-COLD — it brings the vortex yoghurt cannot build"],
+   ["JO", 139,"Naturjoghurt ungesüßt — die Basis mit der besten gemessenen Textur","โยเกิร์ตรสธรรมชาติ — ฐานที่ให้เนื้อสัมผัสดีที่สุดเท่าที่วัดมา","Plain unsweetened yoghurt — the base with the best measured texture"],
+   ["MG",43.7,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (der stärkste Hebel gegen Säure)","เกลือ — ต้องชั่ง ไม่กะ (ตัวช่วยที่แรงที่สุดในการลดความเปรี้ยว)","Salt — weighed, not guessed (the strongest lever against acid)"],
+   ["MG",  40,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"],
+   ["ER", 120,"Erdbeere GEFROREN — direkt aus dem Beutel, NICHT auftauen","สตรอว์เบอร์รีแช่แข็ง — เทจากถุงโดยตรง ห้ามละลาย","Strawberry FROZEN — straight from the bag, do NOT thaw"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Mandelmilch EISKALT","① ใส่ของเหลวก่อน: นมอัลมอนด์ เย็นจัด","① Liquids first: Almond milk ICE-COLD"],
+   ["② Frisches & Weiches: Naturjoghurt ungesüßt, Mango","② ของสดและของนิ่ม: โยเกิร์ตรสธรรมชาติ · มะม่วงแช่แข็ง","② Fresh & soft: Plain unsweetened yoghurt, Mango"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Mango, Erdbeere","④ ของแช่แข็งไว้บนสุด: มะม่วงแช่แข็ง · สตรอว์เบอร์รีแช่แข็ง","④ Frozen last, on top: Mango, Strawberry"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["GEBAUT AUF DEM EINZIGEN GEMESSENEN SPITZENWERT DES PROJEKTS. Bei Nr. 20 gaben beide Verkoster der Glattheit 10 von 10 — der einzige Wert, bei dem sie sich auf der Höchstnote trafen. Die Basis dafür war Joghurt mit Mango. Hier kommt die Erdbeere in genau diese Basis. MANGO IST NICHT DEKORATION, SONDERN DER ZUCKERERSATZ. Sie deckt die Beerensäure zu, ohne dass ein Löffel Zucker in den Becher muss. GESTUFT MIXEN IST PFLICHT. Joghurt ist zäh und baut keinen Wirbel — bei Nr. 20 klebte die Masse außen, und Peter musste 80 ml nachgießen. Das hat den Fruchtgeschmack auf 4 von 10 gedrückt (Skalenpol 1 heißt wörtlich „wässrig\"). Deshalb: erst ein Drittel, dann der Rest. NICHT nachgießen. VEGETARISCH, ENTHÄLT MILCH UND MANDEL. ⚠ NEU 24.08.2026, noch nie gemixt. ⚠ Die gestufte Zugabe ist bisher eine Hypothese und wird hier zum ersten Mal geprüft — wenn sie scheitert, die zugegossene Menge notieren.",
+      "สร้างขึ้นบนค่าสูงสุดค่าเดียวที่วัดได้จริงในโครงการนี้ · ในเบอร์ 20 ผู้ชิมทั้งสองให้คะแนนความเนียน 10 เต็ม 10 — เป็นค่าเดียวที่ทั้งคู่ให้คะแนนสูงสุดตรงกัน · ฐานของมันคือโยเกิร์ตกับมะม่วง · แก้วนี้คือการเอาสตรอว์เบอร์รีใส่ลงไปในฐานเดียวกันนั้น · มะม่วงไม่ใช่ของประดับ แต่คือตัวแทนน้ำตาล · มันกลบความเปรี้ยวของเบอร์รีได้โดยไม่ต้องใส่น้ำตาลลงในแก้ว · ต้องปั่นแบบแบ่งใส่เท่านั้น · โยเกิร์ตหนืดและไม่สร้างวังวน — ในเบอร์ 20 เนื้อไปเกาะข้างโถ และปีเตอร์ต้องเติมน้ำ 80 มล. · ผลคือคะแนนรสผลไม้ตกเหลือ 4 เต็ม 10 (ปลายสเกลที่ 1 แปลว่า “จืดเหมือนน้ำ”) · ดังนั้น: ใส่หนึ่งในสามก่อน แล้วค่อยใส่ที่เหลือ · ห้ามเติมของเหลว · มังสวิรัติ มีนมและอัลมอนด์ · ใหม่ 24.08.2026 ยังไม่เคยปั่น · การแบ่งใส่ยังเป็นเพียงสมมติฐานและจะถูกทดสอบครั้งแรกที่นี่ — ถ้าไม่ได้ผล ให้จดปริมาณของเหลวที่เติมไว้",
+      "BUILT ON THE PROJECT'S ONLY MEASURED TOP SCORE: at Nr. 20 both tasters gave smoothness 10 of 10, the single value where they met at the maximum, and the base for it was yoghurt with mango. The strawberry now goes into exactly that base. Mango is not decoration but the sugar substitute. Staged blending is mandatory — yoghurt is thick and builds no vortex; at Nr. 20 the mass stuck to the wall and 80 ml had to be added, which pushed fruit flavour down to 4 of 10. One third first, then the rest, and do NOT pour in liquid. VEGETARIAN, contains milk and almond. NEW 24.08.2026, never blended — the staged method is tested here for the first time."]},
+
+{n:"38", stufe:"A", de:"Ananas-Kokos-Banane", th:"สับปะรด-กะทิ-กล้วย", en:"Pineapple-Coconut-Banana",
+ alg:"",
+ zut:[
+   ["KO", 150,"Kokosmilch — Fett und Tropenton","กะทิ — ไขมันและกลิ่นเขตร้อน","Coconut milk — fat and the tropical note"],
+   ["KW", 110,"Kokoswasser EISKALT — dünn, baut den Wirbel","น้ำมะพร้าว เย็นจัด — ใส สร้างวังวน","Coconut water ICE-COLD — thin, builds the vortex"],
+   ["AN",  80,"Ananas (frisch)","สับปะรดแช่แข็ง (สด)","Pineapple (fresh)"],
+   ["BA",27.7,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (der stärkste Hebel gegen Säure)","เกลือ — ต้องชั่ง ไม่กะ (ตัวช่วยที่แรงที่สุดในการลดความเปรี้ยว)","Salt — weighed, not guessed (the strongest lever against acid)"],
+   ["AN",  80,"Ananas (gefroren)","สับปะรดแช่แข็ง (แช่แข็ง)","Pineapple (frozen)"],
+   ["BA",  25,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch, Kokoswasser EISKALT","① ใส่ของเหลวก่อน: กะทิ · น้ำมะพร้าว เย็นจัด","① Liquids first: Coconut milk, Coconut water ICE-COLD"],
+   ["② Frisches & Weiches: Ananas, Banane","② ของสดและของนิ่ม: สับปะรดแช่แข็ง · กล้วยแช่แข็ง","② Fresh & soft: Pineapple, Banana"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Ananas, Banane","④ ของแช่แข็งไว้บนสุด: สับปะรดแช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Pineapple, Banana"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["DIESER BECHER REPARIERT DEN EINZIGEN FEHLER VON NR. 16. Dort haben beide das Kaufkreuz gesetzt — Peter 9, das beste Ergebnis mit beidseitiger Zustimmung — aber die Glattheit lag bei 4 und 5. Der Bogen nennt den Verdacht ausdrücklich: nicht die Passionsfruchtkerne, sondern die ANANASFASERN. Also fliegt die Passionsfrucht raus, die Ananas bleibt, und die Mixzeit verdoppelt sich. 60 SEKUNDEN SIND KEINE EMPFEHLUNG, SONDERN DIE ZUTAT. Wer nach 30 Sekunden abbricht, verkauft genau die 4 von 10, die Nr. 16 ausgebremst hat. PIÑA OHNE ALKOHOL — die Kombination kennt jeder Tourist in Pattaya, das spart die Erklärung am Tresen. Und sie räumt Bestand ab: 1.146 g Ananas liegen in der Truhe. KEINE LIMETTE. Ananas bringt genug Säure mit, deshalb steht das Salz im Rezept. VEGAN, KEIN ALLERGEN. ⚠ NEU 24.08.2026, noch nie gemixt. Beim Test ausdrücklich die Glattheit gegen Nr. 16 vergleichen.",
+      "แก้วนี้แก้ข้อผิดพลาดข้อเดียวของเบอร์ 16 · ที่นั่นทั้งสองคนกาช่องว่าจะซื้อ — ปีเตอร์ให้ 9 คะแนน เป็นผลลัพธ์ที่ดีที่สุดที่ทั้งคู่เห็นตรงกัน — แต่ความเนียนได้แค่ 4 กับ 5 · แบบฟอร์มระบุข้อสงสัยไว้ชัดเจน: ไม่ใช่เมล็ดเสาวรส แต่เป็นเส้นใยสับปะรด · ดังนั้นตัดเสาวรสออก เก็บสับปะรดไว้ และเพิ่มเวลาปั่นเป็นสองเท่า · 60 วินาทีไม่ใช่คำแนะนำ แต่คือส่วนผสมอย่างหนึ่ง · ใครหยุดที่ 30 วินาที ก็คือขายคะแนน 4 เต็ม 10 ที่ฉุดเบอร์ 16 เอาไว้นั่นเอง · ปีญ่าโคลาด้าแบบไม่มีแอลกอฮอล์ — นักท่องเที่ยวในพัทยารู้จักทุกคน ไม่ต้องอธิบายที่เคาน์เตอร์ · และช่วยระบายของในตู้แช่: มีสับปะรดอยู่ 1.146 กรัม · ห้ามใส่มะนาว · สับปะรดเปรี้ยวพออยู่แล้ว จึงต้องมีเกลือในสูตร · วีแกน ไม่มีสารก่อภูมิแพ้ · ใหม่ 24.08.2026 ยังไม่เคยปั่น · ตอนทดสอบให้เทียบความเนียนกับเบอร์ 16 โดยเฉพาะ",
+      "THIS CUP REPAIRS THE ONLY FAULT OF NR. 16, where both tasters ticked the buy box — Peter 9, the best mutually agreed result — but smoothness came in at 4 and 5. The sheet names the suspect explicitly: not the passion fruit seeds but the PINEAPPLE FIBRES. So the passion fruit goes, the pineapple stays, and the blending time doubles. 60 seconds is not advice, it is an ingredient. A piña without alcohol needs no explaining in Pattaya, and it clears stock: 1,146 g of pineapple are in the freezer. NO lime — pineapple brings enough acid, which is why salt is in the recipe. VEGAN, no allergen. NEW 24.08.2026, never blended."]},
+
+{n:"39", stufe:"A", de:"Mango-Kakao-Mandel", th:"มะม่วง-โกโก้-อัลมอนด์", en:"Mango-Cocoa-Almond",
+ alg:"",
+ zut:[
+   ["MM", 200,"Mandelmilch EISKALT — die nussige Note aus der Verkostung vom 20.08.","นมอัลมอนด์ เย็นจัด — กลิ่นถั่วจากการชิมเมื่อ 20.08.","Almond milk ICE-COLD — the nutty note from the 20.08. tasting"],
+   ["MG", 100,"Mango (frisch)","มะม่วงแช่แข็ง (สด)","Mango (fresh)"],
+   ["BA",32.7,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["KK",  10,"Kakao ungesüßt — vollständig lösen, sonst wird er sandig","ผงโกโก้ไม่หวาน — ต้องละลายให้หมด ไม่งั้นจะเป็นทราย","Unsweetened cocoa — dissolve fully or it turns sandy"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (der stärkste Hebel gegen Säure)","เกลือ — ต้องชั่ง ไม่กะ (ตัวช่วยที่แรงที่สุดในการลดความเปรี้ยว)","Salt — weighed, not guessed (the strongest lever against acid)"],
+   ["MG", 100,"Mango (gefroren)","มะม่วงแช่แข็ง (แช่แข็ง)","Mango (frozen)"],
+   ["BA",  30,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Mandelmilch EISKALT","① ใส่ของเหลวก่อน: นมอัลมอนด์ เย็นจัด","① Liquids first: Almond milk ICE-COLD"],
+   ["② Frisches & Weiches: Mango, Banane","② ของสดและของนิ่ม: มะม่วงแช่แข็ง · กล้วยแช่แข็ง","② Fresh & soft: Mango, Banana"],
+   ["③ Trockenes darüber: Kakao ungesüßt, Salz","③ ใส่ของแห้งทับ: ผงโกโก้ไม่หวาน · เกลือ","③ Dry on top: Unsweetened cocoa, Salt"],
+   ["④ Gefrorenes ganz oben: Mango, Banane","④ ของแช่แข็งไว้บนสุด: มะม่วงแช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Mango, Banana"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["PETERS WUNSCH, AUF SEIN EIGENES BESTBEWERTETES REZEPT ANGEWENDET. Im Bogen zu Nr. 20 steht unter „Was fehlt Ihnen?\" wörtlich: „Etwas mehr Nuss oder Schoko könnte sehr gut passen.\" Nr. 20 war Mango mit Joghurt und Mandelmilch — hier fällt der Joghurt weg und der Kakao kommt dazu. MANGO UND KAKAO IST UNGEWÖHNLICH, und das ist der Punkt: es gibt keinen zweiten Stand in Pattaya, der das anbietet. Ein Becher, den man nirgends sonst bekommt, verkauft sich anders als der fünfzehnte Mango-Smoothie der Straße. OHNE JOGHURT LÄUFT ER OHNE GESTUFTES MIXEN — Mandelmilch baut den Wirbel von allein, das ist der praktische Vorteil gegenüber Nr. 20 und Nr. 37. VEGAN, ENTHÄLT MANDEL. ⚠ NEU 24.08.2026, noch nie gemixt. ⚠ OFFEN: das Verhältnis Kakao zu Mango. 10 g sind der Startwert aus Nr. 17, nicht ein für diesen Becher gemessener Wert.",
+      "สิ่งที่ปีเตอร์ขอ นำมาใช้กับสูตรที่เขาให้คะแนนสูงสุดเอง · ในแบบฟอร์มของเบอร์ 20 ช่อง “ขาดอะไรไหม” เขียนไว้คำต่อคำว่า “ถ้าเพิ่มกลิ่นถั่วหรือช็อกโกแลตอีกนิด น่าจะเข้ากันมาก” · เบอร์ 20 คือมะม่วงกับโยเกิร์ตและนมอัลมอนด์ — แก้วนี้ตัดโยเกิร์ตออกและใส่โกโก้เข้าไปแทน · มะม่วงกับโกโก้เป็นคู่ที่ไม่ธรรมดา และนั่นคือประเด็น: ไม่มีร้านไหนในพัทยาขายแบบนี้ · แก้วที่หาที่อื่นไม่ได้ ย่อมขายได้ต่างจากสมูทตี้มะม่วงแก้วที่สิบห้าของถนนสายนั้น · เมื่อไม่มีโยเกิร์ต ก็ไม่ต้องแบ่งใส่ — นมอัลมอนด์สร้างวังวนได้เอง นี่คือข้อได้เปรียบในทางปฏิบัติเหนือเบอร์ 20 และเบอร์ 37 · วีแกน มีอัลมอนด์ · ใหม่ 24.08.2026 ยังไม่เคยปั่น · ยังไม่รู้: สัดส่วนโกโก้ต่อมะม่วง · 10 กรัม คือค่าตั้งต้นที่ยกมาจากเบอร์ 17 ไม่ใช่ค่าที่วัดมาสำหรับแก้วนี้",
+      "PETER'S REQUEST APPLIED TO HIS OWN TOP-SCORING RECIPE. Under what is missing on the Nr. 20 sheet he wrote: more nut or chocolate would fit very well. Nr. 20 was mango with yoghurt and almond milk; here the yoghurt goes and the cocoa arrives. Mango and cocoa is unusual, and that is the point — no other stand in Pattaya offers it, and a cup you cannot get elsewhere sells differently from the fifteenth mango smoothie on the street. Without yoghurt it needs no staged blending: almond milk builds the vortex by itself. VEGAN, contains almond. NEW 24.08.2026, never blended. OPEN: the cocoa-to-mango ratio; 10 g is carried over from Nr. 17, not measured for this cup."]},
+
+{n:"40", stufe:"A", de:"Drachenfrucht-Erdbeere-Kokos", th:"แก้วมังกร-สตรอว์เบอร์รี-กะทิ", en:"Dragon Fruit-Strawberry-Coconut",
+ alg:"",
+ zut:[
+   ["KO", 140,"Kokosmilch — Fett und das Weiß, gegen das das Pink steht","กะทิ — ไขมันและสีขาวที่ตัดกับสีชมพู","Coconut milk — fat, and the white the pink stands against"],
+   ["MM", 120,"Mandelmilch EISKALT — bringt den Wirbel","นมอัลมอนด์ เย็นจัด — สร้างวังวน","Almond milk ICE-COLD — brings the vortex"],
+   ["DR",  65,"Drachenfrucht rot (frisch)","แก้วมังกรแดงแช่แข็ง (สด)","Red dragon fruit (fresh)"],
+   ["SA", 0.3,"Salz — abwiegen, nicht schätzen (der stärkste Hebel gegen Säure)","เกลือ — ต้องชั่ง ไม่กะ (ตัวช่วยที่แรงที่สุดในการลดความเปรี้ยว)","Salt — weighed, not guessed (the strongest lever against acid)"],
+   ["DR",  65,"Drachenfrucht rot (gefroren)","แก้วมังกรแดงแช่แข็ง (แช่แข็ง)","Red dragon fruit (frozen)"],
+   ["ER",82.7,"Erdbeere GEFROREN — sie macht den Geschmack, nicht die Farbe","สตรอว์เบอร์รีแช่แข็ง — ให้รส ไม่ใช่ให้สี","Strawberry FROZEN — it makes the taste, not the colour"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch, Mandelmilch EISKALT","① ใส่ของเหลวก่อน: กะทิ · นมอัลมอนด์ เย็นจัด","① Liquids first: Coconut milk, Almond milk ICE-COLD"],
+   ["② Frisches & Weiches: Drachenfrucht rot","② ของสดและของนิ่ม: แก้วมังกรแดงแช่แข็ง","② Fresh & soft: Red dragon fruit"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Drachenfrucht rot, Erdbeere","④ ของแช่แข็งไว้บนสุด: แก้วมังกรแดงแช่แข็ง · สตรอว์เบอร์รีแช่แข็ง","④ Frozen last, on top: Red dragon fruit, Strawberry"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["DIE ARBEITSTEILUNG IST DER GANZE TRICK: die Drachenfrucht liefert die Farbe, die Erdbeere den Geschmack. Rote Drachenfrucht schmeckt fast nach nichts — deshalb ist sie bei Nr. 18 auch durchgefallen, Peter hat kein Kaufkreuz gesetzt. Als Farbgeber ohne eigene Meinung ist sie dagegen unschlagbar. AUSSEHEN IST EIN BEWERTETES KRITERIUM. Bei Nr. 20 gaben beide Verkoster dafür 10 von 10 — und auf einem Instagram-Foto vor dem Stand ist es das einzige Kriterium, das der Gast vorher sieht. KEINE LIMETTE. Bei Nr. 18 war Limette drin und der Becher fiel bei Peter durch; dieselbe Kombination ohne Säure und mit Kokosfett ist ein anderes Produkt. BESTAND BEACHTEN: nur 352 g Drachenfrucht in der Truhe, das reicht für knapp drei Becher. Für den Test genug, für die Karte muss nachgekauft werden. VEGAN, ENTHÄLT MANDEL. ⚠ NEU 24.08.2026, noch nie gemixt.",
+      "การแบ่งหน้าที่คือหัวใจทั้งหมด: แก้วมังกรให้สี สตรอว์เบอร์รีให้รส · แก้วมังกรแดงแทบไม่มีรสชาติของตัวเอง — นั่นคือเหตุผลที่เบอร์ 18 ไม่ผ่าน ปีเตอร์ไม่กาช่องว่าจะซื้อ · แต่ในฐานะตัวให้สีที่ไม่มีความเห็นเป็นของตัวเอง มันหาตัวจับยาก · หน้าตาเป็นเกณฑ์ที่ให้คะแนนจริง · ในเบอร์ 20 ผู้ชิมทั้งสองให้ 10 เต็ม 10 ในข้อนี้ — และในรูปอินสตาแกรมหน้าร้าน มันคือเกณฑ์เดียวที่ลูกค้าเห็นก่อนตัดสินใจ · ห้ามใส่มะนาว · เบอร์ 18 มีมะนาวและปีเตอร์ไม่ผ่าน · ส่วนผสมเดียวกันแต่ไม่มีความเปรี้ยวและมีไขมันกะทิ ถือเป็นสินค้าคนละตัว · ดูของในสต๊อกด้วย: มีแก้วมังกรเพียง 352 กรัม พอทำได้ไม่ถึงสามแก้ว · พอสำหรับทดสอบ แต่ถ้าจะขึ้นเมนูต้องสั่งเพิ่ม · วีแกน มีอัลมอนด์ · ใหม่ 24.08.2026 ยังไม่เคยปั่น",
+      "THE DIVISION OF LABOUR IS THE WHOLE TRICK: dragon fruit supplies the colour, strawberry the taste. Red dragon fruit tastes of almost nothing — which is why Nr. 18 failed and Peter ticked no buy box — but as a colourant with no opinion of its own it is unbeatable. Appearance is a scored criterion: at Nr. 20 both gave it 10 of 10, and on a photo outside the stand it is the only criterion the guest sees in advance. NO lime — Nr. 18 had lime and failed. STOCK: only 352 g of dragon fruit, enough for barely three cups. VEGAN, contains almond. NEW 24.08.2026, never blended."]},
+
+{n:"41", stufe:"A", de:"Leber-Kraft 🔒", th:"ตับ-พลัง 🔒", en:"Liver-Strength 🔒",
+ alg:"",
+ zut:[
+   ["KM", 200,"Vollmilch — Kalorien, Fett und Eiweiß statt Wasser (Nr. 13 nimmt Wasser)","นมวัวไขมันเต็ม — ให้แคลอรี ไขมัน และโปรตีน แทนน้ำเปล่า (เบอร์ 13 ใช้น้ำ)","Whole milk — calories, fat and protein instead of water (Nr. 13 uses water)"],
+   ["JO", 110,"Naturjoghurt ungesüßt — Eiweiß und die Cremigkeit","โยเกิร์ตรสธรรมชาติ ไม่หวาน — โปรตีนและความครีมมี่","Plain unsweetened yoghurt — protein and the creaminess"],
+   ["AV",  40,"Avocado — Fett ohne Zucker, und sie macht es samtig","อะโวคาโด — ไขมันที่ไม่มีน้ำตาล และทำให้เนื้อนุ่มลื่น","Avocado — fat without sugar, and it makes it velvety"],
+   ["IG",   2,"Ingwer — nur ein Hauch, wie gewünscht","ขิง — แค่แผ่วบาง ๆ ตามที่ต้องการ","Ginger — just a hint, as requested"],
+   ["HF",  40,"Kernige Haferflocken — mit der Milch als ERSTES anrühren, quellen in 5 Min. beim Rest","ข้าวโอ๊ตธรรมดา (แบบเต็มเมล็ด) — ใส่นมเป็นสิ่งแรก พองตัวใน 5 นาทีระหว่างเตรียมของอื่น","Rolled oats — start by combining with milk, they swell in 5 min while you prep the rest"],
+   ["HS",  25,"Hanfsamen geschält — die dichteste Kalorienquelle im Haus, mild-nussig","เมล็ดกัญชงกะเทาะเปลือก — แหล่งแคลอรีเข้มข้นที่สุดที่มีอยู่ รสถั่วอ่อน ๆ","Hulled hemp seeds — the densest calorie source in the house, mildly nutty"],
+   ["KK",   8,"Kakao ungesüßt — ZUERST lösen; er deckt den Brokkoli, bitter und dunkel","โกโก้ไม่หวาน — ละลายก่อนเสมอ · ความขมและสีเข้มกลบบรอกโคลี","Unsweetened cocoa — dissolve FIRST; bitter and dark, it covers the broccoli"],
+   ["ZI", 0.5,"Ceylon-Zimt — schmeckt süß, ohne Zucker zu sein","อบเชยซีลอน — ให้ความรู้สึกหวานโดยไม่มีน้ำตาล","Ceylon cinnamon — tastes sweet without being sugar"],
+   ["BK",  30,"Brokkoli gedämpft und gefroren — HALBIERT gegenüber Nr. 13, der Kakao deckt ihn","บรอกโคลีนึ่งแล้วแช่แข็ง — ลดลงครึ่งหนึ่งจากเบอร์ 13 เพราะโกโก้กลบได้","Broccoli steamed and frozen — HALVED against Nr. 13, the cocoa covers it"],
+   ["BM",  80,"Beeren gefroren — die Süße und die Kälte, wenig Zucker","เบอร์รีแช่แข็ง — ความหวานและความเย็น น้ำตาลน้อย","Berries frozen — the sweetness and the cold, little sugar"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Vollmilch","① ใส่ของเหลวก่อน: นมวัวไขมันเต็ม","① Liquids first: Whole milk"],
+   ["② Frisches & Weiches: Naturjoghurt ungesüßt, Avocado, Ingwer","② ของสดและของนิ่ม: โยเกิร์ตรสธรรมชาติ ไม่หวาน · อะโวคาโด · ขิง","② Fresh & soft: Plain unsweetened yoghurt, Avocado, Ginger"],
+   ["③ Trockenes darüber: Kernige Haferflocken, Hanfsamen geschält, Kakao ungesüßt, Ceylon-Zimt","③ ใส่ของแห้งทับ: ข้าวโอ๊ตธรรมดา · เมล็ดกัญชงกะเทาะเปลือก · โกโก้ไม่หวาน · อบเชยซีลอน","③ Dry on top: Rolled oats, Hulled hemp seeds, Unsweetened cocoa, Ceylon cinnamon"],
+   ["④ Gefrorenes ganz oben: Brokkoli gedämpft und, Beeren","④ ของแช่แข็งไว้บนสุด: บรอกโคลีนึ่งแล้วแช่แข็ง · เบอร์รีแช่แข็ง","④ Frozen last, on top: Broccoli steamed and, Berries"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["🔒 NICHT im Verkaufsmenü — Peters persönlicher Becher, die satt machende Fassung von Nr. 13. DER WIDERSPRUCH UND SEINE AUFLÖSUNG: Zunehmen heißt Kalorien, Diabetes heißt kein Zucker. Der Ausweg ist FETT — es hat mehr als doppelt so viele Kalorien je Gramm wie Zucker und bewegt den Blutzucker praktisch nicht. Deshalb tragen Hanfsamen, Avocado und Vollmilch diesen Becher, nicht Banane und nicht Sirup. RECHNUNG (Referenzwerte aus Nährwerttabellen, ⚠ nicht an unseren Zutaten gemessen): rund 620 kcal auf 535 g. Der Löwenanteil kommt aus 25 g Hanfsamen und 40 g Haferflocken. Zum Vergleich: Nr. 13 liegt bei etwa 200 kcal. WARUM KAKAO DEN BROKKOLI RETTET: Peters Zweifel war berechtigt — im grünen Becher schmeckt man ihn. Kakao ist bitter und dunkel; die Bitterkeit deckt den Kohlgeschmack, die Farbe deckt das Grün. Dieselbe Überlegung wie bei Nr. 36. Der Brokkoli sinkt trotzdem von 60 g auf 30 g. ⚠ KEIN SALZ. In jedem Verkaufsrezept ist Salz der stärkste Hebel gegen Säure — hier ist es gesperrt, weil bei Bauchwasser Natrium begrenzt wird. Nr. 13 hat auch keins. Nicht nachträglich zufügen, auch nicht \"nur eine Prise\". AUF ZWEI GLÄSER: 535 g auf einmal drücken bei Bauchwasser auf den Bauch. Zweimal ein halber Becher über den Tag bringt dieselben Kalorien, ohne Völlegefühl. KEINE BANANE, KEIN ZUCKER (Diabetes), KEIN Grapefruit/Pomelo (Eliquis) — unverändert aus Nr. 13. ANANAS GEHÖRT HIER NICHT HINEIN, obwohl Peter sie liebt: ihr Bromelain zerlegt genau das Eiweiß, das dieser Becher liefern soll, in bittere Bruchstücke — und das zweite Glas steht. Der Ananas-Becher ist Nr. 42, dort trägt Kokosfett statt Eiweiß die Kalorien. ⚠ NEU 24.08.2026, noch nie gemixt. Die Eiweißmenge und die Natriumgrenze entscheidet der Arzt, nicht dieses Rezept.",
+      "🔒 ไม่อยู่ในเมนูขาย — แก้วส่วนตัวของปีเตอร์ เป็นฉบับที่ทำให้อิ่มของเบอร์ 13 · ความขัดแย้งและทางออก: จะเพิ่มน้ำหนักต้องมีแคลอรี แต่เบาหวานห้ามน้ำตาล · ทางออกคือไขมัน — ให้แคลอรีต่อกรัมมากกว่าน้ำตาลสองเท่า และแทบไม่ขยับน้ำตาลในเลือด · ดังนั้นแก้วนี้จึงพึ่งเมล็ดกัญชง อะโวคาโด และนมไขมันเต็ม ไม่ใช่กล้วยและไม่ใช่น้ำเชื่อม · การคำนวณ (ค่าอ้างอิงจากตารางโภชนาการ ยังไม่ได้วัดจากวัตถุดิบของเราเอง): ประมาณ 620 กิโลแคลอรี ต่อ 535 กรัม · ส่วนใหญ่มาจากเมล็ดกัญชง 25 กรัม และข้าวโอ๊ต 40 กรัม · เทียบกับเบอร์ 13 ที่อยู่ราว 200 กิโลแคลอรี · ทำไมโกโก้ช่วยเรื่องบรอกโคลี: ข้อสงสัยของปีเตอร์มีเหตุผล — ในแก้วสีเขียวจะได้รสบรอกโคลีชัด · โกโก้ขมและสีเข้ม ความขมกลบรสผัก สีกลบความเขียว · แนวคิดเดียวกับเบอร์ 36 · และบรอกโคลียังลดจาก 60 กรัม เหลือ 30 กรัม อยู่ดี · ห้ามใส่เกลือ · ในสูตรขายทุกสูตร เกลือคือตัวช่วยที่แรงที่สุดในการลดความเปรี้ยว — แต่ที่นี่ห้าม เพราะภาวะน้ำในช่องท้องต้องจำกัดโซเดียม · เบอร์ 13 ก็ไม่มีเกลือ · ห้ามใส่เพิ่มทีหลัง แม้แต่ “หยิบมือเดียว” · ต้องแช่ข้าวโอ๊ตก่อน ไม่ใช่ทางเลือก · ถ้าใส่แบบแห้งลงในแก้วเย็น จะสากและย่อยยาก · แบ่งเป็นสองแก้ว: 535 กรัม รวดเดียวจะกดท้องเมื่อมีน้ำในช่องท้อง · ดื่มครึ่งแก้วสองครั้งต่อวันได้แคลอรีเท่ากันโดยไม่อึดอัด · ไม่ใส่กล้วย ไม่ใส่น้ำตาล (เบาหวาน) ไม่ใส่ส้มโอหรือเกรปฟรุต (ยาอีลิควิส) — เหมือนเบอร์ 13 · สับปะรดใส่ในแก้วนี้ไม่ได้ ทั้งที่ปีเตอร์ชอบมาก: โบรมีเลนในสับปะรดจะย่อยโปรตีน ซึ่งเป็นสิ่งที่แก้วนี้ตั้งใจให้ ให้กลายเป็นชิ้นส่วนที่ขม และแก้วที่สองยังต้องตั้งทิ้งไว้ · แก้วสับปะรดคือเบอร์ 42 ที่ใช้ไขมันกะทิเป็นตัวให้แคลอรีแทนโปรตีน · ใหม่ 24.08.2026 ยังไม่เคยปั่น · ปริมาณโปรตีนและขีดจำกัดโซเดียมให้แพทย์ตัดสิน ไม่ใช่สูตรนี้",
+      "🔒 NOT on the sales menu — Peter's personal cup, the filling version of Nr. 13. THE CONTRADICTION AND ITS RESOLUTION: gaining weight means calories, diabetes means no sugar. The way out is FAT — more than twice the calories per gram of sugar, and it barely moves blood glucose. So hemp seeds, avocado and whole milk carry this cup, not banana and not syrup. MATH (reference values from nutrition tables, ⚠ not measured on our own ingredients): about 620 kcal in 535 g, most of it from 25 g hemp seeds and 40 g oats. Nr. 13 sits at roughly 200. WHY COCOA RESCUES THE BROCCOLI: the doubt was justified — in a green cup you taste it. Cocoa is bitter and dark; the bitterness covers the cabbage note, the colour covers the green. Same reasoning as Nr. 36. The broccoli still drops from 60 g to 30 g. ⚠ NO SALT. In every sales recipe salt is the strongest lever against acid — here it is blocked, because ascites means limiting sodium. Nr. 13 has none either. Do not add it later, not even a pinch. ⚠ SOAKING THE OATS IS MANDATORY, not a refinement — dry into a cold cup they turn gritty and hard to digest. TWO GLASSES: 535 g at once presses on a distended abdomen. Half a cup twice a day delivers the same calories without the fullness. NO banana, NO sugar (diabetes), NO grapefruit or pomelo (Eliquis) — unchanged from Nr. 13. PINEAPPLE DOES NOT BELONG HERE although Peter loves it: its bromelain splits exactly the protein this cup is meant to deliver into bitter fragments, and the second glass stands. The pineapple cup is Nr. 42, where coconut fat carries the calories instead of protein. NEW 24.08.2026, never blended. The protein amount and the sodium limit are the doctor's call, not this recipe's."]},
+
+{n:"42", stufe:"A", de:"Ananas-Kokos-Kraft 🔒", th:"สับปะรด-กะทิ-พลัง 🔒", en:"Pineapple-Coconut-Strength 🔒",
+ alg:"",
+ zut:[
+   ["KO", 200,"Kokosmilch — fast reines Fett, deshalb greift das Bromelain nichts an","กะทิ — เกือบเป็นไขมันล้วน โบรมีเลนจึงไม่มีอะไรให้ย่อย","Coconut milk — almost pure fat, so the bromelain has nothing to attack"],
+   ["AN",  90,"Ananas (frisch)","สับปะรดแช่แข็ง (สด)","Pineapple (fresh)"],
+   ["AV",  60,"Avocado — Fett ohne Zucker, macht es samtig statt wässrig","อะโวคาโด — ไขมันที่ไม่มีน้ำตาล ทำให้เนื้อนุ่มลื่นไม่ใส","Avocado — fat without sugar, velvety instead of watery"],
+   ["GK",  60,"Gurke mit Schale — Volumen und Frische, ohne Zucker dazuzugeben","แตงกวาทั้งเปลือก — เพิ่มปริมาณและความสดชื่นโดยไม่เพิ่มน้ำตาล","Cucumber with skin — volume and freshness without adding sugar"],
+   ["IG",   2,"Ingwer — ein Hauch, er hebt die Ananas an","ขิง — แผ่วบาง ๆ ช่วยชูรสสับปะรด","Ginger — a hint, it lifts the pineapple"],
+   ["ZI", 0.5,"Ceylon-Zimt — schmeckt süß, ohne Zucker zu sein","อบเชยซีลอน — ให้ความรู้สึกหวานโดยไม่มีน้ำตาล","Ceylon cinnamon — tastes sweet without being sugar"],
+   ["AN",  90,"Ananas (gefroren)","สับปะรดแช่แข็ง (แช่แข็ง)","Pineapple (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch","① ใส่ของเหลวก่อน: กะทิ","① Liquids first: Coconut milk"],
+   ["② Frisches & Weiches: Ananas, Avocado, Gurke mit Schale, Ingwer","② ของสดและของนิ่ม: สับปะรดแช่แข็ง · อะโวคาโด · แตงกวาทั้งเปลือก · ขิง","② Fresh & soft: Pineapple, Avocado, Cucumber with skin, Ginger"],
+   ["③ Trockenes darüber: Ceylon-Zimt","③ ใส่ของแห้งทับ: อบเชยซีลอน","③ Dry on top: Ceylon cinnamon"],
+   ["④ Gefrorenes ganz oben: Ananas","④ ของแช่แข็งไว้บนสุด: สับปะรดแช่แข็ง","④ Frozen last, on top: Pineapple"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["🔒 NICHT im Verkaufsmenü — Peters persönlicher Ananas-Becher, das Gegenstück zu Nr. 41. WARUM ANANAS NICHT IN NR. 41 DARF: Nr. 41 ist absichtlich eiweißreich (Milch, Joghurt, Hanfsamen). Ananas enthält Bromelain, ein Enzym, das Eiweiß in bittere Bruchstücke zerlegt — Einfrieren zerstört es nicht, nur Hitze. Und weil Nr. 41 auf zwei Gläser über den Tag verteilt wird, stünde das zweite Glas und würde bitter. DIE LÖSUNG IST NICHT VERZICHT, SONDERN EIN ANDERER TRÄGER: Bromelain braucht Eiweiß, um Schaden anzurichten. Kokosmilch ist praktisch reines Fett und bringt fast keins mit — die Kalorien kommen hier aus Fett statt aus Eiweiß, und das Enzym findet nichts vor. Dieser Becher darf stehen. RECHNUNG (Referenzwerte aus Nährwerttabellen, ⚠ nicht an unseren Zutaten gemessen): rund 570 kcal auf 502 g, davon etwa zwei Drittel aus der Kokosmilch. Fruchtzucker rund 20 g — vergleichbar mit Nr. 41, weil die Gurke Volumen ohne Zucker liefert. SO ERGIBT SICH EIN PAAR, KEIN ENTWEDER-ODER: Nr. 41 ist der Eiweiß-Becher für den Muskel, Nr. 42 der Ananas-Becher. Abwechselnd getrunken deckt das beide Ziele. ⚠ KEIN SALZ — wie bei Nr. 13 und Nr. 41, wegen Bauchwasser. ⚠ KOKOSMILCH IST NICHT KOKOSWASSER. Ausgeschlossen wurde Kokos-WASSER (Kalium). Kokosmilch ist ein anderes Erzeugnis mit deutlich weniger Kalium je Portion, aber nicht null — beim nächsten Arzttermin ansprechen, bevor das ein täglicher Becher wird. 60 SEKUNDEN SIND DIE ZUTAT: bei Nr. 16 haben Ananasfasern die Glattheit auf 4 von 10 gedrückt. ALLE ZUTATEN IM HAUS (Bestand 24.08.): Kokosmilch 500 g, Ananas 1.146 g, Avocado 200 g, Gurke 300 g, Ingwer 30 g, Zimt 100 g. ⚠ NEU 24.08.2026, noch nie gemixt.",
+      "🔒 ไม่อยู่ในเมนูขาย — แก้วสับปะรดส่วนตัวของปีเตอร์ เป็นคู่ของเบอร์ 41 · ทำไมสับปะรดใส่ในเบอร์ 41 ไม่ได้: เบอร์ 41 ตั้งใจให้มีโปรตีนสูง (นม โยเกิร์ต เมล็ดกัญชง) · สับปะรดมีเอนไซม์โบรมีเลนที่ย่อยโปรตีนจนเกิดรสขม — การแช่แข็งไม่ทำลายมัน มีแต่ความร้อนที่ทำได้ · และเพราะเบอร์ 41 ต้องแบ่งดื่มสองแก้วตลอดวัน แก้วที่สองจะตั้งทิ้งไว้และกลายเป็นขม · ทางแก้ไม่ใช่การเลิกใส่ แต่คือเปลี่ยนตัวพา: โบรมีเลนต้องมีโปรตีนจึงจะสร้างปัญหาได้ · กะทิเกือบเป็นไขมันล้วนและมีโปรตีนน้อยมาก — แคลอรีในแก้วนี้จึงมาจากไขมันแทนโปรตีน และเอนไซม์ก็ไม่มีอะไรให้ย่อย · แก้วนี้ตั้งทิ้งไว้ได้ · การคำนวณ (ค่าอ้างอิงจากตารางโภชนาการ ยังไม่ได้วัดจากวัตถุดิบของเราเอง): ประมาณ 570 กิโลแคลอรี ต่อ 502 กรัม ราวสองในสามมาจากกะทิ · น้ำตาลผลไม้ราว 20 กรัม เทียบเท่าเบอร์ 41 เพราะแตงกวาเพิ่มปริมาณโดยไม่เพิ่มน้ำตาล · จึงกลายเป็นคู่ ไม่ใช่ต้องเลือกอย่างใดอย่างหนึ่ง: เบอร์ 41 คือแก้วโปรตีนเพื่อกล้ามเนื้อ เบอร์ 42 คือแก้วสับปะรด · ดื่มสลับกันจะได้ทั้งสองเป้าหมาย · ห้ามใส่เกลือ — เหมือนเบอร์ 13 และ 41 เพราะภาวะน้ำในช่องท้อง · กะทิไม่ใช่น้ำมะพร้าว · สิ่งที่ห้ามคือน้ำมะพร้าว (โพแทสเซียม) · กะทิเป็นผลิตภัณฑ์อีกชนิด มีโพแทสเซียมต่อหนึ่งเสิร์ฟน้อยกว่ามาก แต่ไม่ใช่ศูนย์ — ให้ปรึกษาแพทย์ครั้งต่อไปก่อนที่จะดื่มเป็นประจำทุกวัน · 60 วินาทีคือส่วนผสมอย่างหนึ่ง: ในเบอร์ 16 เส้นใยสับปะรดทำให้คะแนนความเนียนตกเหลือ 4 เต็ม 10 · วัตถุดิบมีอยู่ในบ้านทั้งหมด (สต๊อก 24.08.): กะทิ 500 กรัม สับปะรด 1.146 กรัม อะโวคาโด 200 กรัม แตงกวา 300 กรัม ขิง 30 กรัม อบเชย 100 กรัม · ใหม่ 24.08.2026 ยังไม่เคยปั่น",
+      "🔒 NOT on the sales menu — Peter's personal pineapple cup, the counterpart to Nr. 41. WHY PINEAPPLE CANNOT GO INTO NR. 41: that cup is deliberately protein-rich (milk, yoghurt, hemp seeds). Pineapple carries bromelain, an enzyme that splits protein into bitter fragments — freezing does not destroy it, only heat does. And since Nr. 41 is split across two glasses over the day, the second glass would stand and turn bitter. THE ANSWER IS NOT GOING WITHOUT, BUT A DIFFERENT CARRIER: bromelain needs protein to do damage. Coconut milk is almost pure fat and brings almost none — the calories here come from fat instead of protein, and the enzyme finds nothing. This cup may stand. MATH (reference values, ⚠ not measured on our own ingredients): about 570 kcal in 502 g, roughly two thirds from the coconut milk. Fruit sugar about 20 g, comparable to Nr. 41, because the cucumber delivers volume without sugar. SO IT IS A PAIR, NOT AN EITHER-OR: Nr. 41 is the protein cup for muscle, Nr. 42 the pineapple cup. Alternating them covers both goals. ⚠ NO SALT — as in Nr. 13 and Nr. 41, because of ascites. ⚠ COCONUT MILK IS NOT COCONUT WATER. What was excluded is coconut WATER (potassium). Coconut milk is a different product with far less potassium per serving, but not zero — raise it at the next doctor's appointment before this becomes a daily cup. 60 SECONDS IS AN INGREDIENT: at Nr. 16 pineapple fibres pushed smoothness down to 4 of 10. ALL INGREDIENTS IN THE HOUSE (stock 24.08.). NEW 24.08.2026, never blended."]},
+
+{n:"43", stufe:"A", de:"Wassermelone-Minze (frisch & gefroren)", th:"แตงโม-สะระแหน่ (สดและแช่แข็ง)", en:"Watermelon-Mint (fresh & frozen)",
+ alg:"",
+ zut:[
+   ["WM", 235,"Wassermelone (frisch)","แตงโม (สด)","Watermelon (fresh)"],
+   ["MI",   2,"Minze, gezählt (12-15 Blätter)","ใบสะระแหน่ เด็ดใบ (12-15 ใบ)","Mint, counted (12-15 leaves)"],
+   ["SA", 0.3,"Salz — Prise. Verstärkt die Süße der Wassermelone, wie im thai Nam Som","เกลือ — นิดเดียว ช่วยชูความหวานของแตงโม แบบเดียวกับน้ำส้มไทย","Salt — a pinch. Lifts the sweetness of the melon, same trick as in Thai nam som"],
+   ["WM", 235,"Wassermelone (gefroren)","แตงโม (แช่แข็ง)","Watermelon (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den schlanken (dicke Masse, wenig Flüssigkeit)","โถปั่น: ใช้โถทรงสูงแคบ (เนื้อข้น ของเหลวน้อย)","BLENDER JAR: the slim one (thick mix, little liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["② Frisches & Weiches: Wassermelone, Minze, gezählt","② ของสดและของนิ่ม: แตงโม · ใบสะระแหน่ เด็ดใบ","② Fresh & soft: Watermelon, Mint, counted"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Wassermelone","④ ของแช่แข็งไว้บนสุด: แตงโม","④ Frozen last, on top: Watermelon"],
+   ["1-Minuten-Taste drücken  (60 s, höchste Stufe)","กดปุ่ม 1 นาที  (60 วินาที ความเร็วสูงสุด)","Press the 1-minute button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["EINFACHSTES REZEPT DER KARTE. Zwei Zutaten (Wassermelone + Minze), eine Prise Salz. WARUM 1:1 FRISCH+GEFROREN: reine frische Wassermelone ist warm und wässrig. Reine gefrorene Wassermelone verliert Aroma und schmeckt nach Sorbet. Die Mischung bringt Kälte OHNE Aromaverlust — die frische Hälfte hält den Duft, die gefrorene die Temperatur. Kein Eiszusatz nötig, keine Milch, kein Fett-Träger (Wassermelone ist nicht sauer). WARUM MINZE PASST: Wassermelone+Minze ist das älteste Kombinationspaar in der arabischen und mexikanischen Sommergetränke-Tradition (agua fresca). Die Minze muss frisch sein — getrocknet schmeckt sie nach Zahnpasta. Und sie muss ANGEQUETSCHT werden, nicht zerhackt: Zerhacken bricht die Blätter und setzt Bitterstoffe frei; Anquetschen presst nur die ätherischen Öle raus. SALZ: 0,3 g klingt wie Rundungsfehler, aber der Effekt ist gewaltig. Salz maskiert Bittere und verstärkt Süße-Wahrnehmung — deshalb wird in Thai-Fruchtsäften traditionell mit einer Prise Salz gearbeitet, nicht mit mehr Zucker. GRAB-TAUGLICH: keine Deko, keine Toppings, durch den Halm trinkbar. Regel 8 erfüllt. AGUA-FRESCA-SIGNATURE: dieses Rezept ist der Sommer-Becher schlechthin — man kann Gäste damit bewirten, die noch nie ein 100blend-Smoothie getrunken haben, und sie verstehen ihn sofort. Nichts zu erklären, nur Wassermelone kalt und lebendig. ⚠ NEU 25.08.2026, noch nie gemixt.",
+      "สูตรที่ง่ายที่สุดในเมนู · สองวัตถุดิบ (แตงโม + สะระแหน่) กับเกลือหนึ่งหยิบมือ · ทำไม 1:1 สด+แช่แข็ง: แตงโมสดล้วนอุ่นและเป็นน้ำ · แตงโมแช่แข็งล้วนสูญเสียกลิ่นและกลายเป็นเชอร์เบท · การผสมครึ่งต่อครึ่งให้ความเย็นโดยไม่เสียกลิ่น — ครึ่งสดเก็บกลิ่น ครึ่งแช่แข็งเก็บอุณหภูมิ · ไม่ต้องใส่น้ำแข็ง ไม่ต้องใส่นม ไม่ต้องมีตัวพาไขมัน (แตงโมไม่เปรี้ยว) · ทำไมสะระแหน่เข้ากัน: แตงโม+สะระแหน่คือคู่เก่าแก่ที่สุดในเครื่องดื่มฤดูร้อนของอาหรับและเม็กซิโก (agua fresca) · สะระแหน่ต้องสด — แบบแห้งจะเหมือนยาสีฟัน · และต้องบดเบา ๆ ไม่ใช่สับ: สับจะทำให้ใบแตกและปล่อยรสขม ส่วนบดเบา ๆ จะบีบเฉพาะน้ำมันหอม · เกลือ: 0.3 กรัม ดูเหมือนไม่มีค่า แต่ผลใหญ่มาก · เกลือกลบรสขมและเพิ่มการรับรู้ความหวาน — นี่คือเหตุผลที่น้ำผลไม้ไทยใช้เกลือแทนน้ำตาลเพิ่ม · ผ่านเกณฑ์แกร็บ: ไม่มีของแต่ง ไม่มีท็อปปิ้ง ดื่มผ่านหลอดได้ ผ่านกฎข้อ 8 · ซิกเนเจอร์อาควาเฟรสก้า: สูตรนี้คือแก้วฤดูร้อนของแท้ — ให้แขกที่ไม่เคยดื่ม 100blend มาก่อนดื่มได้ทันที ไม่ต้องอธิบายอะไร แค่แตงโมเย็นและมีชีวิต · ใหม่ 25.08.2026 ยังไม่เคยปั่น",
+      "SIMPLEST RECIPE ON THE MENU. Two ingredients (watermelon + mint), a pinch of salt. WHY 1:1 FRESH+FROZEN: pure fresh watermelon is warm and watery. Pure frozen watermelon loses aroma and tastes like sorbet. The blend brings cold WITHOUT aroma loss — the fresh half keeps the scent, the frozen half keeps the temperature. No added ice, no milk, no fat carrier (watermelon is not acidic). WHY MINT WORKS: watermelon+mint is the oldest pairing in Arabic and Mexican summer-drink tradition (agua fresca). The mint must be fresh — dried mint tastes like toothpaste. And it must be BRUISED, not chopped: chopping breaks the leaves and releases bitters; bruising presses out only the essential oils. SALT: 0.3 g sounds like a rounding error, but the effect is huge. Salt masks bitters and boosts sweetness perception — that is why Thai fruit juices traditionally use a pinch of salt instead of more sugar. GRAB-COMPATIBLE: no deco, no toppings, drinkable through a straw. Rule 8 met. AGUA FRESCA SIGNATURE: this is the summer cup, plain and simple — you can serve it to guests who have never had a 100blend smoothie, and they get it instantly. Nothing to explain, just watermelon cold and alive. ⚠ NEW 25.08.2026, never blended."]},
+
+{n:"44", stufe:"B", de:"Beere-Kakao-Mandel (Praliné)", th:"เบอร์รี-โกโก้-อัลมอนด์", en:"Berry-Cacao-Almond",
+ alg:"🥛",
+ zut:[
+   ["KM", 200,"Kuhmilch EISKALT — das Milchfett trägt Kakao UND Mandel-Aroma","นมวัวเย็นจัด — ไขมันในนมพาทั้งกลิ่นโกโก้และอัลมอนด์","Cold milk — dairy fat carries both cacao AND almond aroma"],
+   ["BA",  55,"Banane (frisch)","กล้วยแช่แข็ง (สด)","Banana (fresh)"],
+   ["MA",  30,"Mandeln GERÖSTET ungesalzen, GANZ in den Mixer — kein Einweichen (Nr. 43 verifiziert)","อัลมอนด์คั่วไม่ใส่เกลือทั้งเมล็ด ใส่เครื่องปั่นได้เลย — ไม่ต้องแช่ (เบอร์ 43 ยืนยัน)","Roasted unsalted almonds, WHOLE into the mixer — no soaking (verified by Nr. 43)"],
+   ["KK",  10,"Kakao ungesüßt — dämpft die Beerensäure und verbindet Beere mit Mandel","โกโก้ไม่ใส่น้ำตาล — ลดความเปรี้ยวของเบอร์รีและเชื่อมกับอัลมอนด์","Unsweetened cacao — softens berry acid and links berry to almond"],
+   ["ZI", 0.5,"Ceylon-Zimt — schmeckt süß, ohne Zucker zu sein","อบเชยซีลอน — ให้ความรู้สึกหวานโดยไม่มีน้ำตาล","Ceylon cinnamon — tastes sweet without being sugar"],
+   ["SA", 0.3,"Salz — hebt den Kakao und rundet die Beerensäure","เกลือ — ชูโกโก้และช่วยเบอร์รี","Salt — lifts the cacao and rounds the berry acid"],
+   ["BM", 130,"Beeren-Mix GEFROREN — die Säure gegen die Süße von Kakao/Banane","เบอร์รีรวมแช่แข็ง — ความเปรี้ยวมาสมดุลกับความหวานของโกโก้และกล้วย","Berry-mix FROZEN — acidity balances the sweetness of cacao and banana"],
+   ["BA",  45,"Banane (gefroren)","กล้วยแช่แข็ง (แช่แข็ง)","Banana (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den großen (viel Volumen / genug Flüssigkeit)","โถปั่น: ใช้โถใหญ่ (ปริมาณมาก / ของเหลวพอ)","BLENDER JAR: the large one (high volume / enough liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kuhmilch EISKALT","① ใส่ของเหลวก่อน: นมวัวเย็นจัด","① Liquids first: Cold milk"],
+   ["② Frisches & Weiches: Banane","② ของสดและของนิ่ม: กล้วยแช่แข็ง","② Fresh & soft: Banana"],
+   ["③ Trockenes darüber: Mandeln GERÖSTET ungesalzen, GANZ in den Mixer, Kakao ungesüßt, Ceylon-Zimt, Salz","③ ใส่ของแห้งทับ: อัลมอนด์คั่วไม่ใส่เกลือทั้งเมล็ด ใส่เครื่องปั่นได้เลย · โกโก้ไม่ใส่น้ำตาล · อบเชยซีลอน · เกลือ","③ Dry on top: Roasted unsalted almonds, WHOLE into the mixer, Unsweetened cacao, Ceylon cinnamon, Salt"],
+   ["④ Gefrorenes ganz oben: Beeren-Mix, Banane","④ ของแช่แข็งไว้บนสุด: เบอร์รีรวมแช่แข็ง · กล้วยแช่แข็ง","④ Frozen last, on top: Berry-mix, Banana"],
+   ["1-Minuten-Taste, danach 35-Sekunden-Taste  (90 s, höchste Stufe)","กดปุ่ม 1 นาที แล้วกดปุ่ม 35 วินาที  (90 วินาที ความเร็วสูงสุด)","1-minute button, then the 35-second button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["TESTKANDIDAT (Stufe B) NEU 25.08.2026, noch nie gemixt. Die Kombination Beere+Kakao+Mandel ist die klassische PRALINÉ-Formel — Sacher, Rehrücken, Nougat: alle drei drehen sich um genau diese drei Aromen. WARUM ES FUNKTIONIEREN SOLLTE: (1) Beerenmix bringt Säure, die den Kakao braucht, sonst wirkt er dumpf. (2) Geröstete Mandeln geben eine tiefe Nuss-Note, die Mandelmilch nicht schafft — Rösten setzt Aromastoffe frei, die im Rohmandel gebunden sind. (3) Banane liefert die Süße OHNE Zucker und bindet die Mischung. WARUM NR. 44 UND NICHT NR. 36 REICHT: Nr. 36 (Erdbeere-Schoko-Mandel) hat Erdbeere allein und Mandel als MILCH — leichter und einfarbig-pink. Nr. 44 hat den vollen Beeren-Mix (dunkler, komplexer) und GANZE Mandeln (nussiger, sättigender). Andere Zielgruppe: Nr. 36 = Frühstück-leicht, Nr. 44 = Dessert-satt. NACH DEM MIXEN: sofort trinken, sonst setzt sich der Mandel-Trester unten ab. Wenn es zu dick wird: 20 g Milch nachgießen. Wenn es sandig ist: nochmal 20 Sekunden mixen — geröstete Mandeln brauchen etwas mehr Zeit als Mandelmilch. Grab-tauglich (Regel 8): keine Deko, alles im Mix, durch den Halm trinkbar.",
+      "แบบทดสอบ (ระดับ B) ใหม่ 25.08.2026 ยังไม่เคยปั่น · การรวมกันของเบอร์รี+โกโก้+อัลมอนด์คือสูตรพราลิเน่คลาสสิก — ซาเชอร์ เรห์รือคเคน นูกาต์ ทั้งสามอย่างหมุนรอบสามกลิ่นนี้ · ทำไมมันน่าจะได้ผล: (1) เบอร์รีให้ความเปรี้ยวที่โกโก้ต้องการ ไม่งั้นจะทึม (2) อัลมอนด์คั่วให้ความหอมลึกที่นมอัลมอนด์ทำไม่ได้ — การคั่วปลดปล่อยกลิ่นที่ผูกอยู่ในอัลมอนด์ดิบ (3) กล้วยให้ความหวานโดยไม่มีน้ำตาลและช่วยยึดส่วนผสม · ทำไมเบอร์ 44 ต้องมีทั้งที่มีเบอร์ 36: เบอร์ 36 (สตรอว์เบอร์รี-ช็อกโกแลต-อัลมอนด์) มีสตรอว์เบอร์รีอย่างเดียวและอัลมอนด์ในรูปนม — เบา สีชมพูล้วน · เบอร์ 44 มีเบอร์รีรวมเต็ม (สีเข้มกว่า ซับซ้อนกว่า) และอัลมอนด์ทั้งเมล็ด (หอมกว่า อิ่มกว่า) · กลุ่มเป้าหมายต่างกัน: เบอร์ 36 = อาหารเช้าเบา ๆ เบอร์ 44 = ของหวานอิ่ม · หลังปั่น: ดื่มทันที ไม่งั้นกากอัลมอนด์จะตกก้น · ถ้าข้นเกิน: เติมนม 20 กรัม · ถ้าสาก: ปั่นต่ออีก 20 วินาที — อัลมอนด์คั่วใช้เวลานานกว่านมอัลมอนด์เล็กน้อย · ผ่านเกณฑ์แกร็บ (กฎ 8): ไม่มีของแต่ง ทุกอย่างอยู่ในแก้ว ดื่มผ่านหลอดได้",
+      "TEST CANDIDATE (stufe B) NEW 25.08.2026, never blended. The combination berry+cacao+almond is the classic PRALINÉ formula — Sachertorte, Rehrücken, nougat: all three revolve around exactly these three aromas. WHY IT SHOULD WORK: (1) Berry mix brings acidity, which cacao needs — otherwise it tastes flat. (2) Roasted almonds give a deep nut note that almond milk cannot deliver — roasting releases aroma compounds that are locked in the raw nut. (3) Banana delivers sweetness WITHOUT sugar and binds the mixture. WHY NR. 44 IF NR. 36 ALREADY EXISTS: Nr. 36 (Strawberry-Chocolate-Almond) uses strawberry alone and almond AS MILK — lighter, monochrome pink. Nr. 44 uses the full berry mix (darker, more complex) and WHOLE almonds (nuttier, more filling). Different targets: Nr. 36 = light breakfast, Nr. 44 = dessert-satisfying. AFTER BLENDING: drink immediately, otherwise the almond pulp settles. If too thick: add 20 g milk. If sandy: blend another 20 s — roasted almonds need a touch more time than almond milk. Grab-compatible (rule 8): no deco, everything in the mix, drinkable through a straw."]},
+
+{n:"45", stufe:"X", de:"Tarator (Gurke-Joghurt-Knoblauch) 🧪", th:"ทาราเตอร์ 🧪", en:"Tarator (savoury lab) 🧪",
+ alg:"🥛",
+ zut:[
+   ["WA",  60,"Wasser EISKALT — macht es trinkbar (Joghurt allein ist zu dick für einen Smoothie)","น้ำเย็นจัด — ทำให้ดื่มได้ (โยเกิร์ตล้วนข้นเกินไปสำหรับสมูทตี้)","Ice-cold water — makes it drinkable (yoghurt alone is too thick)"],
+   ["LS",   5,"Limettensaft — hebt alle Aromen und ersetzt Balsamico/Weißweinessig","น้ำมะนาว — ชูกลิ่นทั้งหมด แทนน้ำส้มสายชูองุ่นขาว","Lime juice — lifts all aromas and replaces balsamic/white wine vinegar"],
+   ["JO", 240,"Naturjoghurt UNGESÜẞT — die Basis und der Fett-Träger","โยเกิร์ตธรรมชาติไม่หวาน — เป็นฐานและตัวพาไขมัน","Plain unsweetened yoghurt — base and fat carrier"],
+   ["GK", 120,"Gurke MIT SCHALE — Frische, Volumen, klassisch bulgarisch","แตงกวาทั้งเปลือก — สดชื่น เพิ่มปริมาณ แบบบัลแกเรียคลาสสิก","Cucumber WITH SKIN — freshness, volume, classic Bulgarian"],
+   ["KB",   4,"Knoblauch ≈½ Zehe — mit dem Salz zerdrücken bevor er in den Mixer geht, sonst zu scharf","กระเทียม ≈½ กลีบ — ทุบพร้อมเกลือก่อนใส่เครื่องปั่น ไม่งั้นแรงเกินไป","Garlic ≈½ clove — crush with the salt before it enters the mixer, otherwise too pungent"],
+   ["SC",   8,"Schalotte statt normaler Zwiebel — milder, thai-typisch, ganz klein gehackt","หอมแดงแทนหัวหอมธรรมดา — อ่อนกว่า เป็นแบบไทย ๆ สับละเอียด","Shallot instead of regular onion — milder, Thai-typical, finely chopped"],
+   ["DL",   3,"Dill frisch — Tarator-Klassiker; ODER Minze wenn Dill nicht da","ผักชีลาวสด — คลาสสิกทาราเตอร์ · หรือใช้สะระแหน่ถ้าไม่มีผักชีลาว","Fresh dill — Tarator classic; OR mint if dill is not available"],
+   ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
+   ["PP", 0.5,"Schwarzer Pfeffer, FRISCH gemahlen — er steht und fällt mit der Frische","พริกไทยดำ บดสด ๆ — คุณภาพขึ้นอยู่กับความสด","Black pepper, FRESHLY ground — quality depends on freshness"],
+   ["SA", 0.5,"Salz — Tarator braucht MEHR Salz als jeder süße Becher, das ist Teil des Charakters","เกลือ — ทาราเตอร์ต้องมีเกลือมากกว่าแก้วหวาน ๆ เพราะเป็นส่วนหนึ่งของเอกลักษณ์","Salt — Tarator needs MORE salt than any sweet cup; it is part of the character"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: den schlanken (dicke Masse, wenig Flüssigkeit)","โถปั่น: ใช้โถทรงสูงแคบ (เนื้อข้น ของเหลวน้อย)","BLENDER JAR: the slim one (thick mix, little liquid)"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Wasser EISKALT, Limettensaft","① ใส่ของเหลวก่อน: น้ำเย็นจัด · น้ำมะนาว","① Liquids first: Ice-cold water, Lime juice"],
+   ["② Frisches & Weiches: Naturjoghurt UNGESÜẞT, Gurke MIT SCHALE, Knoblauch ≈½ Zehe, Schalotte statt normaler Zwiebel, Dill, Minze, gezählt","② ของสดและของนิ่ม: โยเกิร์ตธรรมชาติไม่หวาน · แตงกวาทั้งเปลือก · กระเทียม ≈½ กลีบ · หอมแดงแทนหัวหอมธรรมดา · ผักชีลาวสด · ใบสะระแหน่ เด็ดใบ","② Fresh & soft: Plain unsweetened yoghurt, Cucumber WITH SKIN, Garlic ≈½ clove, Shallot instead of regular onion, dill, Mint, counted"],
+   ["③ Trockenes darüber: Schwarzer Pfeffer, gemahlen, Salz","③ ใส่ของแห้งทับ: พริกไทยดำ บดสด ๆ · เกลือ","③ Dry on top: Black pepper, FRESHLY ground, Salt"],
+   ["35-Sekunden-Taste drücken  (30 s, höchste Stufe)","กดปุ่ม 35 วินาที  (30 วินาที ความเร็วสูงสุด)","Press the 35-second button  (30 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["🧪 LABOR-REZEPT (Stufe X), NEU 25.08.2026 · Der erste HERZHAFTE Smoothie in der Karte — direkte Vorlage: Tarator (Bulgarien) / Cacık (Türkei) / Tzatziki (Griechenland als Sauce). Zielgruppe: der Gast, der nichts Süßes will, oder als Begleiter zu Essen. NICHT als Zwischenmahlzeit-Smoothie gedacht. WARUM SCHALOTTE STATT ZWIEBEL: rohe normale Zwiebel setzt Schwefelverbindungen frei, die im warmen Mixer noch aggressiver werden. Schalotte hat davon deutlich weniger und ist in Thailand ohnehin die Standard-Zwiebel (หอมแดง). WARUM PASTE STATT ROHER KNOBLAUCH: mit Salz zerdrücken zerstört einen Teil der Allicin-Enzyme, bevor sie im Speichel den scharfen Effekt entfalten — genau der Trick, den italienische Aioli-Köche seit Jahrhunderten machen. LIMETTE STATT ESSIG: türkische Restaurants nehmen Zitrone, bulgarische Balsamico. Wir haben Limette im Haus, sie tut denselben Job. SALZ WICHTIG: Tarator ist salzig, das ist kein Fehler. Wenn er nicht salzig genug ist, wirkt der Joghurt kreidig. TEXTUR: bewusst DÜNN — Ayran-nah, kein Sattmach-Smoothie. Grab-tauglich (Regel 8): keine Deko, alles gemixt. ⚠ VERKOSTUNG STEHT AUS — Peter/Freundin haben eine Variante experimentiert; dies ist die Labor-Version zum systematischen Vergleich.",
+      "🧪 สูตรทดลอง (ระดับ X) ใหม่ 25.08.2026 · แก้วรสเผ็ดร้อนแรกในเมนู — ต้นแบบตรง: ทาราเตอร์ (บัลแกเรีย) / จาจีก (ตุรกี) / ทซัตซิกิ (กรีกในรูปซอส) · กลุ่มเป้าหมาย: ลูกค้าที่ไม่ต้องการอะไรหวาน หรือดื่มคู่กับอาหาร ไม่ได้ตั้งใจเป็นสมูทตี้ทานเล่น · ทำไมใช้หอมแดงแทนหอมใหญ่: หอมใหญ่ดิบปล่อยสารซัลเฟอร์ที่แรงขึ้นในเครื่องปั่นที่อุ่น ๆ · หอมแดงมีน้อยกว่ามาก และเป็นหอมมาตรฐานในไทยอยู่แล้ว · ทำไมทำเป็นเนื้อแทนกระเทียมดิบ: การบดกับเกลือทำลายเอนไซม์อัลลิซินบางส่วนก่อนที่มันจะเผ็ดในน้ำลาย — เป็นเคล็ดลับที่คนทำอาหารอิตาเลียนใช้มาหลายศตวรรษ · มะนาวแทนน้ำส้มสายชู: ร้านตุรกีใช้มะนาว บัลแกเรียใช้บัลซามิก · เรามีมะนาว มันทำงานเหมือนกัน · เกลือสำคัญ: ทาราเตอร์ต้องเค็ม ไม่ใช่ความผิด ถ้าไม่เค็มพอ โยเกิร์ตจะรู้สึกฝืด · เนื้อสัมผัส: ตั้งใจให้เจือจาง — คล้ายอายราน ไม่ใช่สมูทตี้อิ่ม · ผ่านเกณฑ์แกร็บ (กฎ 8): ไม่มีของแต่ง ทุกอย่างอยู่ในแก้ว · ยังไม่ได้ชิม — ปีเตอร์กับแฟนทดลองเวอร์ชันหนึ่งแล้ว นี่คือเวอร์ชันห้องแล็บสำหรับเปรียบเทียบอย่างเป็นระบบ",
+      "🧪 LAB RECIPE (stufe X), NEW 25.08.2026 · The first SAVOURY smoothie on the menu — direct model: Tarator (Bulgaria) / Cacık (Turkey) / Tzatziki (Greece as a sauce). Target: the guest who does not want anything sweet, or as a companion to food. NOT intended as an in-between-meal smoothie. WHY SHALLOT INSTEAD OF ONION: raw regular onion releases sulphur compounds that become even more aggressive in a warm mixer. Shallot has far less of them and is the standard onion in Thailand anyway (หอมแดง). WHY PASTE INSTEAD OF RAW GARLIC: crushing with salt destroys part of the allicin enzymes before they unfold their sharp effect in saliva — exactly the trick Italian aioli cooks have used for centuries. LIME INSTEAD OF VINEGAR: Turkish restaurants use lemon, Bulgarian ones balsamic. We have lime in the house, it does the same job. SALT MATTERS: Tarator is salty, that is not a mistake. If it is not salty enough, the yoghurt feels chalky. TEXTURE: deliberately THIN — close to Ayran, not a filling smoothie. Grab-compatible (rule 8): no deco, everything blended. ⚠ TASTING PENDING — Peter/partner have experimented with a variant; this is the lab version for systematic comparison."]},
+
+{n:"46", stufe:"X", de:"Ayran (Instant, mit Limette) 🧪", th:"อายราน (โยเกิร์ตดื่ม) 🧪", en:"Ayran (instant, with lime) 🧪",
+ alg:"🥛",
+ zut:[
+   ["JO", 310,"Naturjoghurt UNGESÜẞT — 2 Teile Joghurt : 1 Teil Wasser ist die klassische türkische Ratio","โยเกิร์ตธรรมชาติไม่หวาน — โยเกิร์ต 2 ส่วน ต่อน้ำ 1 ส่วน คืออัตราส่วนคลาสสิกของตุรกี","Plain unsweetened yoghurt — 2 parts yoghurt to 1 part water is the classic Turkish ratio"],
+   ["WA", 150,"Wasser EISKALT — verdünnt auf Trink-Konsistenz (Ayran ist DÜNNER als jeder Smoothie)","น้ำเย็นจัด — เจือจางให้ดื่มได้ (อายรานเจือจางกว่าสมูทตี้)","Ice-cold water — dilutes to drinking consistency (Ayran is THINNER than any smoothie)"],
+   ["LS",   5,"Limettensaft — Peters Variation (klassisch kein Zitrus, aber hebt den Joghurt spürbar)","น้ำมะนาว — เวอร์ชันของปีเตอร์ (คลาสสิกไม่มี แต่ช่วยชูโยเกิร์ตชัดเจน)","Lime juice — Peter's variation (classic has no citrus, but lifts the yoghurt noticeably)"],
+   ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
+   ["SA",   1,"Salz — Ayran braucht MEHR Salz als jeder süße Becher (das ist der Charakter)","เกลือ — อายรานต้องเค็มมากกว่าแก้วหวาน (เป็นเอกลักษณ์)","Salt — Ayran needs MORE salt than any sweet cup (that is the character)"]
+ ],
+ schritte:[
+   ["Joghurt + Salz mit dem Schneebesen von Hand kurz aufschlagen — nicht mit dem Mixer, sonst schäumt es zu stark","ตีโยเกิร์ต + เกลือด้วยตะกร้อมือสั้น ๆ — อย่าใช้เครื่องปั่น ไม่งั้นเป็นฟองมาก","Whisk yoghurt + salt by hand briefly — do not use the blender, otherwise it foams too much"],
+   ["Eiskaltes Wasser in dünnem Strahl unter Rühren dazugeben — nie umgekehrt, sonst wird der Joghurt körnig","ค่อย ๆ เทน้ำเย็นจัดเป็นสายบาง ๆ ขณะคน — อย่ากลับกัน ไม่งั้นโยเกิร์ตจะเป็นเม็ด","Slowly stream in the ice-cold water while stirring — never the other way around, otherwise the yoghurt turns grainy"],
+   ["Limette + Minze am Ende zufügen und noch einmal kurz verrühren","ใส่มะนาวและสะระแหน่ตอนท้าย แล้วคนอีกสั้น ๆ","Add lime and mint at the end, stir briefly again"],
+   ["Direkt in ein GEKÜHLTES Glas, sofort trinken","เทลงแก้วเย็น ดื่มทันที","Pour straight into a CHILLED glass, drink immediately"]
+ ],
+ tip:["🧪 LABOR-REZEPT (Stufe X), NEU 25.08.2026 · Türkischer Klassiker in seiner reinsten Form — nur Joghurt, Wasser, Salz. Peter fügt Limette als moderne Variation dazu; das ist keine Häresie, sondern Öffnung Richtung Osten (arabischer Laban hat oft Zitrus). WARUM 2:1 (Joghurt zu Wasser): das ist die getestete Volksrezeptur, weniger wird zu wässrig, mehr zu breiig. WARUM VON HAND STATT MIXER: der Ayran soll SEIDIG und leicht luftig sein, nicht schaumig. Ein Mixer schlägt so viel Luft ein, dass er innerhalb von 10 Minuten zusammenfällt und den Joghurt trennt. WARUM WASSER IN JOGHURT und nicht umgekehrt: Joghurt in Wasser lässt Eiweiß koagulieren — das gibt Klümpchen. Wasser langsam in Joghurt ergibt eine glatte Emulsion. WARUM VIEL SALZ: Ayran wird ohne Salz fad und kreidig. 1 g auf 460 g klingt viel, ist aber die Grenze zum Wohlfühlen — türkische Standard-Ayrans sind sogar salziger. TEMPERATUR-KRITISCH: warmer Ayran ist ungenießbar. Glas im Voraus kühlen. Grab-tauglich (Regel 8) — aber vermutlich zu ungewöhnlich für den ersten Grab-Bestand; erst mal als Stand-Verkauf testen. ⚠ VERKOSTUNG STEHT AUS.",
+      "🧪 สูตรทดลอง (ระดับ X) ใหม่ 25.08.2026 · คลาสสิกตุรกีในรูปแบบดั้งเดิม — มีแค่โยเกิร์ต น้ำ เกลือ · ปีเตอร์เติมมะนาวเป็นเวอร์ชันสมัยใหม่ ไม่ใช่นอกรีต แต่เปิดไปทางตะวันออก (ลาบันอาหรับมักมีรสส้ม) · ทำไม 2:1 (โยเกิร์ตต่อน้ำ): เป็นสัดส่วนที่ทดสอบมาแล้ว น้อยกว่าจะเหลว มากกว่าจะข้น · ทำไมตีมือแทนเครื่องปั่น: อายรานต้องนุ่มนวลและเบาเล็กน้อย ไม่ใช่เป็นฟอง เครื่องปั่นจะตีอากาศเข้ามากจนพังใน 10 นาทีและโยเกิร์ตแยกชั้น · ทำไมเทน้ำในโยเกิร์ตแทนที่จะกลับกัน: โยเกิร์ตในน้ำจะทำให้โปรตีนจับตัว — เกิดเม็ด · เทน้ำช้า ๆ ในโยเกิร์ตจะได้อิมัลชันเนียน · ทำไมเกลือมาก: อายรานไม่มีเกลือจะจืดและฝืด · 1 กรัมต่อ 460 กรัมฟังดูมาก แต่เป็นขอบเขตของความสบายลิ้น — อายรานตุรกีมาตรฐานเค็มกว่านี้อีก · อุณหภูมิสำคัญ: อายรานอุ่นดื่มไม่ได้ · ให้แช่แก้วก่อน · ผ่านเกณฑ์แกร็บ (กฎ 8) — แต่คงแปลกเกินไปสำหรับแกร็บครั้งแรก ทดสอบขายที่ร้านก่อน · ยังไม่ได้ชิม",
+      "🧪 LAB RECIPE (stufe X), NEW 25.08.2026 · Turkish classic in its purest form — only yoghurt, water, salt. Peter adds lime as a modern variation; that is not heresy but opens towards the east (Arab laban often has citrus). WHY 2:1 (yoghurt to water): the tested folk ratio, less becomes watery, more becomes pasty. WHY BY HAND INSTEAD OF BLENDER: Ayran should be SILKY and slightly airy, not foamy. A blender whips so much air in that it collapses within 10 minutes and the yoghurt separates. WHY WATER INTO YOGHURT and not the other way: yoghurt into water makes protein coagulate — that gives lumps. Water slowly into yoghurt gives a smooth emulsion. WHY LOTS OF SALT: Ayran without salt is bland and chalky. 1 g on 460 g sounds like a lot but is the border of the comfort zone — standard Turkish Ayrans are even saltier. TEMPERATURE-CRITICAL: warm Ayran is undrinkable. Chill the glass in advance. Grab-compatible (rule 8) — but probably too unusual for the first Grab order; test as counter sale first. ⚠ TASTING PENDING."]}
+];
+
+const T={
+ de:{zut:"Zutaten",abl:"Zubereitung",back:"Alle Rezepte",todo:"Rezept noch nicht eingetragen. Gramm aus rezept.md übertragen.",
+     foot:"Interne Arbeitsversion · Gramm sind Betriebsgeheimnis · nicht weitergeben"},
+ th:{zut:"ส่วนผสม",abl:"วิธีทำ",back:"สูตรทั้งหมด",todo:"ยังไม่ได้ใส่สูตร",
+     foot:"เอกสารภายใน · ห้ามเผยแพร่"},
+ en:{zut:"Ingredients",abl:"Preparation",back:"All recipes",todo:"Recipe not entered yet.",
+     foot:"Internal working copy · gram amounts are confidential"}
+};
+
+/* KENN-ANFANG */
+/* Erzeugt von _kennzeichnung-in-app.js aus den Zutaten.
+   NICHT von Hand aendern. Zutat aendern, Skript laufen lassen. */
+const KENN={"10":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"11":{"s":"vegetarisch","de":"VEGETARISCH","th":"มังสวิรัติ","en":"VEGETARIAN","ade":"Milch","ath":"นม","aen":"milk","kf":0},"12":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"13":{"s":"vegetarisch","de":"VEGETARISCH","th":"มังสวิรัติ","en":"VEGETARIAN","ade":"Milch","ath":"นม","aen":"milk","kf":0},"15":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"16":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"17":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Mandel · Hanfsamen · Soja (Tofu)","ath":"อัลมอนด์ · เมล็ดกัญชง · ถั่วเหลือง (เต้าหู้)","aen":"almond · hemp seeds · soy (tofu)","kf":0},"18":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"19":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"20":{"s":"vegetarisch","de":"VEGETARISCH","th":"มังสวิรัติ","en":"VEGETARIAN","ade":"Milch · Hafer","ath":"นม · ข้าวโอ๊ต","aen":"milk · oat","kf":0},"21":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Hafer","ath":"ข้าวโอ๊ต","aen":"oat","kf":0},"22":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"23":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Hafer · Hanfsamen","ath":"ข้าวโอ๊ต · เมล็ดกัญชง","aen":"oat · hemp seeds","kf":0},"24":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"25":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"26":{"s":"vegetarisch","de":"VEGETARISCH","th":"มังสวิรัติ","en":"VEGETARIAN","ade":"Milch · Mandel","ath":"นม · อัลมอนด์","aen":"milk · almond","kf":0},"27":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"28":{"s":"fisch","de":"ENTHÄLT FISCH","th":"มีส่วนผสมจากปลา","en":"CONTAINS FISH","ade":"Fisch","ath":"ปลา","aen":"fish","kf":0},"29":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"30":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Koffein · Hafer · Soja (Tofu)","ath":"คาเฟอีน · ข้าวโอ๊ต · ถั่วเหลือง (เต้าหู้)","aen":"caffeine · oat · soy (tofu)","kf":1},"31":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Koffein · Hafer","ath":"คาเฟอีน · ข้าวโอ๊ต","aen":"caffeine · oat","kf":1},"01":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Koffein · Sonnenblumenkerne · Soja (Tofu)","ath":"คาเฟอีน · เมล็ดทานตะวัน · ถั่วเหลือง (เต้าหู้)","aen":"caffeine · sunflower seeds · soy (tofu)","kf":1},"02":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Kürbiskerne · Soja (Tofu)","ath":"เมล็ดฟักทอง · ถั่วเหลือง (เต้าหู้)","aen":"pumpkin seeds · soy (tofu)","kf":0},"03":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Sonnenblumenkerne · Soja (Tofu)","ath":"เมล็ดทานตะวัน · ถั่วเหลือง (เต้าหู้)","aen":"sunflower seeds · soy (tofu)","kf":0},"04":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Sonnenblumenkerne · Soja (Tofu)","ath":"เมล็ดทานตะวัน · ถั่วเหลือง (เต้าหู้)","aen":"sunflower seeds · soy (tofu)","kf":0},"05":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"06":{"s":"fisch","de":"ENTHÄLT FISCH","th":"มีส่วนผสมจากปลา","en":"CONTAINS FISH","ade":"Milch · Fisch","ath":"นม · ปลา","aen":"milk · fish","kf":0},"07":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"Kürbiskerne","ath":"เมล็ดฟักทอง","aen":"pumpkin seeds","kf":0},"08":{"s":"vegan","de":"VEGAN","th":"วีแกน","en":"VEGAN","ade":"","ath":"","aen":"","kf":0},"09":{"s":"vegetarisch","de":"VEGETARISCH","th":"มังสวิรัติ","en":"VEGETARIAN","ade":"Milch","ath":"นม","aen":"milk","kf":0}};
+function kennBadge(n, klein){
+  const k=KENN[n]; if(!k) return "";
+  const wort = L==="th"?k.th : L==="en"?k.en : k.de;
+  const alle = L==="th"?k.ath : L==="en"?k.aen : k.ade;
+  const kof  = L==="th"?"คาเฟอีน" : "KOFFEIN";
+  return '<span class="kenn '+k.s+'">'+esc(wort)+'</span>'
+       + (k.kf?'<span class="kenn kof">'+esc(kof)+'</span>':"")
+       + (klein||!alle?"":'<span class="allerg">'+esc(alle)+'</span>');
+}
+/* KENN-ENDE */
+
+/* VORSTUFEN-ANFANG */
+/* Erzeugt von _vorstufen-in-app.js aus _vorstufen-daten.js.
+   NICHT von Hand aendern - beim naechsten Lauf ist es wieder weg.
+   Quelle aendern, dann das Skript laufen lassen. */
+const VORSTUFEN={"HM":{"code0":"HM","de":"Hafermilch","th":"นมข้าวโอ๊ต","kurz":["Verhältnis 1 : 10 — auf 1 L Milch 100 g Haferflocken","อัตราส่วน 1 : 10 — นม 1 ลิตร ใช้ข้าวโอ๊ต 100 กรัม"],"warn":["HAFER HAT DIE UMGEKEHRTEN REGELN WIE NUSS. Nicht einweichen, kurz mixen, nicht pressen. Wer die Mandelanleitung auf Hafer anwendet, bekommt Schleim statt Milch.","ข้าวโอ๊ตมีกฎตรงข้ามกับถั่ว ห้ามแช่น้ำ ปั่นสั้น ห้ามบีบ ถ้าทำตามวิธีอัลมอนด์ จะได้เมือกไม่ใช่นม"],"zut":[["Haferflocken (zart oder kernig, beides geht)","ข้าวโอ๊ต (แบบบางหรือหยาบก็ได้)","100 g"],["Wasser, EISKALT 4–7 Grad","น้ำเย็นจัด 4–7 องศา","1000 ml"],["Salz","เกลือ","0,5 g"]],"schritte":[["Wasser aus dem Kühlschrank nehmen, 4–7 Grad. Zu warmes Wasser ist der häufigste Fehler. Wenn nur Zimmerwasser da ist: ein Drittel der Wassermenge als Eiswürfel abwiegen und mitrechnen.","ใช้น้ำจากตู้เย็น 4–7 องศา น้ำอุ่นเกินคือความผิดพลาดที่พบบ่อยที่สุด ถ้ามีแต่น้ำอุณหภูมิห้อง ให้ชั่งน้ำแข็ง 1 ใน 3 ของปริมาณน้ำแล้วนับรวม"],["Haferflocken NICHT einweichen. Direkt mit dem Wasser in den Mixer.","ห้ามแช่ข้าวโอ๊ตก่อน ใส่ลงเครื่องปั่นพร้อมน้ำได้เลย"],["Höchstens 25–30 Sekunden mixen. Länger heizt die Mischung durch Reibung auf und löst die Stärke — genau davon wird die Milch schleimig.","ปั่นไม่เกิน 25–30 วินาที ถ้านานกว่านี้ แรงเสียดทานจะทำให้ร้อนขึ้นและปล่อยแป้งออกมา นมจะเหนียว"],["Sofort durch das FEINE SIEB gießen und von selbst durchlaufen lassen. NICHT PRESSEN, nicht mit dem Löffel nachdrücken — dabei geht die Stärke mit durch.","เทผ่านตะแกรงตาถี่ทันที ปล่อยให้ไหลเอง ห้ามบีบ ห้ามใช้ช้อนกด เพราะแป้งจะไหลตามลงไป"],["Ein zweites Mal durch das saubere Sieb gießen, wenn die Milch noch Flocken zeigt. Unser Sieb hat größere Löcher als ein Nussbeutel — zweimal sieben ersetzt ihn.","ถ้ายังเห็นเศษข้าวโอ๊ต ให้กรองซ้ำอีกครั้งด้วยตะแกรงที่ล้างแล้ว ตะแกรงของเรารูใหญ่กว่าถุงกรองนม การกรองสองรอบใช้แทนได้"],["Salz einrühren, in die Flasche, sofort in den Kühlschrank.","คนเกลือให้เข้ากัน ใส่ขวด แล้วแช่ตู้เย็นทันที"],["Vor jedem Gebrauch die FLASCHE SCHÜTTELN — Hafermilch setzt sich ab.","เขย่าขวดทุกครั้งก่อนใช้ นมข้าวโอ๊ตจะตกตะกอน"]],"warum":["Haferstärke fängt bei rund 55 Grad an zu verkleistern — der niedrigste Wert unter den üblichen Getreiden. Ein Mixer heizt die Mischung durch Reibung auf; ab etwa 20–30 Sekunden reicht das aus. Kaltes Wasser und kurze Mixzeit halten die Mischung unter dieser Schwelle. Das Pressen des Tresters drückt gelöste Stärke mechanisch durch das Sieb — derselbe Effekt ohne Wärme.","แป้งข้าวโอ๊ตเริ่มพองตัวที่ประมาณ 55 องศา ต่ำที่สุดในบรรดาธัญพืชทั่วไป เครื่องปั่นทำให้ส่วนผสมร้อนขึ้นจากแรงเสียดทาน ประมาณ 20–30 วินาทีก็ถึงจุดนั้น น้ำเย็นและเวลาปั่นสั้นช่วยไม่ให้ถึงอุณหภูมินี้ ส่วนการบีบกากคือการดันแป้งผ่านตะแกรงด้วยแรง ผลเหมือนกันแม้ไม่มีความร้อน"],"offen":["Ausbeute und Haltbarkeit beim ersten Ansatz messen und hier eintragen: aus 100 g + 1000 ml wurden ____ ml Milch und ____ g Trester. Im Kühlschrank gut bis ____.","ครั้งแรกให้ชั่งแล้วจดไว้ตรงนี้: จาก 100 กรัม + 1000 มล. ได้นม ____ มล. และกาก ____ กรัม เก็บในตู้เย็นได้ถึง ____"],"passt":["Banane · Kakao · Beeren · Kaffee · Zimt — alles Milde. Hafer ist von sich aus leicht süß und gibt Körper.","กล้วย · โกโก้ · เบอร์รี่ · กาแฟ · อบเชย — รสอ่อนทั้งหมด ข้าวโอ๊ตหวานในตัวเองอยู่แล้วและให้เนื้อสัมผัส"]},"MA":{"code0":"MA","de":"Mandelmilch (selbst gemacht)","th":"นมอัลมอนด์ (ทำเอง)","kurz":["Verhältnis 1 : 4 — auf 1 L Milch 250 g Mandeln · beginnt EINEN TAG vorher","อัตราส่วน 1 : 4 — นม 1 ลิตร ใช้อัลมอนด์ 250 กรัม · เริ่มล่วงหน้า 1 วัน"],"warn":["Nicht mit der gekauften Mandelmilch verwechseln. Die gekaufte kommt fertig aus der Flasche und braucht nur geschüttelt zu werden.","อย่าสับสนกับนมอัลมอนด์สำเร็จรูป แบบสำเร็จรูปแค่เขย่าขวดก็ใช้ได้เลย"],"zut":[["Mandeln, roh und ungesalzen","อัลมอนด์ดิบ ไม่ใส่เกลือ","250 g"],["Wasser zum Einweichen (kommt weg)","น้ำสำหรับแช่ (เททิ้ง)","ca. 750 ml"],["Wasser, EISKALT 4–7 Grad, zum Mixen","น้ำเย็นจัด 4–7 องศา สำหรับปั่น","1000 ml"],["Salz","เกลือ","0,5 g"]],"schritte":[["Mandeln 8–12 Stunden IM KÜHLSCHRANK einweichen — nicht auf der Arbeitsfläche. Bei 30 Grad Raumtemperatur fängt Einweichwasser an zu gären.","แช่อัลมอนด์ 8–12 ชั่วโมง ในตู้เย็น ไม่ใช่วางไว้ข้างนอก ที่อุณหภูมิห้อง 30 องศา น้ำแช่จะเริ่มบูด"],["Einweichwasser weggießen — es ist bitter und trägt die gelösten Gerbstoffe. Mandeln klar abspülen.","เทน้ำแช่ทิ้ง เพราะขมและมีสารแทนนินละลายอยู่ แล้วล้างอัลมอนด์ให้สะอาด"],["Häute abziehen. Sie lösen sich nach dem Einweichen von selbst. Die Haut ist der Bitterstoff — ohne sie wird die Milch heller und süßer.","ลอกเปลือกออก หลังแช่แล้วจะหลุดง่าย เปลือกคือส่วนที่ขม เมื่อเอาออกนมจะขาวขึ้นและหวานขึ้น"],["Mit 1000 ml EISKALTEM Wasser 2 Minuten mixen. Hier ist lange Mixzeit richtig — Mandeln haben keine Stärke, die verkleistern kann.","ปั่นกับน้ำเย็นจัด 1000 มล. นาน 2 นาที ตรงนี้ปั่นนานได้ เพราะอัลมอนด์ไม่มีแป้งที่จะพองตัว"],["Durch das FEINE SIEB gießen. Danach ein ZWEITES Mal durch das saubere Sieb — unser Sieb hat größere Löcher als ein Nussbeutel, beim ersten Durchgang kommen feine Mandelteilchen mit und die Milch wird sandig.","กรองผ่านตะแกรงตาถี่ แล้วกรองซ้ำอีกครั้งด้วยตะแกรงที่ล้างแล้ว ตะแกรงของเรารูใหญ่กว่าถุงกรอง รอบแรกจะมีเศษอัลมอนด์ละเอียดผ่านลงมา ทำให้นมสาก"],["Trester ausdrücken ist hier ERLAUBT — anders als bei Hafer. Er gibt noch Milch her.","บีบกากได้ ต่างจากข้าวโอ๊ต เพราะยังมีนมเหลืออยู่"],["Salz einrühren, Flasche, Kühlschrank. Vor Gebrauch FLASCHE SCHÜTTELN.","คนเกลือ ใส่ขวด แช่ตู้เย็น เขย่าขวดก่อนใช้"]],"warum":["Die zwei Punkte, an denen selbstgemachte Mandelmilch scheitert, sind die Haut und das Sieb. Die Haut macht sie bitter und grau, das zu grobe Sieb macht sie sandig. Beides kostet nur einen Arbeitsschritt mehr.","จุดที่นมอัลมอนด์ทำเองมักพลาดคือเปลือกกับตะแกรง เปลือกทำให้ขมและสีหม่น ตะแกรงหยาบเกินทำให้สาก ทั้งสองอย่างแก้ได้ด้วยการเพิ่มขั้นตอนเดียว"],"offen":["Ausbeute messen und eintragen: aus 250 g + 1000 ml wurden ____ ml Milch und ____ g Trester. Haltbar bis ____. ⚠ Ob GERÖSTETE Mandeln besser schmecken, ist noch nicht getestet — beim nächsten Ansatz eine kleine Menge gegenprobieren.","ชั่งแล้วจดไว้: จาก 250 กรัม + 1000 มล. ได้นม ____ มล. กาก ____ กรัม เก็บได้ถึง ____ · ยังไม่ได้ทดสอบว่าอัลมอนด์คั่วอร่อยกว่าไหม ครั้งหน้าให้ลองเทียบปริมาณน้อย ๆ"],"passt":["Kakao · Banane · Beeren · Kaffee · Dattel. Dünner und weniger süß als Hafer — mit Seidentofu oder Banane ausgleichen.","โกโก้ · กล้วย · เบอร์รี่ · กาแฟ · อินทผลัม · บางกว่าและหวานน้อยกว่าข้าวโอ๊ต ให้ชดเชยด้วยเต้าหู้อ่อนหรือกล้วย"]},"SJ":{"code0":"SJ","de":"Sojamilch (selbst gemacht)","th":"นมถั่วเหลือง (ทำเอง)","kurz":["Verhältnis 1 : 8 — auf 1 L Milch 125 g Sojabohnen · beginnt EINEN TAG vorher","อัตราส่วน 1 : 8 — นม 1 ลิตร ใช้ถั่วเหลือง 125 กรัม · เริ่มล่วงหน้า 1 วัน"],"warn":["SOJA MUSS KOCHEN. Das ist die einzige Milch, bei der kalt FALSCH ist. Rohe Sojamilch ist nicht bekömmlich — die Hemmstoffe in der Bohne werden erst durch Hitze zerstört. Erst kochen, dann abkühlen.","นมถั่วเหลืองต้องต้ม นี่คือนมชนิดเดียวที่ห้ามทำแบบเย็น นมถั่วเหลืองดิบกินไม่ได้ สารยับยั้งในถั่วต้องใช้ความร้อนทำลาย ต้มก่อน แล้วค่อยทำให้เย็น"],"zut":[["Sojabohnen, trocken","ถั่วเหลืองแห้ง","125 g"],["Wasser zum Einweichen (kommt weg)","น้ำสำหรับแช่ (เททิ้ง)","ca. 400 ml"],["Wasser zum Mixen","น้ำสำหรับปั่น","1000 ml"],["Salz","เกลือ","0,5 g"]],"schritte":[["Bohnen 8–12 Stunden IM KÜHLSCHRANK einweichen, Wasser weg, klar abspülen.","แช่ถั่ว 8–12 ชั่วโมง ในตู้เย็น เทน้ำทิ้ง ล้างให้สะอาด"],["Mit 1000 ml Wasser 2 Minuten mixen.","ปั่นกับน้ำ 1000 มล. นาน 2 นาที"],["Durch das FEINE SIEB gießen, Trester ausdrücken.","กรองผ่านตะแกรงตาถี่ แล้วบีบกาก"],["Die abgesiebte Milch in einen Topf und aufkochen. Ab dem Aufkochen 15 Minuten bei kleiner Hitze köcheln lassen, dabei rühren — Sojamilch kocht schnell über und setzt am Boden an.","เทนมที่กรองแล้วลงหม้อ ต้มให้เดือด แล้วเคี่ยวไฟอ่อน 15 นาที คนตลอด นมถั่วเหลืองล้นหม้อง่ายและติดก้นหม้อ"],["Der Schaum oben abschöpfen. Salz einrühren.","ช้อนฟองด้านบนออก คนเกลือให้เข้ากัน"],["SCHNELL abkühlen: Topf in ein Becken mit kaltem Wasser stellen. Nicht auf der Arbeitsfläche stehen lassen — bei 30 Grad Raumtemperatur steht Sojamilch stundenlang im Bereich, in dem Keime wachsen.","ทำให้เย็นเร็ว ๆ วางหม้อในอ่างน้ำเย็น อย่าตั้งทิ้งไว้ข้างนอก ที่อุณหภูมิห้อง 30 องศา นมถั่วเหลืองจะอยู่ในช่วงที่เชื้อโตได้นานหลายชั่วโมง"],["Kalt in die Flasche, Kühlschrank. Vor Gebrauch FLASCHE SCHÜTTELN.","เมื่อเย็นแล้วใส่ขวด แช่ตู้เย็น เขย่าขวดก่อนใช้"]],"warum":["Sojabohnen enthalten Stoffe, die die Eiweißverdauung hemmen, und sie werden durch Hitze unwirksam. Deshalb wird Sojamilch weltweit gekocht — auch die gekaufte. Das ist kein Geschmacks-, sondern ein Verträglichkeitsschritt.","ถั่วเหลืองมีสารที่ขัดขวางการย่อยโปรตีน และถูกทำลายด้วยความร้อน นมถั่วเหลืองทั่วโลกจึงต้องต้ม รวมถึงแบบที่ซื้อด้วย นี่ไม่ใช่เรื่องรสชาติ แต่เป็นเรื่องการย่อย"],"offen":["Ausbeute und Haltbarkeit eintragen: ____ ml Milch, ____ g Okara (Trester). Haltbar bis ____. ⚠ Gekaufte Thai-Sojamilch ist billig und gut — selbst machen lohnt nur, wenn wir den Geschmack oder den Preis wirklich verbessern. Beim ersten Ansatz gegen die gekaufte blind vergleichen.","จดผลผลิตและอายุการเก็บ: นม ____ มล. โอการะ ____ กรัม เก็บได้ถึง ____ · นมถั่วเหลืองไทยแบบซื้อราคาถูกและคุณภาพดี การทำเองคุ้มก็ต่อเมื่อรสหรือราคาดีกว่าจริง ครั้งแรกให้ชิมเทียบแบบไม่รู้ยี่ห้อ"],"passt":["Kakao · Kaffee · Banane. Höchster Eiweißgehalt der drei — die Milch für Protein-Smoothies. Vorsicht bei viel Säure: Sojaeiweiß flockt aus.","โกโก้ · กาแฟ · กล้วย · โปรตีนสูงที่สุดในสามชนิด เป็นนมสำหรับสมูทตี้โปรตีน · ระวังของที่เปรี้ยวมาก โปรตีนถั่วเหลืองจะแตกตัว"]},"KF":{"code0":"KF","de":"Espresso für Smoothies","th":"เอสเปรสโซสำหรับสมูทตี้","kurz":["Wird IMMER kalt in den Mixer gegeben — nie heiß","ใส่เครื่องปั่นแบบเย็นเสมอ ห้ามใส่ตอนร้อน"],"warn":["Heißer Espresso auf gefrorene Frucht taut sie an. Das Ergebnis ist lauwarm, dünn und trennt sich im Becher. Das ist der eine Fehler, der bei Kaffee-Smoothies gemacht wird.","เอสเปรสโซร้อนจะทำให้ผลไม้แช่แข็งละลาย ผลลัพธ์คืออุ่น ๆ เหลว และแยกชั้นในแก้ว นี่คือความผิดพลาดหลักของสมูทตี้กาแฟ"],"zut":[["Espresso, frisch gebrüht","เอสเปรสโซชงสด","je Becher 40–60 ml"],["— danach vollständig abgekühlt","— แล้วทำให้เย็นสนิท",""]],"schritte":[["Espresso wie gewohnt beziehen. Doppelter Espresso je Becher.","ชงเอสเปรสโซตามปกติ แก้วละ 1 ช็อตคู่"],["Sofort in ein flaches Gefäß gießen und in den Kühlschrank. Flach heißt: große Fläche, kühlt in Minuten statt in einer Stunde.","เทใส่ภาชนะปากกว้างทันที แล้วแช่ตู้เย็น ปากกว้างหมายถึงพื้นที่ผิวมาก เย็นในไม่กี่นาทีแทนที่จะเป็นชั่วโมง"],["Am besten morgens für den ganzen Tag vorbereiten und kalt bereitstellen. Kaffee, der stundenlang warm steht, wird bitter.","ทางที่ดีคือชงตอนเช้าสำหรับทั้งวัน แล้วเก็บไว้แบบเย็น กาแฟที่ตั้งอุ่นไว้นานจะขม"],["Erst in den Mixer, wenn er wirklich kalt ist. Im Zweifel anfassen — nicht schätzen.","ใส่เครื่องปั่นเมื่อเย็นจริงเท่านั้น ถ้าไม่แน่ใจให้จับดู อย่าเดา"]],"warum":["Kalt gebrühter Kaffee (12 Stunden im Kühlschrank ziehen lassen) wäre die zweite Möglichkeit und schmeckt milder und weniger sauer. Er braucht aber Vorlauf und Platz. Solange die Maschine da ist, ist gekühlter Espresso der kürzere Weg.","อีกทางเลือกคือกาแฟสกัดเย็น (แช่ตู้เย็น 12 ชั่วโมง) รสนุ่มกว่าและเปรี้ยวน้อยกว่า แต่ต้องเตรียมล่วงหน้าและใช้พื้นที่ ตราบใดที่มีเครื่องอยู่แล้ว เอสเปรสโซแช่เย็นคือทางที่สั้นกว่า"],"offen":["⚠ NICHT als Eiswürfel einfrieren, solange die Regel „kein Eiszusatz\" gilt — gefrorener Kaffee ist zwar kein Wasser, aber die Regel gehört einmal ausdrücklich entschieden, bevor wir es tun. ⚠ Koffein muss auf die Karte: nicht für Kinder, Hinweis für Schwangere.","อย่าแช่แข็งเป็นก้อนน้ำแข็ง ตราบใดที่ยังมีกฎห้ามเติมน้ำแข็ง กาแฟแช่แข็งไม่ใช่น้ำก็จริง แต่ควรตัดสินใจให้ชัดก่อน · ต้องระบุคาเฟอีนบนเมนู ไม่เหมาะกับเด็ก และมีคำเตือนสำหรับหญิงตั้งครรภ์"],"passt":["Banane · Kakao · Dattel · Avocado · Zimt. Nicht zu saurer Frucht — Kaffee und Zitrus beißen sich.","กล้วย · โกโก้ · อินทผลัม · อะโวคาโด · อบเชย · ไม่เข้ากับผลไม้เปรี้ยว กาแฟกับส้มมะนาวตีกัน"]},"HT":{"code0":"HT","de":"Hibiskustee","th":"ชากระเจี๊ยบ","kurz":["4–5 getrocknete Blüten auf 1 L Wasser · wird KALT verwendet","ดอกกระเจี๊ยบแห้ง 4–5 ดอก ต่อน้ำ 1 ลิตร · ใช้แบบเย็น"],"warn":["Hibiskus ist stark. Zu lange gezogen wird er scharf-sauer und übertönt jede Frucht.","กระเจี๊ยบรสแรง ถ้าแช่นานเกินจะเปรี้ยวจัดและกลบรสผลไม้ทั้งหมด"],"zut":[["Hibiskusblüten, getrocknet","ดอกกระเจี๊ยบแห้ง","4–5 Stück"],["Wasser","น้ำ","1000 ml"]],"schritte":[["Wasser aufkochen, vom Herd nehmen, Blüten hinein.","ต้มน้ำให้เดือด ยกลง แล้วใส่ดอกกระเจี๊ยบ"],["8–10 Minuten ziehen lassen, dann die Blüten HERAUSNEHMEN. Wenn sie drin bleiben, zieht der Tee weiter und wird sauer.","แช่ 8–10 นาที แล้วตักดอกออก ถ้าปล่อยไว้ ชาจะแช่ต่อและเปรี้ยวขึ้น"],["Abkühlen lassen, dann in den Kühlschrank. Vollständig kalt in den Mixer.","ปล่อยให้เย็น แล้วแช่ตู้เย็น ใส่เครื่องปั่นเมื่อเย็นสนิท"],["Farbe prüfen: tiefrot ist richtig. Blass heißt zu wenig Blüten, fast schwarz heißt zu lange gezogen.","ดูสี สีแดงเข้มคือถูกต้อง สีจางแปลว่าดอกน้อยไป เกือบดำแปลว่าแช่นานไป"]],"warum":["Hibiskus liefert die Farbe, für die wir sonst Beeren bräuchten, und bringt eine Säure mit, die süße Frucht auffängt. Er ist billiger als jede Beere und hält im Kühlschrank.","กระเจี๊ยบให้สีที่ปกติต้องใช้เบอร์รี่ และให้ความเปรี้ยวที่ตัดกับผลไม้หวาน ราคาถูกกว่าเบอร์รี่ทุกชนิดและเก็บในตู้เย็นได้"],"offen":["Haltbarkeit im Kühlschrank eintragen: ____ . ⚠ Ziehzeit einmal in drei Stufen gegenprobieren (6 / 8 / 12 Minuten) und die beste hier festschreiben.","จดอายุการเก็บในตู้เย็น: ____ · ลองเทียบเวลาแช่ 3 ระดับ (6 / 8 / 12 นาที) แล้วเขียนเวลาที่ดีที่สุดไว้ตรงนี้"],"passt":["Erdbeere · Beeren · Apfel · Ananas. Färbt kräftig — deshalb sparsam, sonst schmeckt alles nach Hibiskus.","สตรอว์เบอร์รี่ · เบอร์รี่ · แอปเปิ้ล · สับปะรด · ให้สีเข้มมาก ใช้แต่น้อย ไม่อย่างนั้นทุกอย่างจะเป็นรสกระเจี๊ยบ"]},"TE":{"code0":"TE","de":"Grüner Tee & Jasmintee","th":"ชาเขียว และ ชามะลิ","kurz":["NICHT mit kochendem Wasser · 70–80 Grad · 2–3 Minuten","ห้ามใช้น้ำเดือด · 70–80 องศา · 2–3 นาที"],"warn":["Kochendes Wasser macht grünen Tee bitter, und die Bitterkeit geht im Smoothie nicht mehr weg. Nach dem Aufkochen den Kessel 5 Minuten stehen lassen, dann ist er ungefähr richtig.","น้ำเดือดทำให้ชาเขียวขม และความขมจะไม่หายไปในสมูทตี้ หลังต้มเดือดให้พักกาไว้ 5 นาที ก็จะได้อุณหภูมิที่พอดี"],"zut":[["Grüner Tee oder Jasmintee, lose","ชาเขียวหรือชามะลิ แบบใบ","8 g"],["Wasser, 70–80 Grad","น้ำ 70–80 องศา","1000 ml"]],"schritte":[["Wasser aufkochen und 5 Minuten offen stehen lassen — dann liegt es bei etwa 70–80 Grad.","ต้มน้ำให้เดือด แล้วเปิดฝาพักไว้ 5 นาที จะได้ประมาณ 70–80 องศา"],["Tee 2–3 Minuten ziehen lassen, dann die Blätter HERAUSNEHMEN.","แช่ชา 2–3 นาที แล้วเอาใบออก"],["Abkühlen, Kühlschrank, kalt verwenden.","ปล่อยให้เย็น แช่ตู้เย็น ใช้แบบเย็น"],["ALTERNATIVE, die weniger schiefgehen kann: 8 g Tee in 1000 ml kaltes Wasser geben und über Nacht in den Kühlschrank. Kalt gezogener Tee wird nie bitter, weil die Bitterstoffe sich in kaltem Wasser kaum lösen.","ทางเลือกที่พลาดยากกว่า: ใส่ชา 8 กรัม ในน้ำเย็น 1000 มล. แช่ตู้เย็นข้ามคืน ชาสกัดเย็นจะไม่ขม เพราะสารขมแทบไม่ละลายในน้ำเย็น"]],"warum":["Die Bitterstoffe im grünen Tee lösen sich mit steigender Temperatur deutlich schneller als die milden Aromen. Deshalb entscheidet die Wassertemperatur mehr über den Geschmack als die Teesorte.","สารขมในชาเขียวละลายเร็วขึ้นมากเมื่ออุณหภูมิสูงขึ้น เร็วกว่ากลิ่นรสที่นุ่มนวล อุณหภูมิน้ำจึงกำหนดรสชาติมากกว่าชนิดของชา"],"offen":["⚠ Heiß gezogen gegen kalt gezogen einmal blind gegenprobieren und die Gewinnerin hier festschreiben.","ลองชิมเทียบแบบไม่รู้ ระหว่างชงร้อนกับสกัดเย็น แล้วเขียนผู้ชนะไว้ตรงนี้"],"passt":["Ananas · Mango · Gurke · Minze · Limette. Jasmin ist blumiger — passt zu Mango und Litschi.","สับปะรด · มะม่วง · แตงกวา · สะระแหน่ · มะนาว · ชามะลิกลิ่นดอกไม้มากกว่า เข้ากับมะม่วงและลิ้นจี่"]},"JT":{"code0":"TE","de":"Grüner Tee & Jasmintee","th":"ชาเขียว และ ชามะลิ","kurz":["NICHT mit kochendem Wasser · 70–80 Grad · 2–3 Minuten","ห้ามใช้น้ำเดือด · 70–80 องศา · 2–3 นาที"],"warn":["Kochendes Wasser macht grünen Tee bitter, und die Bitterkeit geht im Smoothie nicht mehr weg. Nach dem Aufkochen den Kessel 5 Minuten stehen lassen, dann ist er ungefähr richtig.","น้ำเดือดทำให้ชาเขียวขม และความขมจะไม่หายไปในสมูทตี้ หลังต้มเดือดให้พักกาไว้ 5 นาที ก็จะได้อุณหภูมิที่พอดี"],"zut":[["Grüner Tee oder Jasmintee, lose","ชาเขียวหรือชามะลิ แบบใบ","8 g"],["Wasser, 70–80 Grad","น้ำ 70–80 องศา","1000 ml"]],"schritte":[["Wasser aufkochen und 5 Minuten offen stehen lassen — dann liegt es bei etwa 70–80 Grad.","ต้มน้ำให้เดือด แล้วเปิดฝาพักไว้ 5 นาที จะได้ประมาณ 70–80 องศา"],["Tee 2–3 Minuten ziehen lassen, dann die Blätter HERAUSNEHMEN.","แช่ชา 2–3 นาที แล้วเอาใบออก"],["Abkühlen, Kühlschrank, kalt verwenden.","ปล่อยให้เย็น แช่ตู้เย็น ใช้แบบเย็น"],["ALTERNATIVE, die weniger schiefgehen kann: 8 g Tee in 1000 ml kaltes Wasser geben und über Nacht in den Kühlschrank. Kalt gezogener Tee wird nie bitter, weil die Bitterstoffe sich in kaltem Wasser kaum lösen.","ทางเลือกที่พลาดยากกว่า: ใส่ชา 8 กรัม ในน้ำเย็น 1000 มล. แช่ตู้เย็นข้ามคืน ชาสกัดเย็นจะไม่ขม เพราะสารขมแทบไม่ละลายในน้ำเย็น"]],"warum":["Die Bitterstoffe im grünen Tee lösen sich mit steigender Temperatur deutlich schneller als die milden Aromen. Deshalb entscheidet die Wassertemperatur mehr über den Geschmack als die Teesorte.","สารขมในชาเขียวละลายเร็วขึ้นมากเมื่ออุณหภูมิสูงขึ้น เร็วกว่ากลิ่นรสที่นุ่มนวล อุณหภูมิน้ำจึงกำหนดรสชาติมากกว่าชนิดของชา"],"offen":["⚠ Heiß gezogen gegen kalt gezogen einmal blind gegenprobieren und die Gewinnerin hier festschreiben.","ลองชิมเทียบแบบไม่รู้ ระหว่างชงร้อนกับสกัดเย็น แล้วเขียนผู้ชนะไว้ตรงนี้"],"passt":["Ananas · Mango · Gurke · Minze · Limette. Jasmin ist blumiger — passt zu Mango und Litschi.","สับปะรด · มะม่วง · แตงกวา · สะระแหน่ · มะนาว · ชามะลิกลิ่นดอกไม้มากกว่า เข้ากับมะม่วงและลิ้นจี่"]}};
+
+/* Eine Vorstufen-Karte in der App. Beide Sprachen gleichrangig -
+   gleiche Groesse, gleiches Gewicht, untereinander. Englisch gibt es auf
+   diesen Karten noch nicht; solange das so ist, zeigt die App auch bei
+   eingestelltem Englisch Deutsch und Thai, statt eine leere Karte. */
+function vorstufe(k){
+  const zw=(de,th)=>'<span class="vzeile">'+kalt(esc(de))+'</span>'
+                   +'<span class="vzeile">'+kalt(esc(th))+'</span>';
+  const zurueck=L==="th"?"กลับไปที่สูตร":L==="en"?"Back to the recipe":"Zurück zum Rezept";
+  const wie=L==="th"?"วิธีทำ":L==="en"?"How it is made":"So wird sie gemacht";
+  app.innerHTML='<button class="back">← '+zurueck+'</button>'
+    +'<div class="vhead"><div class="vcode">'+k.code0+'</div>'
+    +'<div class="vname">'+esc(k.de)+'<span>'+esc(k.th)+'</span></div></div>'
+    +'<div class="vkurz">'+zw(k.kurz[0],k.kurz[1])+'</div>'
+    +'<div class="vwarn">'+zw(k.warn[0],k.warn[1])+'</div>'
+    +'<h2>'+esc(wie)+'</h2>'
+    +'<div class="zut">'+k.zut.map(z=>
+        '<div><span class="zn"><b>'+kalt(esc(z[0]))+'</b><i>'+kalt(esc(z[1]))+'</i></span>'
+        +'<span class="zg">'+esc(z[2]||"")+'</span></div>').join("")+'</div>'
+    +'<ol class="steps">'+k.schritte.map(s=>
+        '<li><b>'+kalt(esc(s[0]))+'</b><i>'+kalt(esc(s[1]))+'</i></li>').join("")+'</ol>'
+    +'<div class="vwarum">'+zw(k.warum[0],k.warum[1])+'</div>'
+    +'<div class="voffen">'+zw(k.offen[0],k.offen[1])+'</div>'
+    +'<div class="tip">'+zw("PASST ZU: "+k.passt[0],"เข้ากับ: "+k.passt[1])+'</div>';
+  app.querySelector(".back").onclick=()=>{curV=null;scrollTo(0,0);render()};
+}
+
+/* EISKALT und die anderen Kippschalter hervorheben - dieselben Woerter wie
+   auf dem Ausdruck, damit Handy und Papier gleich aussehen. */
+function kalt(h){
+  return h.replace(/(EISKALT(?:ES|EM|E)?|[Ee]iskalt(?:es|em|e)?|FEINE[SN]? SIEB|FEINSIEB|NICHT PRESSEN|MUSS KOCHEN|เย็นจัด|ห้ามบีบ|ตะแกรงตาถี่|ต้องต้ม)/g,
+    '<span class="kalt">$1</span>');
+}
+/* VORSTUFEN-ENDE */
+
+/* Thai ist die Arbeitssprache — Lexi fuehrt aus, Peter kontrolliert nur.
+   Peter, 30.08.2026. */
+let L=localStorage.getItem("bl_lang")||"th", cur=null, curV=null;
+const app=document.getElementById("app"), foot=document.getElementById("foot");
+
+document.querySelectorAll(".langs button").forEach(b=>b.onclick=()=>{
+  L=b.dataset.l; localStorage.setItem("bl_lang",L);
+  document.querySelectorAll(".langs button").forEach(x=>x.classList.toggle("on",x===b));
+  render();
+});
+document.querySelectorAll(".langs button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* SPRACHPAARE — jede Zeile zeigt zwei Sprachen: oben die gewaehlte,
+   darunter die Gegensprache. Bei Thai ist das Deutsch (Peter liest mit),
+   bei Deutsch/Englisch ist es Thai (Lexi liest mit).
+   Feldindex: Zutat [code,g,DE,TH,EN] · Schritt [DE,TH,EN]. */
+const IDX={de:0, th:1, en:2};
+const GEGEN={th:"de", de:"th", en:"th"};
+const haupt=(a,off)=>a[off+IDX[L]];
+const zweit=(a,off)=>a[off+IDX[GEGEN[L]]];
+
+function list(){
+  app.innerHTML='<div class="grid">'+REZEPTE.map(r=>`
+    <button class="tile" data-n="${r.n}">
+      <div class="no">${r.n}</div>
+      <div class="nm">${esc(r[L]||r.de)}</div>
+      <div class="th">${esc(r[GEGEN[L]]||"")}</div>
+      <div class="foot">
+        <span class="pill" style="background:var(--${r.stufe})">${r.stufe==="X"?"?":r.stufe}</span>
+        <span class="alg">${kennBadge(r.n,true)}</span>
+      </div>
+    </button>`).join("")+'</div>';
+  app.querySelectorAll(".tile").forEach(t=>t.onclick=()=>{cur=t.dataset.n;scrollTo(0,0);render()});
+}
+
+function detail(r){
+  const t=T[L];
+  app.innerHTML=`
+    <button class="back">← ${t.back}</button>
+    <div class="rhead">
+      <div class="rno">${r.n}</div>
+      <div>
+        <div class="rname">${esc(r[L]||r.de)}</div>
+        <div class="rth">${esc(r[GEGEN[L]]||r.de)}</div>
+        <div class="kennzeile">${kennBadge(r.n)}</div>
+      </div>
+    </div>
+    ${r.todo?`<div class="warn">⚠ ${t.todo}</div>`:`
+      <h2>${t.zut}</h2>
+      <div class="zut">${r.zut.map(z=>{
+        const v=VORSTUFEN[z[0]];
+        return `
+        <div class="${v?"mach":""}" ${v?`data-v="${z[0]}"`:""}>
+          <span class="code">${z[0]}</span>
+          <span class="zn"><b>${esc(haupt(z,2))}</b>
+            <i>${esc(zweit(z,2))}</i></span>
+          ${v?`<span class="pfeil">${L==="th"?"วิธีทำ ›":L==="en"?"how to ›":"Herstellung ›"}</span>`:""}
+          <span class="zg">${typeof z[1]==="number"?z[1]+" g":esc(z[1])}</span>
+        </div>`;}).join("")}</div>
+      <h2>${t.abl}</h2>
+      <ol class="steps">${r.schritte.map(s=>`
+        <li><b>${esc(haupt(s,0))}</b>
+        <i>${esc(zweit(s,0))}</i></li>`).join("")}</ol>
+      ${r.tip?`<div class="tip">💡 ${esc(L==="th"?r.tip[1]:L==="en"?r.tip[2]:r.tip[0])}</div>`:""}
+    `}`;
+  app.querySelector(".back").onclick=()=>{cur=null;scrollTo(0,0);render()};
+  app.querySelectorAll(".zut div.mach").forEach(d=>
+    d.onclick=()=>{curV=d.dataset.v;scrollTo(0,0);render()});
+}
+
+function render(){
+  foot.textContent=T[L].foot;
+  document.documentElement.lang=L;
+  if(curV) vorstufe(VORSTUFEN[curV]);
+  else cur?detail(REZEPTE.find(r=>r.n===cur)):list();
+}
+render();
+</script>
+</body>
+</html>
