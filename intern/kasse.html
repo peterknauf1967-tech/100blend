@@ -476,19 +476,59 @@ const BOOSTER_FAKTOR = 2.0;   /* Aufschlag auf den Rohstoff. Niedriger als
 const BOOSTER_MIN    = 20;    /* Kleiner lohnt das Handling nicht. */
 
 const BOOSTER=[
+ /* GESPERRT 30.08.2026 — nicht mehr "ungeklaert", sondern GEKLAERT und negativ:
+    MATELL ist NICHT halal-zertifiziert. Suche in der CICOT-Datenbank
+    (thic.or.th / halal.co.th) nach "matell" und "matell intertrade" = null
+    Treffer, waehrend Kontrollsuchen (bamm 12, fitwhey 2, biovitt 12) sauber
+    anschlagen — die Suche funktioniert also. MATELLs eigene Nachweise
+    (Chulalongkorn, ALS, TISTR, Foodchain USA) enthalten keinen Halal-Punkt.
+    ACHTUNG FALLE: halal.co.th/en/product/detail/757351 "Whey Protein Isolate"
+    gehoert der Siam City Chemical Co. Ltd., NICHT MATELL.
+    Wir werben mit Halal — dann darf kein unzertifiziertes Molkenprotein in
+    den Verkaufsbecher. Die 908 g im Haus sind nicht verdorben, nur nicht
+    verkaufsfaehig; fuer Peters eigene Tests bleiben sie nutzbar.
+    ERSATZ MIT BELEG: Biovitt WPI ungesuesst, halal 10G5680240662,
+    อย. 10-1-03958-5-0123, gueltig bis 05.02.2027, ca. 1.399 THB/907 g
+    = 1.540 THB/kg — billiger ALS MATELL (1.690 THB/kg) und zertifiziert.
+    Details: konzept-bausteine/halal-und-rechtslage-booster-30-08.md */
  {code:"WY", de:"Whey Protein",   th:"เวย์โปรตีน",        en:"Whey protein",
-  gramm:{"12":20,"16":25,"22":30}, ekProG:1.436, offen:false,
-  sperre:"⚠ Halal-Zertifizierung des MATELL-Isolats ungeklaert (30.08.)"},
+  gramm:{"12":20,"16":25,"22":30}, ekProG:1.436, offen:true,
+  sperre:"⚠ MATELL ist NICHT halal-zertifiziert (CICOT geprueft 30.08.) · Ersatz: Biovitt WPI ungesuesst"},
 
+ /* RECHTSFRAGE GEKLAERT 30.08.2026 — und zwar positiv: Ein frisch am Stand
+    zubereitetes Getraenk braucht KEINE eigene อย.-Registrierung. Thai FDA
+    stellt Vor-Ort-Zubereitung ausdruecklich frei ("A person producing and
+    selling food at a storefront ... is exempt from applying for a license").
+    Es gilt der Public Health Act B.E. 2535 ueber die Standlizenz der Stadt
+    Pattaya. Bedingung: die gekaufte Dose muss selbst ein registriertes
+    Produkt mit อย.-Nummer sein (z. B. BAAM!! CREATINE, อย. 11-1-08463-5-0126,
+    halal 10T6770090967).
+    MENGE AUF 2,5 g GESENKT (vorher 3 g): Die Thai-FDA-Positivliste fuer
+    Getraenke nennt fuer Kreatin-Monohydrat ausdruecklich hoechstens 2,5 g
+    pro Tag. Formal bindet die Liste abgepackte Getraenke, nicht frisch
+    Gemixtes — sie ist aber der Massstab, den ein Inspektor anlegt.
+    OFFEN BLEIBT NUR NOCH DER PREIS. */
  {code:"KR", de:"Kreatin",        th:"ครีเอทีน",           en:"Creatine",
-  gramm:{"12":3,"16":3,"22":3},    ekProG:null,  offen:true,
-  sperre:"⚠ Preis offen · Verkauf in Thailand rechtlich ungeklaert"},
+  gramm:{"12":2.5,"16":2.5,"22":2.5}, ekProG:null, offen:true,
+  sperre:"⚠ Preis offen · Rechtslage geklaert (erlaubt, max 2,5 g/Portion)"},
 
  {code:"MC", de:"Matcha",         th:"มัทฉะ",              en:"Matcha",
   gramm:{"12":1.5,"16":2,"22":2.5}, ekProG:3.225, offen:false, sperre:""},
 
+ /* MENGE GEDECKELT 30.08.2026: 22 oz stand auf 12 g. Die Thai-FDA-
+    Positivliste erlaubt Kollagen-Peptide bis 10 g pro Tag — ein einziger
+    XXL-Becher haette die Tagesmenge ueberschritten. Jetzt 10 g als Obergrenze
+    ueber alle Groessen.
+    ⚠ HALAL-FALLE: Dieselbe FDA-Liste erlaubt ausdruecklich SCHWEIN als
+    Kollagenquelle. Fuer uns kommt nur zertifizierte Fisch- oder Rinderquelle
+    in Frage (z. B. Fitwhey Collagen Dipeptide, halal 10T6770480968,
+    อย. 11-1-08463-5-0215, gueltig bis 19.09.2026).
+    ⚠ Der Einkaufspreis 2,0 THB/g ist im Katalog ohne Beleg hinterlegt und
+    die konkrete Quelle unserer Ware ist nicht dokumentiert — beim naechsten
+    Einkauf Zertifikat und Bon ablegen. */
  {code:"KL", de:"Kollagen",       th:"คอลลาเจน",          en:"Collagen",
-  gramm:{"12":8,"16":10,"22":12},  ekProG:2.0,   offen:false, sperre:""},
+  gramm:{"12":8,"16":10,"22":10},  ekProG:2.0,   offen:false,
+  sperre:"⚠ Quelle muss Fisch/Rind halal-zertifiziert sein — nie Schwein"},
 
  {code:"EB", de:"Erdnussbutter",  th:"เนยถั่ว",            en:"Peanut butter",
   gramm:{"12":12,"16":15,"22":20}, ekProG:0.328, offen:false, sperre:""},
@@ -509,16 +549,27 @@ const BOOSTER=[
     10 g fuer 160,50 THB = 16,05 THB/g Pulver = 0,80 THB je mg Astaxanthin.
     Wasserdispergierbar, weil das 5-%-Oel je mg zwar billiger ist, aber
     emulgiert werden muesste und im Smoothie sonst obenauf schwimmt.
-    MENGE KORRIGIERT: 0,20 g statt 0,24 g. Der Katalog fuehrte ein
+    MENGE: 0,20 g statt der frueheren 0,24 g. Der Katalog fuehrte ein
     2,5-%-Beadlet, kaufbar belegt ist ein 2-%-Pulver — 0,20 g davon sind
-    glatte 4 mg. NICHT 6 mg: das ist die อย.-TAGESgrenze, und wer zwei
-    Becher trinkt, liegt damit drueber. Menge unabhaengig von der
-    Bechergroesse, wie bei Kreatin — es ist eine Dosis, kein Geschmack.
-    GESPERRT: nicht eingekauft, und die Rechtslage fuer Zusaetze in
-    zubereiteten Getraenken (Thai FDA) ist noch nicht geklaert. */
+    glatte 4 mg. Menge unabhaengig von der Bechergroesse, wie bei Kreatin:
+    es ist eine Dosis, kein Geschmack.
+    ⚠ DIE ZAHL "6 mg pro Tag" NICHT ZITIEREN. Sie steht nur auf den Seiten
+    zweier thailaendischer Rohstoffhaendler und liess sich in KEINEM
+    FDA-Dokument nachweisen (Pruefung 30.08.2026).
+    GESPERRT, und zwar staerker als vorher gedacht: Astaxanthin steht NICHT
+    auf der Thai-FDA-Positivliste fuer Getraenke — anders als Kreatin
+    (2,5 g/Tag) und Kollagen (10 g/Tag), die dort ausdruecklich mit
+    Hoechstmenge gefuehrt sind. Es gibt also gar keine erlaubte Menge,
+    an die man sich halten koennte. Als Nahrungsergaenzungsmittel ist es
+    registrierbar und halal erhaeltlich (ASTAGLUTA อย. 73-1-15864-5-0010),
+    aber ob ein solches Fertigprodukt als ZUTAT in eine zubereitete Speise
+    darf, ist in keiner FDA-Guidance geregelt.
+    NAECHSTER SCHRITT: schriftliche Auskunft กองอาหาร / Thai FDA,
+    Hotline 1556. Vorher nicht verkaufen.
+    Details: konzept-bausteine/halal-und-rechtslage-booster-30-08.md */
  {code:"AX", de:"Astaxanthin",    th:"แอสตาแซนทิน",      en:"Astaxanthin",
   gramm:{"12":0.20,"16":0.20,"22":0.20}, ekProG:16.05, offen:true,
-  sperre:"⚠ Nicht eingekauft · Rechtslage Thai FDA offen · Preis belegt: 16,05 ฿/g"},
+  sperre:"⚠ NICHT auf der Thai-FDA-Getraenke-Positivliste · keine belegte Hoechstmenge · erst nach Auskunft FDA-Hotline 1556"},
 ];
 const boosterVon = c => BOOSTER.find(b=>b.code===c);
 function boosterGramm(b, g){ return b.gramm[g||GROESSE] || b.gramm["16"]; }

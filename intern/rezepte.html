@@ -1657,6 +1657,18 @@ function list(){
   app.querySelectorAll(".tile").forEach(t=>t.onclick=()=>{cur=t.dataset.n;scrollTo(0,0);render()});
 }
 
+/* STOERUNGSHILFE AM MIXER — steht in JEDEM Rezept, weil sie in jedem
+   Rezept passieren kann. Belegt aus der Original-Bedienungsanleitung des
+   JTC OmniBlend V (30.08.2026, konzept-bausteine/omniblend-v-bedienung-30-08.md,
+   Regelwerk rezepte/_grundlagen/27). Zwei Fehler, die den Becher ruinieren:
+   laenger mixen statt PULSE (macht den Smoothie warm) und die Hand nicht
+   auf dem Deckel beim Wiederanlauf nach der eingebauten Pause. */
+const HILFE={
+  th:"ถ้าใบมีดหมุนฟรี ไม่เกิดวน — กด PULSE 2–3 ครั้ง แล้วค่อยกดปุ่มเวลา อย่าปั่นนานขึ้น มอเตอร์ที่หมุนฟรีทำให้เครื่องดื่มอุ่นเท่านั้น · วางมือบนฝาไว้ เครื่องอาจกระโดดตอนเริ่มใหม่หลังหยุดพัก",
+  de:"Dreht die Klinge leer und es entsteht kein Wirbel — 2–3× PULSE antippen, dann erst die Zeittaste. Nicht länger mixen: ein leer drehender Motor macht den Smoothie nur warm. Hand auf den Deckel, das Gerät kann beim Wiederanlauf nach der eingebauten Pause springen.",
+  en:"If the blade spins free and no vortex forms — tap PULSE 2–3 times, then press the timer button. Do not blend longer: a motor spinning in a void only warms the drink. Keep a hand on the lid, the machine can jump when it restarts after the built-in pause."
+};
+
 function detail(r){
   const t=T[L];
   app.innerHTML=`
@@ -1685,6 +1697,7 @@ function detail(r){
       <ol class="steps">${r.schritte.map(s=>`
         <li><b>${esc(haupt(s,0))}</b>
         <i>${esc(zweit(s,0))}</i></li>`).join("")}</ol>
+      <div class="tip">🔧 ${esc(HILFE[L]||HILFE.de)}</div>
       ${r.tip?`<div class="tip">💡 ${esc(L==="th"?r.tip[1]:L==="en"?r.tip[2]:r.tip[0])}</div>`:""}
     `}`;
   app.querySelector(".back").onclick=()=>{cur=null;scrollTo(0,0);render()};
