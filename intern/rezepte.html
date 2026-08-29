@@ -249,8 +249,8 @@ const REZEPTE = [
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
    ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
    ["① Flüssigkeit zuerst: Wasser","① ใส่ของเหลวก่อน: น้ำ","① Liquids first: Water"],
-   ["② Frisches & Weiches: Seidentofu, Banane, reif","② ของสดและของนิ่ม: เต้าหู้นิ่ม · กล้วยสุก","② Fresh & soft: Silken tofu, Ripe banana"],
-   ["③ Trockenes darüber: Pandanblätter, Sonnenblumenkerne, Ceylon-Zimt","③ ใส่ของแห้งทับ: ใบเตย ทำน้ำใบเตย · เมล็ดทานตะวัน · อบเชยซีลอน","③ Dry on top: Pandan leaves, Sunflower seeds, Ceylon cinnamon"],
+   ["② Frisches & Weiches: Seidentofu, Banane, reif, Pandanblätter","② ของสดและของนิ่ม: เต้าหู้นิ่ม · กล้วยสุก · ใบเตย ทำน้ำใบเตย","② Fresh & soft: Silken tofu, Ripe banana, Pandan leaves"],
+   ["③ Trockenes darüber: Sonnenblumenkerne, Ceylon-Zimt","③ ใส่ของแห้งทับ: เมล็ดทานตะวัน · อบเชยซีลอน","③ Dry on top: Sunflower seeds, Ceylon cinnamon"],
    ["④ Gefrorenes ganz oben: Banane, reif","④ ของแช่แข็งไว้บนสุด: กล้วยสุก","④ Frozen last, on top: Ripe banana"],
    ["60\"-Taste (1 Minute)  (60 s, höchste Stufe)","กดปุ่ม 60 วินาที (1 นาที)  (60 วินาที ความเร็วสูงสุด)","The 60\" button  (60 s, high speed)"],
    ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
@@ -1436,7 +1436,124 @@ const REZEPTE = [
  ],
  tip:["Das ist der Matcha-Latte als Smoothie — die Fassung, die in Thailand jeder kennt, nur ohne Zucker und ohne Eis. AUSNAHME ZUR REGEL: Banane steht hier bei 60 % gefroren statt der üblichen 45 %. Das ist Absicht. Banane friert cremig statt eisig, weil sie kaum freies Wasser hat, das große Kristalle bilden könnte — und die Mandelmilch trägt die Masse. So werden die 180 g Kälte je Becher erreicht, die die Frucht ohne Eiszusatz liefern muss. Haferflocken kommen trocken dazu (Stufe ③) und mixen sich in 60 Sekunden glatt; sie machen aus dem Getränk ein Frühstück. ⚠ Verkostung steht aus.",
       "มัทฉะลาเต้ในแบบสมูทตี้ — ไม่ใส่น้ำตาล ไม่ใส่น้ำแข็ง · ข้อยกเว้น: กล้วยแช่แข็ง 60% แทน 45% ตั้งใจทำ เพราะกล้วยแช่แข็งแล้วเนียน ไม่เป็นเกล็ดน้ำแข็ง และนมอัลมอนด์ช่วยพยุงเนื้อ · ข้าวโอ๊ตใส่ตอนของแห้ง (ขั้นที่ ③) ปั่น 60 วินาทีก็เนียน ทำให้อิ่มเหมือนมื้อเช้า · ⚠ ยังไม่ได้ชิมทดสอบ",
-      "The matcha latte as a smoothie — the version everyone in Thailand knows, minus the sugar and the ice. EXCEPTION TO THE RULE: banana sits at 60 % frozen here instead of the usual 45 %. That is deliberate. Banana freezes creamy rather than icy because it holds almost no free water to form large crystals, and the almond milk carries the mass. That is how the cup reaches its 180 g of cold without added ice. ⚠ Not yet tasted."]}
+      "The matcha latte as a smoothie — the version everyone in Thailand knows, minus the sugar and the ice. EXCEPTION TO THE RULE: banana sits at 60 % frozen here instead of the usual 45 %. That is deliberate. Banana freezes creamy rather than icy because it holds almost no free water to form large crystals, and the almond milk carries the mass. That is how the cup reaches its 180 g of cold without added ice. ⚠ Not yet tasted."]},
+
+{n:"55", stufe:"C", de:"Kurkuma-Ananas-Ingwer", th:"ขมิ้น-สับปะรด-ขิง", en:"Turmeric-Pineapple-Ginger",
+ alg:"",
+ zut:[
+   ["KO", 100,"Kokosmilch — Fettträger, ohne ihn bleibt Kurkuma wirkungslos","กะทิ — ตัวพาไขมัน","Coconut milk — the fat carrier"],
+   ["LS",   5,"Limettensaft","น้ำมะนาว","Lime juice"],
+   ["AN", 160,"Ananas (frisch)","สับปะรด (สด)","Pineapple (fresh)"],
+   ["IG",   3,"Ingwer, frisch gerieben (≈1 cm)","ขิงสดขูด (ราว 1 ซม.)","Fresh ginger, grated"],
+   ["KU",   1,"Kurkuma, frisch gerieben — Handschuhe, färbt","ขมิ้นสดขูด — ใส่ถุงมือ ติดสี","Fresh turmeric, grated — gloves, it stains"],
+   ["PP", 0.2,"Schwarzer Pfeffer, 1 Mühlendrehung","พริกไทยดำ 1 หมุน","Black pepper, one grind"],
+   ["AN", 200,"Ananas (gefroren)","สับปะรด (แช่แข็ง)","Pineapple (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch, Limettensaft","① ใส่ของเหลวก่อน: กะทิ · น้ำมะนาว","① Liquids first: Coconut milk, Lime juice"],
+   ["② Frisches & Weiches: Ananas, Ingwer, gerieben","② ของสดและของนิ่ม: สับปะรด · ขิงสดขูด","② Fresh & soft: Pineapple, ginger, grated"],
+   ["③ Trockenes darüber: Kurkuma, gerieben, Schwarzer Pfeffer, 1 Mühlendrehung","③ ใส่ของแห้งทับ: ขมิ้นสดขูด · พริกไทยดำ 1 หมุน","③ Dry on top: turmeric, grated, Black pepper, one grind"],
+   ["④ Gefrorenes ganz oben: Ananas","④ ของแช่แข็งไว้บนสุด: สับปะรด","④ Frozen last, on top: Pineapple"],
+   ["90\"-Taste  (90 s, höchste Stufe)","กดปุ่ม 90 วินาที  (90 วินาที ความเร็วสูงสุด)","The 90\" button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Der Becher soll nach ANANAS mit warmer Gewürznote schmecken, nicht nach Kurkuma — genau wie Peters Grundsatz bei Rezept 13: Geschmack geht vor. Deshalb nur 1 g Kurkuma. Kokosmilch und Pfeffer stehen nicht zufällig drin: Curcumin ist fettlöslich, und Piperin aus dem Pfeffer ist der zweite Teil des Paars. Ohne beides ist der Kurkuma reine Farbe. Kurkuma IMMER mit Handschuhen reiben und auf einem Plastik- oder Glasbrett — Holz färbt dauerhaft gelb. ⚠ Verkostung steht aus.",
+      "แก้วนี้ต้องได้รสสับปะรดเป็นหลัก มีกลิ่นเครื่องเทศอุ่น ๆ ตาม ไม่ใช่รสขมิ้นล้วน จึงใส่ขมิ้นแค่ 1 กรัม · กะทิกับพริกไทยไม่ได้ใส่เล่น ๆ — เคอร์คูมินละลายในไขมัน และพริกไทยช่วยเสริม · ขูดขมิ้นต้องใส่ถุงมือ ใช้เขียงพลาสติกหรือแก้ว ไม่ใช้เขียงไม้ เพราะติดสีถาวร · ⚠ ยังไม่ได้ชิมทดสอบ",
+      "The cup should taste of PINEAPPLE with a warm spice note, not of turmeric — 1 g only. Coconut milk and pepper are not decoration: curcumin is fat-soluble and piperine is the other half of the pair. Always grate turmeric with gloves on a plastic or glass board — wood stains permanently. ⚠ Not yet tasted."]},
+
+{n:"56", stufe:"A", de:"Drachenfrucht weiß pur (100 % Frucht)", th:"แก้วมังกรขาว เพียว 100%", en:"White Dragon Fruit 100% Pure",
+ alg:"",
+ zut:[
+   ["LS",   5,"Limettensaft","น้ำมะนาว","Lime juice"],
+   ["DW", 200,"Drachenfrucht weiß, reif (frisch)","แก้วมังกรขาวสุก (สด)","White dragon fruit, ripe (fresh)"],
+   ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
+   ["SA", 0.3,"Salz","เกลือ","Salt"],
+   ["DW", 250,"Drachenfrucht weiß (gefroren)","แก้วมังกรขาว (แช่แข็ง)","White dragon fruit (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Limettensaft","① ใส่ของเหลวก่อน: น้ำมะนาว","① Liquids first: Lime juice"],
+   ["② Frisches & Weiches: Drachenfrucht weiß, reif, Minze, gezählt","② ของสดและของนิ่ม: แก้วมังกรขาวสุก · ใบสะระแหน่ เด็ดใบ","② Fresh & soft: White dragon fruit, ripe, Mint, counted"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Drachenfrucht weiß","④ ของแช่แข็งไว้บนสุด: แก้วมังกรขาว","④ Frozen last, on top: White dragon fruit"],
+   ["60\"-Taste (1 Minute)  (60 s, höchste Stufe)","กดปุ่ม 60 วินาที (1 นาที)  (60 วินาที ความเร็วสูงสุด)","The 60\" button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Peters eigener Verkostungsbefund vom 15.08. über rohe Drachenfrucht: „Geruch kaum vorhanden, Geschmack kaum vorhanden“. Genau deshalb stehen Limette, Minze und Salz hier NICHT als Deko drin, sondern als Wachmacher — ohne sie schmeckt der Becher nach nichts. Das Salz ist der stärkste der drei Hebel, obwohl man es nicht herausschmeckt. Verbraucht 450 g Drachenfrucht je Becher und ist damit der schnellste Weg, die 3 kg abzubauen. Als zweite „pur“-Farbe (weiß) neben dem Gelb von Mango und Ananas. ⚠ Verkostung steht aus.",
+      "ผลชิมของปีเตอร์ 15.08. เรื่องแก้วมังกรดิบ: แทบไม่มีกลิ่น แทบไม่มีรส · มะนาว สะระแหน่ และเกลือจึงไม่ใช่ของตกแต่ง แต่เป็นตัวปลุกรส ถ้าไม่มีจะจืดสนิท · เกลือคือตัวที่แรงที่สุด แม้จะไม่รู้สึกว่าเค็ม · ใช้แก้วมังกร 450 กรัมต่อแก้ว จึงลดสต็อก 3 กก. ได้เร็วที่สุด · ⚠ ยังไม่ได้ชิมทดสอบ",
+      "Peter's own tasting note on raw dragon fruit (15.08.): barely any smell, barely any taste. That is exactly why lime, mint and salt are here as wake-up agents, not garnish. Salt is the strongest of the three even though you never taste it. Uses 450 g per cup — the fastest way to clear the 3 kg. ⚠ Not yet tasted."]},
+
+{n:"57", stufe:"B", de:"Drachenfrucht-Ananas-Limette", th:"แก้วมังกรขาว-สับปะรด-มะนาว", en:"Dragon Fruit White-Pineapple-Lime",
+ alg:"",
+ zut:[
+   ["KW",  90,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
+   ["LS",   8,"Limettensaft","น้ำมะนาว","Lime juice"],
+   ["DW", 100,"Drachenfrucht weiß (frisch)","แก้วมังกรขาว (สด)","White dragon fruit (fresh)"],
+   ["AN",  67,"Ananas (frisch)","สับปะรด (สด)","Pineapple (fresh)"],
+   ["DW", 123,"Drachenfrucht weiß (gefroren)","แก้วมังกรขาว (แช่แข็ง)","White dragon fruit (frozen)"],
+   ["AN",  82,"Ananas (gefroren)","สับปะรด (แช่แข็ง)","Pineapple (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokoswasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำมะพร้าว · น้ำมะนาว","① Liquids first: Coconut water, Lime juice"],
+   ["② Frisches & Weiches: Drachenfrucht weiß, Ananas","② ของสดและของนิ่ม: แก้วมังกรขาว · สับปะรด","② Fresh & soft: White dragon fruit, Pineapple"],
+   ["④ Gefrorenes ganz oben: Drachenfrucht weiß, Ananas","④ ของแช่แข็งไว้บนสุด: แก้วมังกรขาว · สับปะรด","④ Frozen last, on top: White dragon fruit, Pineapple"],
+   ["90\"-Taste  (90 s, höchste Stufe)","กดปุ่ม 90 วินาที  (90 วินาที ความเร็วสูงสุด)","The 90\" button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Dieselbe Aufgabe wie Nr. 56, andere Lösung: statt Kräuterfrische holt hier die Ananas die Säure und Süße, die der Drachenfrucht fehlt. Der praktische Vorteil — der Becher verbraucht 223 g Drachenfrucht UND 149 g frische Ananas auf einmal, und beides muss zuerst weg. Wer Nr. 56 zu blass findet, verkauft diesen. ⚠ Verkostung steht aus.",
+      "งานเดียวกับสูตร 56 แต่แก้ต่างกัน: แทนที่จะใช้สมุนไพร ใช้สับปะรดเติมความเปรี้ยวหวานที่แก้วมังกรขาดไป · ข้อดีจริง — แก้วเดียวใช้แก้วมังกร 223 ก. และสับปะรดสด 149 ก. ซึ่งทั้งคู่ต้องรีบใช้ · ⚠ ยังไม่ได้ชิมทดสอบ",
+      "Same problem as No. 56, different answer: pineapple brings the acidity and sweetness the dragon fruit lacks. The practical gain — one cup clears 223 g of dragon fruit and 149 g of fresh pineapple at once. ⚠ Not yet tasted."]},
+
+{n:"58", stufe:"B", de:"Pandan-Kokos-Ananas", th:"ใบเตย-กะทิ-สับปะรด", en:"Pandan-Coconut-Pineapple",
+ alg:"",
+ zut:[
+   ["KO", 130,"Kokosmilch — Fettträger, PFLICHT bei Pandan","กะทิ — ตัวพาไขมัน จำเป็นสำหรับใบเตย","Coconut milk — fat carrier, required for pandan"],
+   ["PD",   6,"Pandanblätter, fein geschnitten (≈3 Blätter)","ใบเตยหั่นฝอย (ราว 3 ใบ)","Pandan leaves, finely cut (approx. 3)"],
+   ["AN", 150,"Ananas (frisch)","สับปะรด (สด)","Pineapple (fresh)"],
+   ["SA", 0.3,"Salz","เกลือ","Salt"],
+   ["AN", 183,"Ananas (gefroren)","สับปะรด (แช่แข็ง)","Pineapple (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch","① ใส่ของเหลวก่อน: กะทิ","① Liquids first: Coconut milk"],
+   ["② Frisches & Weiches: Pandanblätter, fein geschnitten, Ananas","② ของสดและของนิ่ม: ใบเตยหั่นฝอย · สับปะรด","② Fresh & soft: Pandan leaves, finely cut, Pineapple"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Ananas","④ ของแช่แข็งไว้บนสุด: สับปะรด","④ Frozen last, on top: Pineapple"],
+   ["90\"-Taste  (90 s, höchste Stufe)","กดปุ่ม 90 วินาที  (90 วินาที ความเร็วสูงสุด)","The 90\" button  (90 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Die Kokosmilch ist hier keine Geschmacksfrage, sondern Bedingung: Das Pandan-Aroma (2-Acetyl-1-Pyrrolin) ist fettlöslich. In einem wässrigen Becher verpufft es und übrig bleibt eine grasige, leicht seifige Note. Das ist Regel A aus den Kombi-Regeln vom 25.08. — und der Grund, warum Rezept 03 nie verkaufsfähig war. Dieses Rezept ersetzt es. Ananas darf zusätzlich dazu: ihre Enzyme unterstützen die Aromafreisetzung, und die Süße trägt das Pandan. 90 Sekunden wegen der Ananas-Fasern. ⚠ Verkostung steht aus.",
+      "กะทิไม่ใช่เรื่องรสชาติ แต่เป็นเงื่อนไข: กลิ่นใบเตย (2-Acetyl-1-Pyrroline) ละลายในไขมัน ถ้าอยู่ในน้ำเปล่าจะหายไป เหลือแต่กลิ่นหญ้าและสบู่ · นี่คือกฎข้อ A จากกฎการจับคู่ 25.08. และเป็นเหตุผลที่สูตร 03 ขายไม่ได้ · สูตรนี้มาแทน · ปั่น 90 วินาที เพราะเส้นใยสับปะรด · ⚠ ยังไม่ได้ชิมทดสอบ",
+      "The coconut milk is not a taste choice but a condition: pandan's aroma compound (2-acetyl-1-pyrroline) is fat-soluble. In a watery cup it evaporates and leaves a grassy, faintly soapy note. That is rule A from the 25.08. pairing rules — and the reason recipe 03 was never sellable. This one replaces it. ⚠ Not yet tasted."]},
+
+{n:"59", stufe:"B", de:"Zitronengras-Mango-Kokos", th:"ตะไคร้-มะม่วง-กะทิ", en:"Lemongrass-Mango-Coconut",
+ alg:"",
+ zut:[
+   ["KO",  90,"Kokosmilch — Fettträger, PFLICHT bei Zitronengras","กะทิ — ตัวพาไขมัน จำเป็นสำหรับตะไคร้","Coconut milk — fat carrier, required for lemongrass"],
+   ["ZG",  15,"Zitronengras, nur weiches Inneres, fein gehackt (≈1 Stängel)","ตะไคร้ ส่วนในที่นิ่ม ซอยละเอียด (ราว 1 ต้น)","Lemongrass, tender inner core only, finely chopped"],
+   ["MG", 182,"Mango (frisch)","มะม่วง (สด)","Mango (fresh)"],
+   ["SA", 0.3,"Salz","เกลือ","Salt"],
+   ["MG", 183,"Mango (gefroren)","มะม่วง (แช่แข็ง)","Mango (frozen)"]
+ ],
+ schritte:[
+   ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
+   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
+   ["① Flüssigkeit zuerst: Kokosmilch","① ใส่ของเหลวก่อน: กะทิ","① Liquids first: Coconut milk"],
+   ["② Frisches & Weiches: Zitronengras, nur weiches Inneres, fein gehackt, Mango","② ของสดและของนิ่ม: ตะไคร้ ส่วนในที่นิ่ม ซอยละเอียด · มะม่วง","② Fresh & soft: Lemongrass, tender inner core only, finely chopped, Mango"],
+   ["③ Trockenes darüber: Salz","③ ใส่ของแห้งทับ: เกลือ","③ Dry on top: Salt"],
+   ["④ Gefrorenes ganz oben: Mango","④ ของแช่แข็งไว้บนสุด: มะม่วง","④ Frozen last, on top: Mango"],
+   ["60\"-Taste (1 Minute)  (60 s, höchste Stufe)","กดปุ่ม 60 วินาที (1 นาที)  (60 วินาที ความเร็วสูงสุด)","The 60\" button  (60 s, high speed)"],
+   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
+ ],
+ tip:["Gleiche Fett-Logik wie Nr. 58: Citral aus dem Zitronengras ist fettlöslich, die Kokosmilch trägt es. Rezept 01 nutzte Seidentofu — der ist Protein, kein Fettträger, und deshalb verstieß es gegen Regel A. Dieses Rezept ersetzt es. Mango statt Ananas als zweite Aromabrücke, weil Zitronengras-Mango-Kokos zur Tom-Kha-Aromenfamilie gehört, die hier jeder kennt. NUR das weiche Innere des Stängels verwenden — die äußeren Blätter sind holzig und geben Fasern, die man zwischen den Zähnen hat. ⚠ Verkostung steht aus.",
+      "ตรรกะไขมันเดียวกับสูตร 58: ซิทรัลในตะไคร้ละลายในไขมัน กะทิเป็นตัวพา · สูตร 01 ใช้เต้าหู้นิ่ม ซึ่งเป็นโปรตีน ไม่ใช่ไขมัน จึงผิดกฎข้อ A · สูตรนี้มาแทน · ใช้มะม่วงแทนสับปะรด เพราะตะไคร้-มะม่วง-กะทิ อยู่ในตระกูลกลิ่นต้มข่าที่คนไทยคุ้นเคย · ใช้เฉพาะส่วนในที่นิ่มของต้น ส่วนนอกแข็งเป็นเสี้ยน · ⚠ ยังไม่ได้ชิมทดสอบ",
+      "Same fat logic as No. 58: citral is fat-soluble, coconut milk carries it. Recipe 01 used silken tofu — that is protein, not a fat carrier, so it broke rule A. This replaces it. Use only the tender inner core; the outer leaves are woody and leave fibres between the teeth. ⚠ Not yet tasted."]}
 ];
 
 const T={
