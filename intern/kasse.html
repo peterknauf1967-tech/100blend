@@ -108,6 +108,16 @@
   .item .db{font:700 11px inherit;color:#2f855a;margin-top:2px}
   .item .db.warn{color:#a4262c}
   .item .stern{color:#d4a72c}
+/* BOOSTER-CHIPS in der Bestellzeile — antippen schaltet den Booster
+   fuer genau diese Zeile an oder aus. Aktiv = gefuellt. */
+.bchips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.bchip{
+  border:1px solid #cfc9bd;background:#fff;color:#5b5347;
+  border-radius:999px;padding:4px 9px;font:600 11.5px/1.2 inherit;
+  cursor:pointer;white-space:nowrap;
+}
+.bchip:active{transform:scale(.96)}
+.bchip.on{background:#2C5A3B;border-color:#2C5A3B;color:#fff}
 </style>
 <meta name="robots" content="noindex,nofollow">
 <title>MIXO Kasse</title>
@@ -441,10 +451,90 @@ const KALK_FAKTOR=3.5;
 const THERMO_TASCHE=2.6;
 const TASCHE_CODE="TB";
 const THERMO_PRO_BECHER=0.5;
+
+/* ═══════════════ BOOSTER (Zusatzoptionen je Becher) ═══════════════
+   Peter, 30.08.2026: "Wo sind die Optionen fuer die Smoothies?"
+
+   gramm  Menge je Bechergroesse. Whey steigt mit der Groesse, Kreatin
+          nicht — die Dosis ist eine Tagesdosis, kein Geschmacksmittel.
+   ekProG Rohstoffpreis je Gramm aus _katalog.json (Beleg dort).
+   offen  true = Preis noch nicht belegt, darf nicht verkauft werden.
+   sperre Text, warum die Position noch nicht auf die Karte darf.
+
+   Der VERKAUFSPREIS wird gerechnet, nicht getippt (BOOSTER_FAKTOR).
+   Aendert sich der Einkauf, aendert sich der Aufpreis von allein —
+   dieselbe Logik wie beim XXL-Aufpreis. */
+const BOOSTER_FAKTOR = 2.0;   /* Aufschlag auf den Rohstoff. Niedriger als
+                                 die 3.5 beim Smoothie, weil kein zusaetzlicher
+                                 Arbeitsgang und keine Verpackung dazukommt. */
+const BOOSTER_MIN    = 20;    /* Kleiner lohnt das Handling nicht. */
+
+const BOOSTER=[
+ {code:"WY", de:"Whey Protein",   th:"เวย์โปรตีน",        en:"Whey protein",
+  gramm:{"12":20,"16":25,"22":30}, ekProG:1.436, offen:false,
+  sperre:"⚠ Halal-Zertifizierung des MATELL-Isolats ungeklaert (30.08.)"},
+
+ {code:"KR", de:"Kreatin",        th:"ครีเอทีน",           en:"Creatine",
+  gramm:{"12":3,"16":3,"22":3},    ekProG:null,  offen:true,
+  sperre:"⚠ Preis offen · Verkauf in Thailand rechtlich ungeklaert"},
+
+ {code:"MC", de:"Matcha",         th:"มัทฉะ",              en:"Matcha",
+  gramm:{"12":1.5,"16":2,"22":2.5}, ekProG:3.225, offen:false, sperre:""},
+
+ {code:"KL", de:"Kollagen",       th:"คอลลาเจน",          en:"Collagen",
+  gramm:{"12":8,"16":10,"22":12},  ekProG:2.0,   offen:false, sperre:""},
+
+ {code:"EB", de:"Erdnussbutter",  th:"เนยถั่ว",            en:"Peanut butter",
+  gramm:{"12":12,"16":15,"22":20}, ekProG:0.328, offen:false, sperre:""},
+
+ {code:"HG", de:"Honig",          th:"น้ำผึ้ง",             en:"Honey",
+  gramm:{"12":10,"16":15,"22":20}, ekProG:null,  offen:true,
+  sperre:"⚠ Preis offen — noch nicht eingekauft"},
+
+ {code:"AX", de:"Astaxanthin",    th:"แอสตาแซนทิน",      en:"Astaxanthin",
+  gramm:{"12":0.24,"16":0.24,"22":0.24}, ekProG:null, offen:true,
+  sperre:"⚠ Preis offen"},
+];
+const boosterVon = c => BOOSTER.find(b=>b.code===c);
+function boosterGramm(b, g){ return b.gramm[g||GROESSE] || b.gramm["16"]; }
+function boosterEk(b, g){
+  if (b.ekProG == null) return 0;
+  return Math.round(boosterGramm(b,g) * b.ekProG * 100) / 100;
+}
+/* Aufpreis: Rohstoff x Faktor, auf 10 Baht gerundet, Mindestbetrag.
+   Kein fester Preis in der Datei — er folgt dem Einkauf. */
+function boosterPreis(b, g){
+  if (b.offen) return 0;
+  const roh = boosterEk(b, g) * BOOSTER_FAKTOR;
+  return Math.max(BOOSTER_MIN, Math.round(roh/10)*10);
+}
+/* Nur was einen belegten Preis hat, taucht als Verkaufsoption auf. */
+const boosterVerkaufbar = () => BOOSTER.filter(b=>!b.offen);
+
+/* ═══════════════ XXL-AUFPREIS — dynamisch ═══════════════
+   Peters Regel vom 30.08.2026, woertlich:
+     "Preis vom 16-oz-Becher auf 22 oz umrechnen und 5 % abziehen.
+      Diese Differenz dann als Aufpreis berechnen. Muss dynamisch
+      bleiben, weil wenn der Preis fuer den Smoothie sich aendert,
+      muss sich auch der Aufpreis aendern."
+
+   22 oz / 16 oz            = 1,375   (Volumen)
+   davon 5 % Mengenrabatt   x 0,95
+   ------------------------------------
+   Faktor auf den 16-oz-Preis = 1,30625
+
+   Der Aufpreis ist die Differenz, also 30,625 % des 16-oz-Preises.
+   Beispiel 149 ฿ -> 22 oz 195 ฿, Aufpreis 46 ฿.
+   Aendert Peter den 16-oz-Preis, rechnet sich beides neu. */
+const XXL_VOLUMEN = 22/16;
+const XXL_RABATT  = 0.95;
+const XXL_FAKTOR  = XXL_VOLUMEN * XXL_RABATT;
+const xxlPreis    = p16 => Math.round(p16 * XXL_FAKTOR);
+const xxlAufpreis = p16 => xxlPreis(p16) - Math.round(p16);
 /* Namen und Einheiten der abgezogenen Codes — nur damit die Verbrauchsliste
    im Tag-Reiter lesbar ist ("Ananas 1 310 g" statt "AN 1310"). */
-const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","SK":"Sonnenblumenkerne","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","KE":"Kürbiskerne","MI":"Minze","MS":"Mangostan","BA":"Banane","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","ER":"Erdbeere TK","MB":"Maulbeere TK","GU":"Guave","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","KK":"Kakao (Holland, ungesüßt)","ST":"Süßtamarinde (Makham Wan)","MG":"Mango","KM":"Kuhmilch 🥛 (Meiji, 2 L)","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","HF":"Haferflocken → Hafermilch","GK":"Gurke","ZT":"Zitrone","BK":"Brokkoli TK","PS":"Pfirsich TK","KU":"Kurkuma","HS":"Hanfsamen (geschält)","JB":"Schwarze Johannisbeere TK","TB":"Thermo-Tasche (Lieferung) 25×30 cm"};
-const EINHEIT={"TE":"g","SK":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","KE":"g","MI":"g","MS":"g","BA":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","ER":"g","MB":"g","GU":"g","JO":"g","BM":"g","KL":"g","KO":"ml","KK":"g","ST":"g","MG":"g","KM":"ml","DR":"g","AV":"g","WM":"g","HF":"g","GK":"g","ZT":"g","BK":"g","PS":"g","KU":"g","HS":"g","JB":"g","TB":"Stk"};
+const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","SK":"Sonnenblumenkerne","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Deckel für 16 oz","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","MI":"Minze","MS":"Mangostan","BA":"Banane","KE":"Kürbiskerne","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","GU":"Guave","ER":"Erdbeere TK","MB":"Maulbeere TK ⛔ NICHT VERWENDEN (25.08.)","JO":"Joghurt natur 🥛 (2 L)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch","ST":"Süßtamarinde (Makham Wan)","KK":"Kakao (Holland, ungesüßt)","KM":"Kuhmilch 🥛 (Meiji, 2 L)","MG":"Mango","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","MM":"Mandelmilch fertig 🥜 (V-Soy 1 L)","HS":"Hanfsamen (geschält)","GK":"Gurke","ZT":"Zitrone","KU":"Kurkuma","BK":"Brokkoli TK","HF":"Haferflocken → Hafermilch","JB":"Schwarze Johannisbeere TK","OS":"Orangensaft frisch gepresst","OZ":"Orangenzeste","OG":"Orangensaft GEFROREN","KF":"Kaffee, Espresso ganze Bohne","PG":"Passionsfrucht grün","MA":"Mandeln → Mandelmilch 🥜","KB":"Knoblauch","SC":"Schalotte (statt Zwiebel)","DL":"Dill frisch","TB":"Thermo-Tasche (Lieferung) 25×30 cm"};
+const EINHEIT={"TE":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","SK":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","MI":"g","MS":"g","BA":"g","KE":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","GU":"g","ER":"g","MB":"g","JO":"g","BM":"g","KL":"g","KO":"ml","ST":"g","KK":"g","KM":"ml","MG":"g","DR":"g","AV":"g","WM":"g","MM":"ml","HS":"g","GK":"g","ZT":"g","KU":"g","BK":"g","HF":"g","JB":"g","OS":"ml","OZ":"g","OG":"g","KF":"g","PG":"g","MA":"g","KB":"g","SC":"g","DL":"g","TB":"Stk"};
 const MENU=[
  {
   "nr": "01",
@@ -465,17 +555,17 @@ const MENU=[
     "preis": 69,
     "offen": [
      "TE",
-     "SK",
-     "TO"
+     "TO",
+     "SK"
     ],
     "abzug": {
      "TE": 112.7,
-     "SK": 30,
      "TO": 90.1,
-     "PF": 45.1,
+     "PF": 45,
      "AN": 37.6,
      "ZG": 11.3,
      "GA": 2.3,
+     "SK": 30,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -492,17 +582,17 @@ const MENU=[
     "preis": 79,
     "offen": [
      "TE",
-     "SK",
-     "TO"
+     "TO",
+     "SK"
     ],
     "abzug": {
      "TE": 150,
-     "SK": 40,
      "TO": 120,
      "PF": 60,
      "AN": 50,
      "ZG": 15,
      "GA": 3,
+     "SK": 40,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -519,17 +609,17 @@ const MENU=[
     "preis": 109,
     "offen": [
      "TE",
-     "SK",
-     "TO"
+     "TO",
+     "SK"
     ],
     "abzug": {
      "TE": 206.1,
-     "SK": 55,
      "TO": 164.9,
-     "PF": 82.4,
-     "AN": 68.7,
+     "PF": 82.5,
+     "AN": 68.8,
      "ZG": 20.6,
      "GA": 4.1,
+     "SK": 55,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -556,17 +646,17 @@ const MENU=[
     "kalk": 69,
     "preis": 69,
     "offen": [
-     "KE",
      "MI",
-     "TO"
+     "TO",
+     "KE"
     ],
     "abzug": {
      "KN": 0.45,
-     "KE": 30,
-     "MI": 2.3,
+     "MI": 0.8,
      "TO": 90.1,
-     "MS": 45.1,
-     "BA": 37.6,
+     "MS": 45,
+     "BA": 37.5,
+     "KE": 30,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -582,17 +672,17 @@ const MENU=[
     "kalk": 89,
     "preis": 89,
     "offen": [
-     "KE",
      "MI",
-     "TO"
+     "TO",
+     "KE"
     ],
     "abzug": {
      "KN": 0.6,
-     "KE": 40,
-     "MI": 3,
+     "MI": 1,
      "TO": 120,
      "MS": 60,
      "BA": 50,
+     "KE": 40,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -608,17 +698,17 @@ const MENU=[
     "kalk": 109,
     "preis": 109,
     "offen": [
-     "KE",
      "MI",
-     "TO"
+     "TO",
+     "KE"
     ],
     "abzug": {
      "KN": 0.82,
-     "KE": 55,
-     "MI": 4.1,
+     "MI": 1.4,
      "TO": 164.9,
      "MS": 82.4,
      "BA": 68.7,
+     "KE": 55,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -645,17 +735,17 @@ const MENU=[
     "kalk": 39,
     "preis": 39,
     "offen": [
+     "TO",
      "PD",
      "SK",
-     "ZI",
-     "TO"
+     "ZI"
     ],
     "abzug": {
+     "TO": 90.1,
+     "BA": 37.5,
      "PD": 4.5,
      "SK": 30,
      "ZI": 0.4,
-     "TO": 90.1,
-     "BA": 37.6,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -671,17 +761,17 @@ const MENU=[
     "kalk": 39,
     "preis": 39,
     "offen": [
+     "TO",
      "PD",
      "SK",
-     "ZI",
-     "TO"
+     "ZI"
     ],
     "abzug": {
+     "TO": 120,
+     "BA": 50,
      "PD": 6,
      "SK": 40,
      "ZI": 0.5,
-     "TO": 120,
-     "BA": 50,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -697,17 +787,17 @@ const MENU=[
     "kalk": 39,
     "preis": 39,
     "offen": [
+     "TO",
      "PD",
      "SK",
-     "ZI",
-     "TO"
+     "ZI"
     ],
     "abzug": {
+     "TO": 164.9,
+     "BA": 68.7,
      "PD": 8.2,
      "SK": 55,
      "ZI": 0.7,
-     "TO": 164.9,
-     "BA": 68.7,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -734,19 +824,19 @@ const MENU=[
     "kalk": 39,
     "preis": 39,
     "offen": [
-     "SK",
      "LS",
      "TO",
      "WS",
-     "IG"
+     "IG",
+     "SK"
     ],
     "abzug": {
-     "SK": 30,
      "LS": 7.5,
      "TO": 90.1,
-     "DW": 60.1,
+     "DW": 60,
      "WS": 30,
      "IG": 2.3,
+     "SK": 30,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -762,19 +852,19 @@ const MENU=[
     "kalk": 39,
     "preis": 39,
     "offen": [
-     "SK",
      "LS",
      "TO",
      "WS",
-     "IG"
+     "IG",
+     "SK"
     ],
     "abzug": {
-     "SK": 40,
      "LS": 10,
      "TO": 120,
      "DW": 80,
      "WS": 40,
      "IG": 3,
+     "SK": 40,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -790,19 +880,19 @@ const MENU=[
     "kalk": 39,
     "preis": 39,
     "offen": [
-     "SK",
      "LS",
      "TO",
      "WS",
-     "IG"
+     "IG",
+     "SK"
     ],
     "abzug": {
-     "SK": 55,
      "LS": 13.7,
      "TO": 164.9,
-     "DW": 109.9,
+     "DW": 110,
      "WS": 55,
      "IG": 4.1,
+     "SK": 55,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -834,10 +924,10 @@ const MENU=[
     "abzug": {
      "KN": 0.36,
      "RO": 0.14,
+     "BA": 37.5,
+     "GU": 45.1,
      "ER": 45.1,
      "MB": 30,
-     "BA": 37.6,
-     "GU": 45.1,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -858,10 +948,10 @@ const MENU=[
     "abzug": {
      "KN": 0.48,
      "RO": 0.18,
-     "ER": 60,
-     "MB": 40,
      "BA": 50,
      "GU": 60,
+     "ER": 60,
+     "MB": 40,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -882,10 +972,10 @@ const MENU=[
     "abzug": {
      "KN": 0.66,
      "RO": 0.25,
-     "ER": 82.4,
-     "MB": 55,
      "BA": 68.7,
      "GU": 82.4,
+     "ER": 82.4,
+     "MB": 55,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -918,8 +1008,8 @@ const MENU=[
     "abzug": {
      "KN": 0.24,
      "JO": 60.1,
+     "BA": 37.5,
      "BM": 112.7,
-     "BA": 37.6,
      "KL": 7.5,
      "B12": 1,
      "D12": 1,
@@ -942,8 +1032,8 @@ const MENU=[
     "abzug": {
      "KN": 0.32,
      "JO": 80,
-     "BM": 150,
      "BA": 50,
+     "BM": 150,
      "KL": 10,
      "B16": 1,
      "D16": 1,
@@ -966,8 +1056,8 @@ const MENU=[
     "abzug": {
      "KN": 0.44,
      "JO": 109.9,
-     "BM": 206.1,
      "BA": 68.7,
+     "BM": 206.1,
      "KL": 13.7,
      "BE": 1,
      "DE": 1,
@@ -1000,9 +1090,9 @@ const MENU=[
     ],
     "abzug": {
      "KO": 150.2,
-     "KK": 7.5,
      "ST": 11.3,
      "BA": 60.1,
+     "KK": 7.5,
      "KE": 9,
      "B12": 1,
      "D12": 1,
@@ -1024,9 +1114,9 @@ const MENU=[
     ],
     "abzug": {
      "KO": 200,
-     "KK": 10,
      "ST": 15,
      "BA": 80,
+     "KK": 10,
      "KE": 12,
      "B16": 1,
      "D16": 1,
@@ -1048,9 +1138,9 @@ const MENU=[
     ],
     "abzug": {
      "KO": 274.8,
-     "KK": 13.7,
      "ST": 20.6,
      "BA": 109.9,
+     "KK": 13.7,
      "KE": 16.5,
      "BE": 1,
      "DE": 1,
@@ -1083,8 +1173,8 @@ const MENU=[
     "abzug": {
      "KN": 0.36,
      "BA": 60.1,
-     "BM": 60.1,
      "ST": 11.3,
+     "BM": 60.1,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -1105,8 +1195,8 @@ const MENU=[
     "abzug": {
      "KN": 0.48,
      "BA": 80,
-     "BM": 80,
      "ST": 15,
+     "BM": 80,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -1127,8 +1217,8 @@ const MENU=[
     "abzug": {
      "KN": 0.66,
      "BA": 109.9,
-     "BM": 109.9,
      "ST": 20.6,
+     "BM": 109.9,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -1148,21 +1238,19 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 5.9,
+    "ware": 6.1,
     "verp": 4.2,
-    "ek": 10.1,
-    "ekLief": 11.4,
+    "ek": 10.3,
+    "ekLief": 11.6,
     "kalk": 39,
     "preis": 39,
     "offen": [
-     "KM",
-     "LS"
+     "KM"
     ],
     "abzug": {
-     "MG": 112.7,
-     "BA": 45.1,
      "KM": 112.7,
-     "LS": 3.8,
+     "MG": 116.4,
+     "BA": 45.1,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -1171,21 +1259,19 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 7.9,
+    "ware": 8.1,
     "verp": 4.2,
-    "ek": 12.1,
-    "ekLief": 13.4,
+    "ek": 12.3,
+    "ekLief": 13.6,
     "kalk": 49,
     "preis": 49,
     "offen": [
-     "KM",
-     "LS"
+     "KM"
     ],
     "abzug": {
-     "MG": 150,
-     "BA": 60,
      "KM": 150,
-     "LS": 5,
+     "MG": 155,
+     "BA": 60,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -1194,21 +1280,19 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 10.9,
+    "ware": 11.2,
     "verp": 4.2,
-    "ek": 15,
-    "ekLief": 16.3,
+    "ek": 15.4,
+    "ekLief": 16.7,
     "kalk": 59,
     "preis": 59,
     "offen": [
-     "KM",
-     "LS"
+     "KM"
     ],
     "abzug": {
-     "MG": 206.1,
-     "BA": 82.4,
      "KM": 206.1,
-     "LS": 6.9,
+     "MG": 213,
+     "BA": 82.5,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -1238,7 +1322,7 @@ const MENU=[
     "abzug": {
      "KO": 112.7,
      "BA": 45.1,
-     "DR": 112.7,
+     "DR": 112.6,
      "ER": 7.5,
      "B12": 1,
      "D12": 1,
@@ -1277,8 +1361,8 @@ const MENU=[
     "offen": [],
     "abzug": {
      "KO": 206.1,
-     "BA": 82.4,
-     "DR": 206.1,
+     "BA": 82.5,
+     "DR": 206.2,
      "ER": 13.7,
      "BE": 1,
      "DE": 1,
@@ -1312,7 +1396,7 @@ const MENU=[
     "abzug": {
      "KM": 112.7,
      "ST": 11.3,
-     "BA": 37.6,
+     "BA": 37.5,
      "AV": 90.1,
      "B12": 1,
      "D12": 1,
@@ -1386,15 +1470,15 @@ const MENU=[
     "kalk": 69,
     "preis": 69,
     "offen": [
-     "MI",
-     "LS"
+     "LS",
+     "MI"
     ],
     "abzug": {
-     "WM": 105.1,
-     "ER": 15,
      "KN": 0.6,
-     "MI": 2.3,
      "LS": 7.5,
+     "WM": 105.2,
+     "MI": 1.5,
+     "ER": 15,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -1410,15 +1494,15 @@ const MENU=[
     "kalk": 89,
     "preis": 89,
     "offen": [
-     "MI",
-     "LS"
+     "LS",
+     "MI"
     ],
     "abzug": {
-     "WM": 140,
-     "ER": 20,
      "KN": 0.8,
-     "MI": 3,
      "LS": 10,
+     "WM": 140,
+     "MI": 2,
+     "ER": 20,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -1434,15 +1518,15 @@ const MENU=[
     "kalk": 119,
     "preis": 119,
     "offen": [
-     "MI",
-     "LS"
+     "LS",
+     "MI"
     ],
     "abzug": {
-     "WM": 192.4,
-     "ER": 27.5,
      "KN": 1.1,
-     "MI": 4.1,
      "LS": 13.7,
+     "WM": 192.4,
+     "MI": 2.7,
+     "ER": 27.5,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -1457,8 +1541,8 @@ const MENU=[
   "th": "แตงโม-มะนาว-สะระแหน่",
   "en": "Watermelon-Lime-Mint",
   "alg": "",
-  "bestaetigt": 1,
-  "std": true,
+  "bestaetigt": 0,
+  "std": false,
   "groessen": {
    "12": {
     "ml": 355,
@@ -1474,7 +1558,7 @@ const MENU=[
     ],
     "abzug": {
      "LS": 15.8,
-     "MI": 3.2,
+     "MI": 1.5,
      "WM": 336.5,
      "B12": 1,
      "D12": 1,
@@ -1496,7 +1580,7 @@ const MENU=[
     ],
     "abzug": {
      "LS": 21,
-     "MI": 4.2,
+     "MI": 2,
      "WM": 448,
      "B16": 1,
      "D16": 1,
@@ -1518,7 +1602,7 @@ const MENU=[
     ],
     "abzug": {
      "LS": 28.9,
-     "MI": 5.8,
+     "MI": 2.7,
      "WM": 615.5,
      "BE": 1,
      "DE": 1,
@@ -1539,17 +1623,17 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 23.3,
+    "ware": 24.1,
     "verp": 4.2,
-    "ek": 27.5,
-    "ekLief": 28.8,
+    "ek": 28.3,
+    "ekLief": 29.6,
     "kalk": 99,
     "preis": 99,
     "offen": [],
     "abzug": {
-     "KN": 0.43,
+     "KN": 0.54,
      "PF": 35.3,
-     "AN": 213.3,
+     "AN": 184.8,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -1558,17 +1642,17 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 31,
+    "ware": 32.1,
     "verp": 4.2,
-    "ek": 35.2,
-    "ekLief": 36.5,
+    "ek": 36.3,
+    "ekLief": 37.6,
     "kalk": 129,
     "preis": 129,
     "offen": [],
     "abzug": {
-     "KN": 0.57,
+     "KN": 0.72,
      "PF": 47,
-     "AN": 284,
+     "AN": 246.1,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -1577,17 +1661,17 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 42.7,
+    "ware": 44.1,
     "verp": 4.2,
-    "ek": 46.8,
-    "ekLief": 48.1,
+    "ek": 48.2,
+    "ekLief": 49.5,
     "kalk": 169,
     "preis": 169,
     "offen": [],
     "abzug": {
-     "KN": 0.78,
+     "KN": 0.99,
      "PF": 64.6,
-     "AN": 390.2,
+     "AN": 338.2,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -1598,26 +1682,32 @@ const MENU=[
  },
  {
   "nr": "17",
-  "name": "Banane-Kakao",
-  "th": "กล้วย-โกโก้",
-  "en": "Banana-Cacao",
+  "name": "Banane-Kakao-Protein",
+  "th": "กล้วย-โกโก้-โปรตีน",
+  "en": "Banana-Cacao-Protein",
   "alg": "🌱",
   "bestaetigt": 0,
   "std": false,
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 12.1,
+    "ware": 11.6,
     "verp": 4.2,
-    "ek": 16.3,
-    "ekLief": 17.6,
+    "ek": 15.8,
+    "ekLief": 17.1,
     "kalk": 59,
     "preis": 59,
-    "offen": [],
+    "offen": [
+     "MM",
+     "TO",
+     "HS"
+    ],
     "abzug": {
-     "HF": 17.35,
-     "KK": 7,
-     "BA": 174.2,
+     "MM": 149.3,
+     "TO": 45.1,
+     "BA": 136.1,
+     "KK": 9,
+     "HS": 15.8,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -1626,17 +1716,23 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 16.1,
+    "ware": 15.5,
     "verp": 4.2,
-    "ek": 20.3,
-    "ekLief": 21.6,
-    "kalk": 79,
-    "preis": 79,
-    "offen": [],
+    "ek": 19.7,
+    "ekLief": 21,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "MM",
+     "TO",
+     "HS"
+    ],
     "abzug": {
-     "HF": 23.1,
-     "KK": 9.3,
-     "BA": 232,
+     "MM": 198.8,
+     "TO": 60,
+     "BA": 181.2,
+     "KK": 12,
+     "HS": 21,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -1645,17 +1741,23 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 22.1,
+    "ware": 21.3,
     "verp": 4.2,
-    "ek": 26.3,
-    "ekLief": 27.6,
+    "ek": 25.5,
+    "ekLief": 26.8,
     "kalk": 99,
     "preis": 99,
-    "offen": [],
+    "offen": [
+     "MM",
+     "TO",
+     "HS"
+    ],
     "abzug": {
-     "HF": 31.74,
-     "KK": 12.8,
-     "BA": 318.8,
+     "MM": 273.2,
+     "TO": 82.4,
+     "BA": 248.9,
+     "KK": 16.5,
+     "HS": 28.9,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -1747,8 +1849,8 @@ const MENU=[
   "th": "สัปปะรด-แตงกวา-สะระแหน่",
   "en": "Pineapple-Cucumber-Mint",
   "alg": "",
-  "bestaetigt": 1,
-  "std": true,
+  "bestaetigt": 0,
+  "std": false,
   "groessen": {
    "12": {
     "ml": 355,
@@ -1766,9 +1868,9 @@ const MENU=[
     "abzug": {
      "KN": 0.32,
      "LS": 10.5,
-     "MI": 2.6,
+     "MI": 1.5,
      "GK": 105.1,
-     "AN": 157.7,
+     "AN": 157.8,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -1791,7 +1893,7 @@ const MENU=[
     "abzug": {
      "KN": 0.42,
      "LS": 14,
-     "MI": 3.5,
+     "MI": 2,
      "GK": 140,
      "AN": 210,
      "B16": 1,
@@ -1816,9 +1918,9 @@ const MENU=[
     "abzug": {
      "KN": 0.58,
      "LS": 19.2,
-     "MI": 4.8,
+     "MI": 2.7,
      "GK": 192.4,
-     "AN": 288.5,
+     "AN": 288.6,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -1838,21 +1940,22 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 9.1,
+    "ware": 6.7,
     "verp": 4.2,
-    "ek": 13.3,
-    "ekLief": 14.6,
-    "kalk": 49,
-    "preis": 49,
+    "ek": 10.9,
+    "ekLief": 12.2,
+    "kalk": 39,
+    "preis": 39,
     "offen": [
-     "JO",
-     "ZT"
+     "MM",
+     "ZT",
+     "JO"
     ],
     "abzug": {
-     "JO": 104.4,
-     "HF": 5.26,
+     "MM": 94.7,
      "ZT": 7,
-     "MG": 191.5,
+     "JO": 104.4,
+     "MG": 149.4,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -1861,21 +1964,22 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 12.2,
+    "ware": 9,
     "verp": 4.2,
-    "ek": 16.4,
-    "ekLief": 17.7,
-    "kalk": 59,
-    "preis": 59,
+    "ek": 13.1,
+    "ekLief": 14.4,
+    "kalk": 49,
+    "preis": 49,
     "offen": [
-     "JO",
-     "ZT"
+     "MM",
+     "ZT",
+     "JO"
     ],
     "abzug": {
-     "JO": 139,
-     "HF": 7,
+     "MM": 126.1,
      "ZT": 9.3,
-     "MG": 255,
+     "JO": 139,
+     "MG": 198.9,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -1884,21 +1988,22 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 16.7,
+    "ware": 12.3,
     "verp": 4.2,
-    "ek": 20.9,
-    "ekLief": 22.2,
-    "kalk": 79,
-    "preis": 79,
+    "ek": 16.5,
+    "ekLief": 17.8,
+    "kalk": 59,
+    "preis": 59,
     "offen": [
-     "JO",
-     "ZT"
+     "MM",
+     "ZT",
+     "JO"
     ],
     "abzug": {
-     "JO": 191,
-     "HF": 9.62,
+     "MM": 173.3,
      "ZT": 12.8,
-     "MG": 350.4,
+     "JO": 191,
+     "MG": 273.3,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -1918,28 +2023,28 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 16.6,
+    "ware": 15,
     "verp": 4.2,
-    "ek": 20.8,
-    "ekLief": 22.1,
-    "kalk": 79,
-    "preis": 79,
+    "ek": 19.2,
+    "ekLief": 20.5,
+    "kalk": 69,
+    "preis": 69,
     "offen": [
-     "JO",
      "LS",
+     "JO",
      "GK",
      "IG",
      "KU"
     ],
     "abzug": {
-     "JO": 75.1,
      "LS": 11.3,
+     "JO": 75.1,
      "GK": 30,
      "IG": 3.8,
+     "MG": 45,
+     "KU": 0.3,
      "BK": 45.1,
-     "PS": 45.1,
      "BM": 52.6,
-     "KU": 0.8,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -1948,28 +2053,28 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 22.1,
+    "ware": 20,
     "verp": 4.2,
-    "ek": 26.3,
-    "ekLief": 27.6,
-    "kalk": 99,
-    "preis": 99,
+    "ek": 24.2,
+    "ekLief": 25.5,
+    "kalk": 89,
+    "preis": 89,
     "offen": [
-     "JO",
      "LS",
+     "JO",
      "GK",
      "IG",
      "KU"
     ],
     "abzug": {
-     "JO": 100,
      "LS": 15,
+     "JO": 100,
      "GK": 40,
      "IG": 5,
+     "MG": 60,
+     "KU": 0.4,
      "BK": 60,
-     "PS": 60,
      "BM": 70,
-     "KU": 1,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -1978,28 +2083,28 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 30.3,
+    "ware": 27.5,
     "verp": 4.2,
-    "ek": 34.5,
-    "ekLief": 35.8,
-    "kalk": 129,
-    "preis": 129,
+    "ek": 31.7,
+    "ekLief": 33,
+    "kalk": 119,
+    "preis": 119,
     "offen": [
-     "JO",
      "LS",
+     "JO",
      "GK",
      "IG",
      "KU"
     ],
     "abzug": {
-     "JO": 137.4,
      "LS": 20.6,
+     "JO": 137.4,
      "GK": 55,
      "IG": 6.9,
+     "MG": 82.4,
+     "KU": 0.5,
      "BK": 82.4,
-     "PS": 82.4,
      "BM": 96.2,
-     "KU": 1.4,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -2010,27 +2115,24 @@ const MENU=[
  },
  {
   "nr": "21",
-  "name": "Erdbeere-Banane-Limette",
-  "th": "สตรอว์เบอร์รี-กล้วย-มะนาว",
-  "en": "Strawberry-Banana-Lime",
+  "name": "Erdbeere-Banane (Hafer)",
+  "th": "สตรอว์เบอร์รี่-กล้วย (นมข้าวโอ๊ต)",
+  "en": "Strawberry-Banana (oat)",
   "alg": "",
   "bestaetigt": 0,
   "std": false,
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 18.7,
+    "ware": 18.8,
     "verp": 4.2,
-    "ek": 22.9,
-    "ekLief": 24.2,
+    "ek": 23,
+    "ekLief": 24.3,
     "kalk": 89,
     "preis": 89,
-    "offen": [
-     "LS"
-    ],
+    "offen": [],
     "abzug": {
-     "HF": 11.57,
-     "LS": 8.3,
+     "HF": 12.39,
      "BA": 66.1,
      "ER": 165.2,
      "B12": 1,
@@ -2041,18 +2143,15 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 24.9,
+    "ware": 25,
     "verp": 4.2,
-    "ek": 29.1,
-    "ekLief": 30.4,
+    "ek": 29.2,
+    "ekLief": 30.5,
     "kalk": 109,
     "preis": 109,
-    "offen": [
-     "LS"
-    ],
+    "offen": [],
     "abzug": {
-     "HF": 15.4,
-     "LS": 11,
+     "HF": 16.5,
      "BA": 88,
      "ER": 220,
      "B16": 1,
@@ -2063,18 +2162,15 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 34.2,
+    "ware": 34.4,
     "verp": 4.2,
-    "ek": 38.4,
-    "ekLief": 39.7,
+    "ek": 38.6,
+    "ekLief": 39.9,
     "kalk": 139,
     "preis": 139,
-    "offen": [
-     "LS"
-    ],
+    "offen": [],
     "abzug": {
-     "HF": 21.16,
-     "LS": 15.1,
+     "HF": 22.67,
      "BA": 120.9,
      "ER": 302.3,
      "BE": 1,
@@ -2181,8 +2277,8 @@ const MENU=[
     ],
     "abzug": {
      "HF": 12.62,
-     "HS": 15,
      "BA": 58.6,
+     "HS": 15,
      "BM": 108.9,
      "JB": 46.6,
      "B12": 1,
@@ -2204,8 +2300,8 @@ const MENU=[
     ],
     "abzug": {
      "HF": 16.8,
-     "HS": 20,
      "BA": 78,
+     "HS": 20,
      "BM": 145,
      "JB": 62,
      "B16": 1,
@@ -2227,8 +2323,8 @@ const MENU=[
     ],
     "abzug": {
      "HF": 23.08,
-     "HS": 27.5,
      "BA": 107.2,
+     "HS": 27.5,
      "BM": 199.2,
      "JB": 85.2,
      "BE": 1,
@@ -2240,31 +2336,31 @@ const MENU=[
   }
  },
  {
-  "nr": "24",
-  "name": "Ananas-Ingwer-Limette",
-  "th": "สัปปะรด-ขิง-มะนาว",
-  "en": "Pineapple-Ginger-Lime",
-  "alg": "",
+  "nr": "25",
+  "name": "Johannisbeere-Mango-Minze",
+  "th": "แบล็คเคอร์แรนต์-มะม่วง-สะระแหน่",
+  "en": "Blackcurrant-Mango-Mint",
+  "alg": "🌱",
   "bestaetigt": 0,
   "std": false,
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 18.4,
+    "ware": 25.1,
     "verp": 4.2,
-    "ek": 22.6,
-    "ekLief": 23.9,
-    "kalk": 89,
-    "preis": 89,
+    "ek": 29.3,
+    "ekLief": 30.6,
+    "kalk": 109,
+    "preis": 109,
     "offen": [
-     "IG",
-     "LS"
+     "MI"
     ],
     "abzug": {
-     "KN": 0.45,
-     "IG": 4.7,
-     "LS": 9.8,
-     "AN": 227.6,
+     "KN": 0.65,
+     "MI": 1.5,
+     "MG": 78.9,
+     "BA": 63.8,
+     "JB": 48.8,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -2273,21 +2369,21 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 24.5,
+    "ware": 33.5,
     "verp": 4.2,
-    "ek": 28.7,
-    "ekLief": 30,
-    "kalk": 109,
-    "preis": 109,
+    "ek": 37.7,
+    "ekLief": 39,
+    "kalk": 139,
+    "preis": 139,
     "offen": [
-     "IG",
-     "LS"
+     "MI"
     ],
     "abzug": {
-     "KN": 0.6,
-     "IG": 6.3,
-     "LS": 13,
-     "AN": 303,
+     "KN": 0.86,
+     "MI": 2,
+     "MG": 105,
+     "BA": 85,
+     "JB": 65,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -2296,21 +2392,1796 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 33.7,
+    "ware": 46,
     "verp": 4.2,
-    "ek": 37.9,
-    "ekLief": 39.2,
+    "ek": 50.2,
+    "ekLief": 51.5,
+    "kalk": 189,
+    "preis": 189,
+    "offen": [
+     "MI"
+    ],
+    "abzug": {
+     "KN": 1.18,
+     "MI": 2.7,
+     "MG": 144.3,
+     "BA": 116.8,
+     "JB": 89.3,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "26",
+  "name": "Erdbeere-Banane",
+  "th": "สตรอว์เบอร์รี่-กล้วย",
+  "en": "Strawberry-Banana",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 10.8,
+    "verp": 4.2,
+    "ek": 15,
+    "ekLief": 16.3,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "MM",
+     "JO"
+    ],
+    "abzug": {
+     "MM": 70.7,
+     "JO": 112.7,
+     "BA": 77.4,
+     "ER": 94.6,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 14.4,
+    "verp": 4.2,
+    "ek": 18.6,
+    "ekLief": 19.9,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "MM",
+     "JO"
+    ],
+    "abzug": {
+     "MM": 94.1,
+     "JO": 150,
+     "BA": 103,
+     "ER": 125.9,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 19.8,
+    "verp": 4.2,
+    "ek": 24,
+    "ekLief": 25.3,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "MM",
+     "JO"
+    ],
+    "abzug": {
+     "MM": 129.3,
+     "JO": 206.1,
+     "BA": 141.5,
+     "ER": 173,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "27",
+  "name": "Erdbeere-Mango-Banane",
+  "th": "สตรอว์เบอร์รี่-มะม่วง-กล้วย",
+  "en": "Strawberry-Mango-Banana",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 22.9,
+    "verp": 4.2,
+    "ek": 27,
+    "ekLief": 28.3,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [],
+    "abzug": {
+     "KN": 0.6,
+     "MG": 75.2,
+     "BA": 52.5,
+     "ER": 78.3,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 30.4,
+    "verp": 4.2,
+    "ek": 34.6,
+    "ekLief": 35.9,
+    "kalk": 129,
+    "preis": 129,
+    "offen": [],
+    "abzug": {
+     "KN": 0.79,
+     "MG": 100,
+     "BA": 70,
+     "ER": 104.3,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 41.8,
+    "verp": 4.2,
+    "ek": 46,
+    "ekLief": 47.3,
+    "kalk": 169,
+    "preis": 169,
+    "offen": [],
+    "abzug": {
+     "KN": 1.09,
+     "MG": 137.4,
+     "BA": 96.2,
+     "ER": 143.3,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "28",
+  "name": "Beauty Glow — Erdbeere-Ananas-Mango",
+  "th": "บิวตี้โกลว์ — สตรอว์เบอร์รี่-สับปะรด-มะม่วง",
+  "en": "Beauty Glow - Strawberry-Pineapple-Mango",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 23.7,
+    "verp": 4.2,
+    "ek": 27.9,
+    "ekLief": 29.2,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [
+     "KL"
+    ],
+    "abzug": {
+     "KN": 0.6,
+     "AN": 75.2,
+     "MG": 48.8,
+     "ER": 74.6,
+     "KL": 7.5,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 31.5,
+    "verp": 4.2,
+    "ek": 35.7,
+    "ekLief": 37,
+    "kalk": 129,
+    "preis": 129,
+    "offen": [
+     "KL"
+    ],
+    "abzug": {
+     "KN": 0.79,
+     "AN": 100,
+     "MG": 65,
+     "ER": 99.3,
+     "KL": 10,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 43.3,
+    "verp": 4.2,
+    "ek": 47.5,
+    "ekLief": 48.8,
+    "kalk": 169,
+    "preis": 169,
+    "offen": [
+     "KL"
+    ],
+    "abzug": {
+     "KN": 1.09,
+     "AN": 137.4,
+     "MG": 89.3,
+     "ER": 136.4,
+     "KL": 13.7,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "29",
+  "name": "Orange Sunrise",
+  "th": "ออเรนจ์ ซันไรส์",
+  "en": "Orange Sunrise",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 3,
+    "verp": 4.2,
+    "ek": 7.2,
+    "ekLief": 8.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "OS",
+     "OZ",
+     "IG",
+     "OG"
+    ],
+    "abzug": {
+     "OS": 160.7,
+     "OZ": 0.8,
+     "IG": 2.3,
+     "MG": 67.6,
+     "OG": 123.9,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 4.1,
+    "verp": 4.2,
+    "ek": 8.2,
+    "ekLief": 9.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "OS",
+     "OZ",
+     "IG",
+     "OG"
+    ],
+    "abzug": {
+     "OS": 214,
+     "OZ": 1,
+     "IG": 3,
+     "MG": 90,
+     "OG": 165,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 5.6,
+    "verp": 4.2,
+    "ek": 9.8,
+    "ekLief": 11.1,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "OS",
+     "OZ",
+     "IG",
+     "OG"
+    ],
+    "abzug": {
+     "OS": 294,
+     "OZ": 1.4,
+     "IG": 4.1,
+     "MG": 123.6,
+     "OG": 226.7,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "24",
+  "name": "Ananas-Ingwer-Limette (Health)",
+  "th": "สัปปะรด-ขิง-มะนาว",
+  "en": "Pineapple-Ginger-Lime",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 19.6,
+    "verp": 4.2,
+    "ek": 23.8,
+    "ekLief": 25.1,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "LS",
+     "IG"
+    ],
+    "abzug": {
+     "KN": 0.61,
+     "LS": 9.8,
+     "IG": 1.4,
+     "AN": 191.7,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 26.1,
+    "verp": 4.2,
+    "ek": 30.3,
+    "ekLief": 31.6,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [
+     "LS",
+     "IG"
+    ],
+    "abzug": {
+     "KN": 0.81,
+     "LS": 13,
+     "IG": 1.9,
+     "AN": 255.2,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 35.9,
+    "verp": 4.2,
+    "ek": 40.1,
+    "ekLief": 41.4,
+    "kalk": 149,
+    "preis": 149,
+    "offen": [
+     "LS",
+     "IG"
+    ],
+    "abzug": {
+     "KN": 1.12,
+     "LS": 17.9,
+     "IG": 2.6,
+     "AN": 350.6,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "30",
+  "name": "Espresso-Banane-Kakao",
+  "th": "เอสเปรสโซ-กล้วย-โกโก้",
+  "en": "Espresso-Banana-Cacao",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 9.9,
+    "verp": 4.2,
+    "ek": 14.1,
+    "ekLief": 15.4,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "KF",
+     "TO"
+    ],
+    "abzug": {
+     "HF": 12.77,
+     "KF": 41.3,
+     "TO": 45.1,
+     "BA": 135.2,
+     "KK": 6,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 13.2,
+    "verp": 4.2,
+    "ek": 17.4,
+    "ekLief": 18.7,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "KF",
+     "TO"
+    ],
+    "abzug": {
+     "HF": 17,
+     "KF": 55,
+     "TO": 60,
+     "BA": 180,
+     "KK": 8,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 18.1,
+    "verp": 4.2,
+    "ek": 22.3,
+    "ekLief": 23.6,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "KF",
+     "TO"
+    ],
+    "abzug": {
+     "HF": 23.36,
+     "KF": 75.6,
+     "TO": 82.4,
+     "BA": 247.3,
+     "KK": 11,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "31",
+  "name": "Avocado-Espresso (Cà phê bơ)",
+  "th": "อะโวคาโด-เอสเปรสโซ",
+  "en": "Avocado-Espresso",
+  "alg": "🌱",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 13.3,
+    "verp": 4.2,
+    "ek": 17.5,
+    "ekLief": 18.8,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "KF"
+    ],
+    "abzug": {
+     "HF": 12.99,
+     "KF": 41.3,
+     "AV": 71.3,
+     "BA": 112.7,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 17.7,
+    "verp": 4.2,
+    "ek": 21.9,
+    "ekLief": 23.2,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "KF"
+    ],
+    "abzug": {
+     "HF": 17.3,
+     "KF": 55,
+     "AV": 95,
+     "BA": 150,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 24.3,
+    "verp": 4.2,
+    "ek": 28.5,
+    "ekLief": 29.8,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [
+     "KF"
+    ],
+    "abzug": {
+     "HF": 23.77,
+     "KF": 75.6,
+     "AV": 130.5,
+     "BA": 206.1,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "32",
+  "name": "Passionsfrucht grün-Mango-Kokos",
+  "th": "เสาวรสเขียว-มะม่วง-กะทิ",
+  "en": "Green Passion-Mango-Coconut",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 37.1,
+    "verp": 4.2,
+    "ek": 41.3,
+    "ekLief": 42.6,
+    "kalk": 149,
+    "preis": 149,
+    "offen": [],
+    "abzug": {
+     "KO": 129.9,
+     "PG": 52.6,
+     "MG": 172.8,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 49.4,
+    "verp": 4.2,
+    "ek": 53.6,
+    "ekLief": 54.9,
+    "kalk": 189,
+    "preis": 189,
+    "offen": [],
+    "abzug": {
+     "KO": 173,
+     "PG": 70,
+     "MG": 230,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 67.8,
+    "verp": 4.2,
+    "ek": 72,
+    "ekLief": 73.3,
+    "kalk": 259,
+    "preis": 259,
+    "offen": [],
+    "abzug": {
+     "KO": 237.7,
+     "PG": 96.2,
+     "MG": 316,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "33",
+  "name": "Mango-Ananas-Mandelmilch",
+  "th": "มะม่วง-สับปะรด-นมอัลมอนด์",
+  "en": "Mango-Pineapple-Almond",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 9.9,
+    "verp": 4.2,
+    "ek": 14.1,
+    "ekLief": 15.4,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 135.2,
+     "MG": 131.4,
+     "AN": 88.4,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 13.2,
+    "verp": 4.2,
+    "ek": 17.4,
+    "ekLief": 18.7,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 180,
+     "MG": 175,
+     "AN": 117.7,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 18.1,
+    "verp": 4.2,
+    "ek": 22.3,
+    "ekLief": 23.6,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 247.3,
+     "MG": 240.5,
+     "AN": 161.7,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "34",
+  "name": "Erdbeere-Banane-Milch",
+  "th": "สตรอว์เบอร์รี-กล้วย-นมวัว",
+  "en": "Strawberry-Banana-Milk",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 14.7,
+    "verp": 4.2,
+    "ek": 18.9,
+    "ekLief": 20.2,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "KM"
+    ],
+    "abzug": {
+     "KM": 150.2,
+     "BA": 69.6,
+     "ER": 135.2,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 19.5,
+    "verp": 4.2,
+    "ek": 23.7,
+    "ekLief": 25,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "KM"
+    ],
+    "abzug": {
+     "KM": 200,
+     "BA": 92.7,
+     "ER": 180,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 26.8,
+    "verp": 4.2,
+    "ek": 31,
+    "ekLief": 32.3,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [
+     "KM"
+    ],
+    "abzug": {
+     "KM": 274.8,
+     "BA": 127.4,
+     "ER": 247.3,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "35",
+  "name": "Erdbeere-Kokos",
+  "th": "สตรอว์เบอร์รี-กะทิ",
+  "en": "Strawberry-Coconut",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 24.2,
+    "verp": 4.2,
+    "ek": 28.4,
+    "ekLief": 29.7,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "KO": 105.1,
+     "MM": 90.1,
+     "BA": 39.6,
+     "ER": 120.2,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 32.2,
+    "verp": 4.2,
+    "ek": 36.4,
+    "ekLief": 37.7,
+    "kalk": 129,
+    "preis": 129,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "KO": 140,
+     "MM": 120,
+     "BA": 52.7,
+     "ER": 160,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 44.2,
+    "verp": 4.2,
+    "ek": 48.4,
+    "ekLief": 49.7,
+    "kalk": 189,
+    "preis": 189,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "KO": 192.4,
+     "MM": 164.9,
+     "BA": 72.5,
+     "ER": 219.8,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "36",
+  "name": "Erdbeere-Schoko-Mandel",
+  "th": "สตรอว์เบอร์รี-ช็อกโกแลต-อัลมอนด์",
+  "en": "Strawberry-Chocolate-Almond",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 21.4,
+    "verp": 4.2,
+    "ek": 25.6,
+    "ekLief": 26.9,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 150.2,
+     "BA": 69.6,
+     "KK": 7.5,
+     "ER": 127.7,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 28.5,
+    "verp": 4.2,
+    "ek": 32.7,
+    "ekLief": 34,
+    "kalk": 119,
+    "preis": 119,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 200,
+     "BA": 92.7,
+     "KK": 10,
+     "ER": 170,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 39.2,
+    "verp": 4.2,
+    "ek": 43.4,
+    "ekLief": 44.7,
+    "kalk": 169,
+    "preis": 169,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 274.8,
+     "BA": 127.4,
+     "KK": 13.7,
+     "ER": 233.6,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "37",
+  "name": "Erdbeere-Mango-Joghurt",
+  "th": "สตรอว์เบอร์รี-มะม่วง-โยเกิร์ต",
+  "en": "Strawberry-Mango-Yoghurt",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 11.7,
+    "verp": 4.2,
+    "ek": 15.9,
+    "ekLief": 17.2,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "MM",
+     "JO"
+    ],
+    "abzug": {
+     "MM": 97.6,
+     "JO": 104.4,
+     "MG": 62.8,
+     "ER": 90.1,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 15.6,
+    "verp": 4.2,
+    "ek": 19.8,
+    "ekLief": 21.1,
+    "kalk": 79,
+    "preis": 79,
+    "offen": [
+     "MM",
+     "JO"
+    ],
+    "abzug": {
+     "MM": 130,
+     "JO": 139,
+     "MG": 83.7,
+     "ER": 120,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 21.4,
+    "verp": 4.2,
+    "ek": 25.6,
+    "ekLief": 26.9,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [
+     "MM",
+     "JO"
+    ],
+    "abzug": {
+     "MM": 178.6,
+     "JO": 191,
+     "MG": 115,
+     "ER": 164.9,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "38",
+  "name": "Ananas-Kokos-Banane",
+  "th": "สับปะรด-กะทิ-กล้วย",
+  "en": "Pineapple-Coconut-Banana",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 24.5,
+    "verp": 4.2,
+    "ek": 28.7,
+    "ekLief": 30,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [],
+    "abzug": {
+     "KO": 112.7,
+     "KN": 0.33,
+     "AN": 120.2,
+     "BA": 39.6,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 32.6,
+    "verp": 4.2,
+    "ek": 36.8,
+    "ekLief": 38.1,
+    "kalk": 129,
+    "preis": 129,
+    "offen": [],
+    "abzug": {
+     "KO": 150,
+     "KN": 0.44,
+     "AN": 160,
+     "BA": 52.7,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 44.8,
+    "verp": 4.2,
+    "ek": 49,
+    "ekLief": 50.3,
+    "kalk": 189,
+    "preis": 189,
+    "offen": [],
+    "abzug": {
+     "KO": 206.1,
+     "KN": 0.6,
+     "AN": 219.8,
+     "BA": 72.5,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "39",
+  "name": "Mango-Kakao-Mandel",
+  "th": "มะม่วง-โกโก้-อัลมอนด์",
+  "en": "Mango-Cocoa-Almond",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 15.2,
+    "verp": 4.2,
+    "ek": 19.4,
+    "ekLief": 20.7,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 150.2,
+     "MG": 150.2,
+     "BA": 47.1,
+     "KK": 7.5,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 20.2,
+    "verp": 4.2,
+    "ek": 24.4,
+    "ekLief": 25.7,
+    "kalk": 89,
+    "preis": 89,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 200,
+     "MG": 200,
+     "BA": 62.7,
+     "KK": 10,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 27.8,
+    "verp": 4.2,
+    "ek": 32,
+    "ekLief": 33.3,
+    "kalk": 119,
+    "preis": 119,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "MM": 274.8,
+     "MG": 274.8,
+     "BA": 86.1,
+     "KK": 13.7,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "40",
+  "name": "Drachenfrucht-Erdbeere-Kokos",
+  "th": "แก้วมังกร-สตรอว์เบอร์รี-กะทิ",
+  "en": "Dragon Fruit-Strawberry-Coconut",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 27,
+    "verp": 4.2,
+    "ek": 31.2,
+    "ekLief": 32.5,
+    "kalk": 119,
+    "preis": 119,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "KO": 105.1,
+     "MM": 90.1,
+     "DR": 97.6,
+     "ER": 62.1,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 36,
+    "verp": 4.2,
+    "ek": 40.2,
+    "ekLief": 41.5,
+    "kalk": 149,
+    "preis": 149,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "KO": 140,
+     "MM": 120,
+     "DR": 130,
+     "ER": 82.7,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 49.5,
+    "verp": 4.2,
+    "ek": 53.7,
+    "ekLief": 55,
+    "kalk": 189,
+    "preis": 189,
+    "offen": [
+     "MM"
+    ],
+    "abzug": {
+     "KO": 192.4,
+     "MM": 164.9,
+     "DR": 178.6,
+     "ER": 113.6,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "41",
+  "name": "Leber-Kraft 🔒",
+  "th": "ตับ-พลัง 🔒",
+  "en": "Liver-Strength 🔒",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 24.7,
+    "verp": 4.2,
+    "ek": 28.9,
+    "ekLief": 30.2,
+    "kalk": 109,
+    "preis": 109,
+    "offen": [
+     "KM",
+     "JO",
+     "IG",
+     "HS",
+     "ZI"
+    ],
+    "abzug": {
+     "KM": 150.2,
+     "JO": 82.6,
+     "AV": 30,
+     "IG": 1.5,
+     "HF": 30,
+     "HS": 18.8,
+     "KK": 6,
+     "ZI": 0.4,
+     "BK": 22.5,
+     "BM": 60.1,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 32.9,
+    "verp": 4.2,
+    "ek": 37.1,
+    "ekLief": 38.4,
     "kalk": 139,
     "preis": 139,
     "offen": [
+     "KM",
+     "JO",
      "IG",
-     "LS"
+     "HS",
+     "ZI"
     ],
     "abzug": {
-     "KN": 0.83,
-     "IG": 8.7,
-     "LS": 17.9,
-     "AN": 416.3,
+     "KM": 200,
+     "JO": 110,
+     "AV": 40,
+     "IG": 2,
+     "HF": 40,
+     "HS": 25,
+     "KK": 8,
+     "ZI": 0.5,
+     "BK": 30,
+     "BM": 80,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 45.2,
+    "verp": 4.2,
+    "ek": 49.4,
+    "ekLief": 50.7,
+    "kalk": 189,
+    "preis": 189,
+    "offen": [
+     "KM",
+     "JO",
+     "IG",
+     "HS",
+     "ZI"
+    ],
+    "abzug": {
+     "KM": 274.8,
+     "JO": 151.1,
+     "AV": 55,
+     "IG": 2.7,
+     "HF": 55,
+     "HS": 34.4,
+     "KK": 11,
+     "ZI": 0.7,
+     "BK": 41.2,
+     "BM": 109.9,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "42",
+  "name": "Ananas-Kokos-Kraft 🔒",
+  "th": "สับปะรด-กะทิ-พลัง 🔒",
+  "en": "Pineapple-Coconut-Strength 🔒",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 28.8,
+    "verp": 4.2,
+    "ek": 33,
+    "ekLief": 34.3,
+    "kalk": 119,
+    "preis": 119,
+    "offen": [
+     "GK",
+     "IG",
+     "ZI"
+    ],
+    "abzug": {
+     "KO": 150.2,
+     "AN": 135.2,
+     "AV": 45.1,
+     "GK": 45.1,
+     "IG": 1.5,
+     "ZI": 0.4,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 38.4,
+    "verp": 4.2,
+    "ek": 42.6,
+    "ekLief": 43.9,
+    "kalk": 149,
+    "preis": 149,
+    "offen": [
+     "GK",
+     "IG",
+     "ZI"
+    ],
+    "abzug": {
+     "KO": 200,
+     "AN": 180,
+     "AV": 60,
+     "GK": 60,
+     "IG": 2,
+     "ZI": 0.5,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 52.7,
+    "verp": 4.2,
+    "ek": 56.9,
+    "ekLief": 58.2,
+    "kalk": 229,
+    "preis": 229,
+    "offen": [
+     "GK",
+     "IG",
+     "ZI"
+    ],
+    "abzug": {
+     "KO": 274.8,
+     "AN": 247.4,
+     "AV": 82.4,
+     "GK": 82.4,
+     "IG": 2.7,
+     "ZI": 0.7,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "43",
+  "name": "Wassermelone-Minze (frisch & gefroren)",
+  "th": "แตงโม-สะระแหน่ (สดและแช่แข็ง)",
+  "en": "Watermelon-Mint (fresh & frozen)",
+  "alg": "",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 8.2,
+    "verp": 4.2,
+    "ek": 12.4,
+    "ekLief": 13.7,
+    "kalk": 49,
+    "preis": 49,
+    "offen": [
+     "MI"
+    ],
+    "abzug": {
+     "WM": 353,
+     "MI": 1.5,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 11,
+    "verp": 4.2,
+    "ek": 15.2,
+    "ekLief": 16.5,
+    "kalk": 59,
+    "preis": 59,
+    "offen": [
+     "MI"
+    ],
+    "abzug": {
+     "WM": 470,
+     "MI": 2,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 15.1,
+    "verp": 4.2,
+    "ek": 19.3,
+    "ekLief": 20.6,
+    "kalk": 69,
+    "preis": 69,
+    "offen": [
+     "MI"
+    ],
+    "abzug": {
+     "WM": 645.8,
+     "MI": 2.7,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "44",
+  "name": "Beere-Kakao-Mandel (Praliné)",
+  "th": "เบอร์รี-โกโก้-อัลมอนด์",
+  "en": "Berry-Cacao-Almond",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 23.5,
+    "verp": 4.2,
+    "ek": 27.7,
+    "ekLief": 29,
+    "kalk": 99,
+    "preis": 99,
+    "offen": [
+     "KM",
+     "MA",
+     "ZI"
+    ],
+    "abzug": {
+     "KM": 150.2,
+     "BA": 75.1,
+     "MA": 22.5,
+     "KK": 7.5,
+     "ZI": 0.4,
+     "BM": 97.6,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 31.3,
+    "verp": 4.2,
+    "ek": 35.5,
+    "ekLief": 36.8,
+    "kalk": 129,
+    "preis": 129,
+    "offen": [
+     "KM",
+     "MA",
+     "ZI"
+    ],
+    "abzug": {
+     "KM": 200,
+     "BA": 100,
+     "MA": 30,
+     "KK": 10,
+     "ZI": 0.5,
+     "BM": 130,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 43,
+    "verp": 4.2,
+    "ek": 47.2,
+    "ekLief": 48.5,
+    "kalk": 169,
+    "preis": 169,
+    "offen": [
+     "KM",
+     "MA",
+     "ZI"
+    ],
+    "abzug": {
+     "KM": 274.8,
+     "BA": 137.4,
+     "MA": 41.2,
+     "KK": 13.7,
+     "ZI": 0.7,
+     "BM": 178.6,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "45",
+  "name": "Tarator (Gurke-Joghurt-Knoblauch) 🧪",
+  "th": "ทาราเตอร์ 🧪",
+  "en": "Tarator (savoury lab) 🧪",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 0,
+    "verp": 4.2,
+    "ek": 4.2,
+    "ekLief": 5.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "LS",
+     "JO",
+     "GK",
+     "KB",
+     "SC",
+     "DL",
+     "MI"
+    ],
+    "abzug": {
+     "LS": 3.8,
+     "JO": 180.2,
+     "GK": 90.1,
+     "KB": 3,
+     "SC": 6,
+     "DL": 2.3,
+     "MI": 0.8,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 0,
+    "verp": 4.2,
+    "ek": 4.2,
+    "ekLief": 5.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "LS",
+     "JO",
+     "GK",
+     "KB",
+     "SC",
+     "DL",
+     "MI"
+    ],
+    "abzug": {
+     "LS": 5,
+     "JO": 240,
+     "GK": 120,
+     "KB": 4,
+     "SC": 8,
+     "DL": 3,
+     "MI": 1,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 0,
+    "verp": 4.2,
+    "ek": 4.2,
+    "ekLief": 5.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "LS",
+     "JO",
+     "GK",
+     "KB",
+     "SC",
+     "DL",
+     "MI"
+    ],
+    "abzug": {
+     "LS": 6.9,
+     "JO": 329.8,
+     "GK": 164.9,
+     "KB": 5.5,
+     "SC": 11,
+     "DL": 4.1,
+     "MI": 1.4,
+     "BE": 1,
+     "DE": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   }
+  }
+ },
+ {
+  "nr": "46",
+  "name": "Ayran (Instant, mit Limette) 🧪",
+  "th": "อายราน (โยเกิร์ตดื่ม) 🧪",
+  "en": "Ayran (instant, with lime) 🧪",
+  "alg": "🥛",
+  "bestaetigt": 0,
+  "std": false,
+  "groessen": {
+   "12": {
+    "ml": 355,
+    "ware": 0,
+    "verp": 4.2,
+    "ek": 4.2,
+    "ekLief": 5.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "JO",
+     "LS",
+     "MI"
+    ],
+    "abzug": {
+     "JO": 232.8,
+     "LS": 3.8,
+     "MI": 0.8,
+     "B12": 1,
+     "D12": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "16": {
+    "ml": 473,
+    "ware": 0,
+    "verp": 4.2,
+    "ek": 4.2,
+    "ekLief": 5.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "JO",
+     "LS",
+     "MI"
+    ],
+    "abzug": {
+     "JO": 310,
+     "LS": 5,
+     "MI": 1,
+     "B16": 1,
+     "D16": 1,
+     "HA": 1,
+     "SR": 1
+    }
+   },
+   "22": {
+    "ml": 650,
+    "ware": 0,
+    "verp": 4.2,
+    "ek": 4.2,
+    "ekLief": 5.5,
+    "kalk": 39,
+    "preis": 39,
+    "offen": [
+     "JO",
+     "LS",
+     "MI"
+    ],
+    "abzug": {
+     "JO": 425.9,
+     "LS": 6.9,
+     "MI": 1.4,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -2363,12 +4234,21 @@ function preisVon(m, g){
   g = g || GROESSE;
   const eigen = PREISE[pKey(m.nr,g)];
   if (eigen != null) return +eigen;
+  /* 22 oz hat keinen eigenen gepflegten Preis mehr: er folgt dem 16-oz-Preis
+     ueber XXL_FAKTOR. So bleibt der Aufpreis automatisch richtig, wenn Peter
+     den Grundpreis aendert. Nur ein von Hand gesetzter Preis schlaegt das. */
+  if (g === "22") {
+    const p16 = PREISE[pKey(m.nr,"16")] != null
+      ? +PREISE[pKey(m.nr,"16")]
+      : (m.groessen["16"] || {}).preis || 0;
+    if (p16) return xxlPreis(p16);
+  }
   return (m.groessen[g] || {}).preis || 0;
 }
 function kostenVon(m, g){
   g = g || GROESSE;
   const d = m.groessen[g] || {};
-  return KANAL === "lieferung" ? (d.ekLief || 0) : (d.ek || 0);
+  return (KANAL === "lieferung" || KANAL === "grab") ? (d.ekLief || 0) : (d.ek || 0);
 }
 function preisSetzen(nr, g, wert){
   if (wert === "" || wert == null) delete PREISE[pKey(nr,g)];
@@ -2411,7 +4291,7 @@ function renderMenu(){
   if(leiste)leiste.innerHTML=
     ["22","16","12"].map(g=>`<button class="gr ${GROESSE===g?"on":""}" onclick="setGroesse('${g}')">${GR_NAME[g]}</button>`).join("")
     +`<span class="trenner"></span>`
-    +[["abholung","🥤 Abholung"],["lieferung","🛵 Lieferung"]]
+    +[["abholung","🥤 Abholung"],["lieferung","🛵 Lieferung"],["grab","🟢 Grab"]]
       .map(([k,l])=>`<button class="gr ${KANAL===k?"on":""}" onclick="setKanal('${k}')">${l}</button>`).join("");
 
   $("#menu").innerHTML=MENU.map(m=>{
@@ -2427,7 +4307,8 @@ function renderMenu(){
       <div class="desc">${(DESC[m.nr]||{})[LANG]||m.th||""}</div>
       <div class="meta"><div>
         <div class="pr">${vk} ฿</div>
-        <div class="sz">${GR_NAME[GROESSE]} · ${d.ml||"?"} ml</div>
+        <div class="sz">${GR_NAME[GROESSE]} · ${d.ml||"?"} ml${
+          GROESSE==="22" ? ` · XXL +${xxlAufpreis(preisVon(m,"16"))} ฿` : ""}</div>
         <div class="db ${db<=0?"warn":""}">DB ${Math.round(db)} ฿${unsicher?` <span class="prov" title="${unsicher} Zutaten ohne Preis">~</span>`:""}</div>
       </div></div>
     </button>`;}).join("");
@@ -2440,20 +4321,52 @@ function FARBE(nr){
 }
 /* Schluessel der Bestellzeile ist jetzt "Nr|Groesse" — derselbe Smoothie in
    zwei Groessen sind zwei Zeilen. */
-function add(nr){const k=pKey(nr,GROESSE);order[k]=(order[k]||0)+1;renderOrder();}
+/* Der Zeilenschluessel traegt jetzt auch die Booster: "09|16|WY+MC".
+   Derselbe Smoothie mit und ohne Booster sind zwei Zeilen — sonst liesse
+   sich der Aufpreis nicht sauber zuordnen. */
+function add(nr){const k=pKey(nr,GROESSE)+"|";order[k]=(order[k]||0)+1;renderOrder();}
 function chg(k,d){order[k]=(order[k]||0)+d;if(order[k]<=0)delete order[k];renderOrder();}
 function clearOrder(){order={};renderOrder();}
+/* Booster an-/abschalten: die Zeile wandert auf einen neuen Schluessel. */
+function togBoost(k,code){
+  const [nr,g,bs]=k.split("|");
+  const liste=(bs||"").split("+").filter(Boolean);
+  const i=liste.indexOf(code);
+  if(i<0) liste.push(code); else liste.splice(i,1);
+  liste.sort();
+  const neu=nr+"|"+g+"|"+liste.join("+");
+  if(neu===k) return;
+  order[neu]=(order[neu]||0)+order[k];
+  delete order[k];
+  renderOrder();
+}
+function boosterCodes(k){ return (k.split("|")[2]||"").split("+").filter(Boolean); }
+/* Aufpreis aller Booster einer Zeile — je Becher. */
+function boosterAufpreis(k,g){
+  return boosterCodes(k).reduce((s,c)=>{
+    const b=boosterVon(c); return b? s+boosterPreis(b,g) : s;
+  },0);
+}
+function boosterKosten(k,g){
+  return boosterCodes(k).reduce((s,c)=>{
+    const b=boosterVon(c); return b? s+boosterEk(b,g) : s;
+  },0);
+}
+/* Zeilenpreis je Becher = Grundpreis + Booster. */
+function zeilenPreis(r){ return preisVon(r.m,r.g) + boosterAufpreis(r.k,r.g); }
 function orderRows(){
   return Object.entries(order).map(([k,q])=>{
     const [nr,g]=k.split("|");
     return {k,m:item(nr),g:g||"16",q};
   }).filter(r=>r.m);
 }
-function orderTotal(){return orderRows().reduce((s,r)=>s+preisVon(r.m,r.g)*r.q,0);}
+function orderTotal(){return orderRows().reduce((s,r)=>s+zeilenPreis(r)*r.q,0);}
 function orderCost(){
   /* Thermo-Tasche faellt je angefangene 2 Becher an, nicht je Becher. */
-  const roh=orderRows().reduce((s,r)=>s+((r.m.groessen[r.g]||{}).ek||0)*r.q,0);
-  if(KANAL!=="lieferung")return roh;
+  const roh=orderRows().reduce((s,r)=>
+    s+(((r.m.groessen[r.g]||{}).ek||0)+boosterKosten(r.k,r.g))*r.q,0);
+  /* Grab geht ebenfalls im Thermobeutel raus — gleiche Verpackungskosten. */
+  if(KANAL!=="lieferung" && KANAL!=="grab")return roh;
   return roh + Math.ceil(orderCount()/2)*THERMO_TASCHE;
 }
 function orderCount(){return orderRows().reduce((s,r)=>s+r.q,0);}
@@ -2470,8 +4383,13 @@ function abzugFuer(rows, kanal){
   rows.forEach(r=>{
     const d=(r.m.groessen[r.g]||{}).abzug||{};
     Object.keys(d).forEach(c=>nimm(c,d[c]*r.q));
+    /* Booster gehen genauso vom Bestand ab wie jede andere Zutat —
+       sonst stimmt die Inventur nach dem ersten Protein-Smoothie nicht mehr. */
+    boosterCodes(r.k).forEach(c=>{
+      const b=boosterVon(c); if(b) nimm(c, boosterGramm(b,r.g)*r.q);
+    });
   });
-  if(kanal==="lieferung"){
+  if(kanal==="lieferung"||kanal==="grab"){
     const becher=rows.reduce((x,r)=>x+r.q,0);
     if(becher>0)nimm(TASCHE_CODE, Math.ceil(becher*THERMO_PRO_BECHER));
   }
@@ -2479,12 +4397,21 @@ function abzugFuer(rows, kanal){
 }
 function renderOrder(){
   const rows=orderRows();
-  $("#orderlist").innerHTML=rows.length?rows.map(r=>`
+  $("#orderlist").innerHTML=rows.length?rows.map(r=>{
+    const aktiv=boosterCodes(r.k);
+    const chips=boosterVerkaufbar().map(b=>{
+      const an=aktiv.includes(b.code);
+      return `<button class="bchip${an?" on":""}" onclick="togBoost('${r.k}','${b.code}')"
+        >${b[LANG]||b.de} +${boosterPreis(b,r.g)}฿</button>`;
+    }).join("");
+    const auf=boosterAufpreis(r.k,r.g);
+    return `
     <div class="oli">
-      <div class="t">${r.m.name}<br><small>${t('no')} ${r.m.nr} · ${GR_NAME[r.g]} · ${preisVon(r.m,r.g)} ฿</small></div>
+      <div class="t">${r.m.name}<br><small>${t('no')} ${r.m.nr} · ${GR_NAME[r.g]} · ${preisVon(r.m,r.g)} ฿${auf?` + ${auf} ฿`:""}</small>
+        <div class="bchips">${chips}</div></div>
       <div class="qty"><button onclick="chg('${r.k}',-1)">−</button><b>${r.q}</b><button onclick="chg('${r.k}',1)">+</button></div>
-      <div class="lp">${baht(preisVon(r.m,r.g)*r.q)}</div>
-    </div>`).join(""):`<div class="empty">${t('empty_order')}</div>`;
+      <div class="lp">${baht(zeilenPreis(r)*r.q)}</div>
+    </div>`;}).join(""):`<div class="empty">${t('empty_order')}</div>`;
   $("#total").textContent=baht(orderTotal());
   const has=rows.length>0;$("#btnPay").disabled=!has;$("#btnPrep").disabled=!has;
 }
