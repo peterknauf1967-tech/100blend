@@ -22,7 +22,9 @@
   .lang.on{background:#fff;color:#111;border-color:#fff}
   header .tabs{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
   .tab{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-weight:700;font-size:14px}
-  .tab.on{background:var(--orange);color:#1a0d00;border-color:var(--orange)}
+  /* Dieselbe Sprache oben in den Reitern: was leuchtet, ist aktiv. */
+  .tab.on{background:#16a34a;color:#fff;border-color:#22c55e;
+    box-shadow:0 0 0 2px rgba(34,197,94,.35), 0 0 12px rgba(34,197,94,.5)}
 
   main{padding:16px;max-width:1280px;margin:0 auto}
   .row{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:start}
@@ -103,7 +105,14 @@
   .grleiste{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
   .grleiste .gr{padding:9px 14px;border:1px solid #d8d1c7;background:#fff;border-radius:10px;
     font:700 14px inherit;cursor:pointer;color:#40352a}
-  .grleiste .gr.on{background:#1b4332;color:#fff;border-color:#1b4332}
+  /* AUSGEWAEHLT = LEUCHTET GRUEN. Peter, 30.08.2026: "Koennen wir die
+     Buttons in der Kasse farblich umdrehen? Wenn die leuchten und gruenes
+     Licht haben, sind die ausgewaehlt. Finde ich bedienerfreundlicher."
+     Vorher war die Auswahl DUNKELgruen (#1b4332) — im Sonnenlicht am Stand
+     sieht ein dunkler Knopf aus wie ein ausgegrauter. Jetzt ein saftiges
+     Gruen mit Leuchtrand, das man auch mit Sonne im Ruecken erkennt. */
+  .grleiste .gr.on{background:#16a34a;color:#fff;border-color:#22c55e;
+    box-shadow:0 0 0 2px rgba(34,197,94,.35), 0 0 12px rgba(34,197,94,.5)}
   .grleiste .trenner{width:1px;height:24px;background:#ddd;margin:0 4px}
   .item .db{font:700 11px inherit;color:#2f855a;margin-top:2px}
   .item .db.warn{color:#a4262c}
@@ -117,7 +126,8 @@
   cursor:pointer;white-space:nowrap;
 }
 .bchip:active{transform:scale(.96)}
-.bchip.on{background:#2C5A3B;border-color:#2C5A3B;color:#fff}
+.bchip.on{background:#16a34a;border-color:#22c55e;color:#fff;
+  box-shadow:0 0 0 2px rgba(34,197,94,.3), 0 0 10px rgba(34,197,94,.45)}
 /* Eignung je Rezept: grauer durchgestrichener Chip = passt chemisch nicht
    (Whey in Saeure oder roher Ananas). Nicht anklickbar, damit es am Tresen
    gar nicht erst passieren kann. */
@@ -472,6 +482,8 @@ const THERMO_PRO_BECHER=0.5;
 
 
 
+
+
 /* ═══════════════ BOOSTER (Zusatzoptionen je Becher) ═══════════════
    Peter, 30.08.2026: "Wo sind die Optionen fuer die Smoothies?"
 
@@ -629,11 +641,26 @@ const boosterVerkaufbar = () => BOOSTER.filter(b=>!b.offen);
    Der Aufpreis ist die Differenz, also 30,625 % des 16-oz-Preises.
    Beispiel 149 ฿ -> 22 oz 195 ฿, Aufpreis 46 ฿.
    Aendert Peter den 16-oz-Preis, rechnet sich beides neu. */
-const XXL_VOLUMEN = 22/16;
-const XXL_RABATT  = 0.95;
-const XXL_FAKTOR  = XXL_VOLUMEN * XXL_RABATT;
-const xxlPreis    = p16 => Math.round(p16 * XXL_FAKTOR);
-const xxlAufpreis = p16 => xxlPreis(p16) - Math.round(p16);
+/* NEU 30.08.2026 — Peters praezisierte Regel:
+     "16 oz kosten 100 Baht, fuer XXL 22 oz Aufschlag 37,5 minus 10 %,
+      kaufmaennisch auf einen optisch schoenen Preis gerundet, hier z. B.
+      35 Baht."
+
+   Der Unterschied zur alten Rechnung ist wichtig: Frueher wurden die 5 %
+   Rabatt vom GESAMTPREIS abgezogen (1,375 x 0,95), jetzt gehen die 10 %
+   vom AUFSCHLAG ab. Also:
+       Aufschlag = 37,5 % des 16-oz-Preises, davon 10 % weniger
+                 = 33,75 % — gerundet auf volle 5 Baht
+   Bei 100 ฿ sind das 33,75 -> 35 ฿, XXL kostet 135 ฿. Genau Peters Beispiel.
+
+   Warum der AUFSCHLAG gerundet wird und nicht der Endpreis: Auf der
+   Menuekachel steht "XXL +35 ฿" — diese Zahl liest der Gast, sie muss
+   glatt sein. Der Endpreis darf ruhig 134 sein. */
+const XXL_ANTEIL  = 22/16 - 1;      /* 0,375 — das reine Mehrvolumen */
+const XXL_RABATT  = 0.90;           /* 10 % Mengenrabatt auf den Aufschlag */
+const XXL_RUNDUNG = 5;              /* Aufschlag auf volle 5 Baht */
+const xxlAufpreis = p16 => Math.round(p16 * XXL_ANTEIL * XXL_RABATT / XXL_RUNDUNG) * XXL_RUNDUNG;
+const xxlPreis    = p16 => Math.round(p16) + xxlAufpreis(p16);
 /* Namen und Einheiten der abgezogenen Codes — nur damit die Verbrauchsliste
    im Tag-Reiter lesbar ist ("Ananas 1 310 g" statt "AN 1310"). */
 const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","SK":"Sonnenblumenkerne","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Dome-Deckel Ø 98 mm mit Loch (für 16 oz)","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","MI":"Minze","MS":"Mangostan","BA":"Banane","KE":"Kürbiskerne","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","GU":"Guave","ER":"Erdbeere TK","MB":"Maulbeere TK ⛔ NICHT VERWENDEN (25.08.)","JO":"Joghurt natur 🥛 (Meiji, 5-kg-Gallone)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch (Aroy-D, 1-L-Karton)","ST":"Süßtamarinde (Makham Wan)","KK":"Kakao (Holland, ungesüßt)","KM":"Kuhmilch 🥛 (Meiji, 5-L-Gallone)","MG":"Mango","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","MM":"Mandelmilch fertig 🥜 (V-Soy 1 L)","HS":"Hanfsamen (geschält)","GK":"Gurke","ZT":"Zitrone","KU":"Kurkuma","BK":"Brokkoli TK","HF":"Haferflocken → Hafermilch","JB":"Schwarze Johannisbeere TK","OS":"Orangensaft frisch gepresst","OZ":"Orangenzeste","OG":"Orangensaft GEFROREN","KF":"Kaffee, Espresso ganze Bohne","PG":"Passionsfrucht grün","MA":"Mandeln → Mandelmilch 🥜","KB":"Knoblauch","SC":"Schalotte (statt Zwiebel)","DL":"Dill frisch","MC":"Matcha Pulver","TB":"Thermo-Tasche (Lieferung) 25×30 cm"};
@@ -1103,7 +1130,7 @@ const MENU=[
     "ek": 30.6,
     "ekLief": 31.9,
     "kalk": 109,
-    "preis": 109,
+    "preis": 119,
     "offen": [
      "KL"
     ],
@@ -1266,7 +1293,7 @@ const MENU=[
     "ek": 21.9,
     "ekLief": 23.2,
     "kalk": 79,
-    "preis": 79,
+    "preis": 89,
     "offen": [
      "ST"
     ],
@@ -1411,7 +1438,7 @@ const MENU=[
     "ek": 24.5,
     "ekLief": 25.8,
     "kalk": 89,
-    "preis": 89,
+    "preis": 99,
     "offen": [],
     "abzug": {
      "KO": 112.7,
@@ -2113,7 +2140,7 @@ const MENU=[
     "ek": 25.4,
     "ekLief": 26.7,
     "kalk": 89,
-    "preis": 89,
+    "preis": 99,
     "offen": [
      "LS",
      "IG"
@@ -2205,7 +2232,7 @@ const MENU=[
     "ek": 24.3,
     "ekLief": 25.6,
     "kalk": 89,
-    "preis": 89,
+    "preis": 99,
     "offen": [],
     "abzug": {
      "HF": 12.39,
@@ -2735,7 +2762,7 @@ const MENU=[
     "ek": 37.8,
     "ekLief": 39.1,
     "kalk": 139,
-    "preis": 139,
+    "preis": 149,
     "offen": [
      "OZ",
      "IG"
@@ -2898,7 +2925,7 @@ const MENU=[
     "ek": 47.9,
     "ekLief": 49.2,
     "kalk": 169,
-    "preis": 169,
+    "preis": 189,
     "offen": [
      "TO"
     ],
@@ -3561,7 +3588,7 @@ const MENU=[
     "ek": 22.5,
     "ekLief": 23.8,
     "kalk": 79,
-    "preis": 79,
+    "preis": 89,
     "offen": [
      "MM"
     ],
@@ -3816,7 +3843,7 @@ const MENU=[
     "ek": 31.1,
     "ekLief": 32.4,
     "kalk": 109,
-    "preis": 109,
+    "preis": 119,
     "offen": [
      "IG",
      "ZI"
@@ -3973,7 +4000,7 @@ const MENU=[
     "ek": 41.2,
     "ekLief": 42.5,
     "kalk": 149,
-    "preis": 149,
+    "preis": 169,
     "offen": [
      "ZI"
     ],
@@ -4228,7 +4255,7 @@ const MENU=[
     "ek": 24.2,
     "ekLief": 25.5,
     "kalk": 89,
-    "preis": 89,
+    "preis": 99,
     "offen": [
      "MM",
      "LS"
@@ -4311,7 +4338,7 @@ const MENU=[
     "ek": 24.9,
     "ekLief": 26.2,
     "kalk": 89,
-    "preis": 89,
+    "preis": 99,
     "offen": [
      "LS",
      "MI"
@@ -4388,7 +4415,7 @@ const MENU=[
     "ek": 22.6,
     "ekLief": 23.9,
     "kalk": 79,
-    "preis": 79,
+    "preis": 89,
     "offen": [
      "LS",
      "MI",
@@ -4471,7 +4498,7 @@ const MENU=[
     "ek": 30.7,
     "ekLief": 32,
     "kalk": 109,
-    "preis": 109,
+    "preis": 119,
     "offen": [
      "MI"
     ],
@@ -4705,7 +4732,7 @@ const MENU=[
     "ek": 30.6,
     "ekLief": 31.9,
     "kalk": 109,
-    "preis": 109,
+    "preis": 119,
     "offen": [
      "ZI"
     ],
@@ -4859,7 +4886,7 @@ const MENU=[
     "ek": 25.3,
     "ekLief": 26.6,
     "kalk": 89,
-    "preis": 89,
+    "preis": 99,
     "offen": [
      "LS",
      "IG"
@@ -5425,6 +5452,17 @@ function renderMenu(){
       <div class="nr">${t('no')} ${m.nr}${m.bestaetigt?' <span class="stern">★</span>':''}</div>
       <div class="nm">${mName(m)}</div>
       <div class="desc">${(DESC[m.nr]||{})[LANG]||m.th||""}</div>
+      ${(()=>{ /* HINWEIS AUF DIE OPTIONEN.
+          Peter, 30.08.2026: "Wo finde ich die buchbaren Optionen fuer die
+          Smoothies?" — Sie waren da, aber erst NACHDEM man den Smoothie
+          antippt, unten in der Bestellzeile. Auf der Kachel stand nichts,
+          also sucht man an der falschen Stelle. Jetzt sagt die Kachel, was
+          es gibt und dass es nach dem Antippen kommt. */
+        const n=boosterVerkaufbar().filter(b=>eignung(b.code,m.nr)!=="nein").length;
+        if(!n) return "";
+        return `<div style="margin-top:3px;font:600 10.5px/1.2 inherit;opacity:.6">+ ${n} ${
+          LANG==="th"?"ตัวเลือก (แตะแล้วเลือก)":LANG==="en"?"options (tap first)":"Optionen (nach dem Antippen)"}</div>`;
+      })()}
       <div class="meta"><div>
         <div class="pr">${vk} ฿</div>
         <div class="sz">${GR_NAME[GROESSE]} · ${d.ml||"?"} ml${
@@ -5934,7 +5972,7 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
 </script>
 
 <div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 23:20</div>
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 23:37</div>
 
 <script>
 (function(){
