@@ -122,6 +122,12 @@
    (Whey in Saeure oder roher Ananas). Nicht anklickbar, damit es am Tresen
    gar nicht erst passieren kann. */
 .bchip.aus{opacity:.42;text-decoration:line-through;cursor:not-allowed;background:#f2efe9}
+/* Ausverkaufte Menuekachel: sichtbar, aber gesperrt. Das rote Band sagt den
+   Grund auf einen Blick, der Tooltip nennt die fehlende Zutat mit Menge. */
+.item.aus{opacity:.45;cursor:not-allowed;position:relative;filter:grayscale(.7)}
+.item.aus .ausband{position:absolute;top:8px;right:-30px;transform:rotate(35deg);
+  background:#c0392b;color:#fff;font:800 10px/1.6 inherit;letter-spacing:.5px;
+  padding:2px 34px;z-index:2;pointer-events:none}
 .bchip.etop{border-color:#2C5A3B}
 .bchip.eklein{border-color:#c9a227}
 </style>
@@ -463,6 +469,7 @@ const KALK_FAKTOR=3.5;
 const THERMO_TASCHE=2.6;
 const TASCHE_CODE="TB";
 const THERMO_PRO_BECHER=0.5;
+
 
 
 /* ═══════════════ BOOSTER (Zusatzoptionen je Becher) ═══════════════
@@ -1775,10 +1782,10 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 14.2,
+    "ware": 12.7,
     "verp": 4.2,
-    "ek": 18.4,
-    "ekLief": 19.7,
+    "ek": 16.9,
+    "ekLief": 18.2,
     "kalk": 69,
     "preis": 69,
     "offen": [
@@ -1790,7 +1797,7 @@ const MENU=[
      "MM": 149.3,
      "TO": 45.1,
      "BA": 136.1,
-     "KK": 9,
+     "KK": 7.5,
      "HS": 15.8,
      "B12": 1,
      "D12": 1,
@@ -1800,12 +1807,12 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 19,
+    "ware": 17,
     "verp": 4.7,
-    "ek": 23.6,
-    "ekLief": 24.9,
-    "kalk": 89,
-    "preis": 89,
+    "ek": 21.6,
+    "ekLief": 22.9,
+    "kalk": 79,
+    "preis": 79,
     "offen": [
      "MM",
      "TO",
@@ -1815,7 +1822,7 @@ const MENU=[
      "MM": 198.8,
      "TO": 60,
      "BA": 181.2,
-     "KK": 12,
+     "KK": 10,
      "HS": 21,
      "B16": 1,
      "D16": 1,
@@ -1825,12 +1832,12 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 26.1,
+    "ware": 23.3,
     "verp": 4.2,
-    "ek": 30.3,
-    "ekLief": 31.6,
-    "kalk": 109,
-    "preis": 109,
+    "ek": 27.5,
+    "ekLief": 28.8,
+    "kalk": 99,
+    "preis": 99,
     "offen": [
      "MM",
      "TO",
@@ -1840,7 +1847,7 @@ const MENU=[
      "MM": 273.2,
      "TO": 82.4,
      "BA": 248.9,
-     "KK": 16.5,
+     "KK": 13.7,
      "HS": 28.9,
      "BE": 1,
      "DE": 1,
@@ -5319,6 +5326,68 @@ function tab(tb){
 }
 
 /* =================== MENÜ / BESTELLUNG =================== */
+/* ═══════════ LAGERSTAND IN DER KASSE ═══════════
+   Peter, 30.08.2026: "Wenn ich das dann rausgenommen habe, muss sofort eine
+   Kettenreaktion gestartet werden. Der Smoothie wird nicht mehr angeboten …
+   nicht mehr verkauft."
+
+   Bis heute war das die grosse Luecke: Die Kasse hat den Bestand NIE
+   gelesen. Sie erfuhr von einer Fehlmenge erst NACH dem Verkauf, aus der
+   Antwort des Servers ("knapp"). Der Gast hatte da schon bezahlt.
+
+   Dabei liefert der Server den Stand laengst — eine schlichte GET-Anfrage
+   ohne Parameter gibt bestand, tk, reift und bestellt zurueck. Es hat nur
+   nie jemand gefragt.
+
+   Rechenregel wie auf dem Server (Funktion abziehen): erst TK, dann
+   Rohware. Verfuegbar ist also tk + bestand.
+
+   ⚠ FAIL OPEN, und das ist Absicht: Solange KEIN Lagerstand vorliegt — Sync
+   aus, kein Netz, Server alt — wird NICHTS gesperrt. Eine Kasse, die bei
+   Funkloch alles als ausverkauft zeigt, ist schlimmer als gar keine
+   Sperre. */
+let LAGER = null;          /* null = wir wissen nichts, also nicht sperren */
+let LAGER_ZEIT = 0;
+const VERPACKUNG_CODES = ["B12","D12","B16","D16","BE","DE","HA","SR","TB"];
+
+function lagerHolen(){
+  /* Die Kasse fuehrt die Adresse in CFG.sync, nicht in einer Funktion
+     syncUrl() wie die App — beim ersten Einbau hier verwechselt. */
+  const url = CFG && CFG.sync;
+  if(!url) return Promise.resolve();
+  return fetch(url, {method:"GET"})
+    .then(r=>r.json())
+    .then(a=>{
+      if(!a || !a.ok) return;
+      LAGER = {bestand:a.bestand||{}, tk:a.tk||{}};
+      LAGER_ZEIT = Date.now();
+      renderMenu();
+    })
+    .catch(()=>{ /* stillschweigend: fail open */ });
+}
+
+/* Wieviel ist von einem Code wirklich greifbar? */
+function greifbar(code){
+  if(!LAGER) return Infinity;
+  return (Number(LAGER.tk[code]||0)) + (Number(LAGER.bestand[code]||0));
+}
+
+/* Kann dieser Becher jetzt gemixt werden? Verpackung zaehlt bewusst NICHT
+   mit — ein fehlender Sticker darf keinen Smoothie sperren. */
+function machbar(m, g){
+  if(!LAGER) return {ok:true, fehlt:[]};
+  const ab = ((m.groessen||{})[g||GROESSE]||{}).abzug || {};
+  const fehlt = [];
+  Object.keys(ab).forEach(code=>{
+    if(VERPACKUNG_CODES.indexOf(code)>=0) return;
+    const brauch = Number(ab[code])||0;
+    if(brauch<=0) return;
+    const da = greifbar(code);
+    if(da + 0.001 < brauch) fehlt.push({code:code, fehlt:Math.round((brauch-da)*100)/100});
+  });
+  return {ok: fehlt.length===0, fehlt: fehlt};
+}
+
 function renderMenu(){
   const leiste=$("#groessenleiste");
   if(leiste)leiste.innerHTML=
@@ -5332,8 +5401,15 @@ function renderMenu(){
     const vk=preisVon(m), ek=kostenVon(m);
     const db=vk-ek;
     const unsicher=(d.offen||[]).length;      /* Zutaten ohne Preis */
+    /* Ausverkauft = mindestens eine Zutat reicht nicht mehr. Der Knopf wird
+       gesperrt, nicht versteckt: Lexi soll SEHEN, dass es den Becher gibt
+       und warum er gerade nicht geht — sonst sucht sie ihn und fragt Peter. */
+    const mb=machbar(m);
     return `
-    <button class="item" onclick="add('${m.nr}')">
+    <button class="item${mb.ok?"":" aus"}" ${mb.ok?`onclick="add('${m.nr}')"`:`disabled title="${
+      mb.fehlt.map(f=>(ZUTATNAME[f.code]||f.code)+" −"+f.fehlt+" "+(EINHEIT[f.code]||"g")).join(" · ").replace(/"/g,"'")}"`}>
+      ${mb.ok?"":`<div class="ausband">${
+        LANG==="th"?"หมด":LANG==="en"?"SOLD OUT":"AUSVERKAUFT"}</div>`}
       <div class="bar" style="background:${FARBE(m.nr)}"></div>
       <div class="nr">${t('no')} ${m.nr}${m.bestaetigt?' <span class="stern">★</span>':''}</div>
       <div class="nm">${mName(m)}</div>
@@ -5682,7 +5758,10 @@ function sendeWarteschlange(laut){
     SYNCSTAND={zeit:Date.now(),ok:false,alt:alt,knapp:SYNCSTAND.knapp};
     if(laut)alert(alt?t('sync_old'):t('sync_err'));
   })
-  .finally(()=>{ sendeLaeuft=false; syncChip(); if($("#v-tag")&&!$("#v-tag").classList.contains("hidden"))renderDay(); });
+  .finally(()=>{ sendeLaeuft=false; syncChip(); if($("#v-tag")&&!$("#v-tag").classList.contains("hidden"))renderDay();
+    /* Nach jedem gebuchten Verkauf den Stand neu ziehen — der Becher, der
+       gerade die letzte Mango verbraucht hat, muss sofort gesperrt sein. */
+    lagerHolen(); });
 }
 
 function syncChip(){
@@ -5830,6 +5909,12 @@ function saveSetup(){
 document.querySelectorAll(".lang").forEach(b=>b.classList.toggle("on",b.dataset.l===LANG));
 $("#locline").textContent="Stand "+CFG.loc+" · "+CFG.city;
 applyI18n();renderMenu();renderOrder();setCust(null);syncChip();
+/* Lagerstand holen: einmal beim Start und danach alle 2 Minuten. Zwei
+   Minuten, weil Peter und Lexi am selben Stand arbeiten — wer gerade eine
+   Zutat aussortiert, will nicht, dass die Kasse den Becher noch zehn Minuten
+   weiterverkauft. Die Anfrage ist winzig (nur der Stand, kein Verkauf). */
+lagerHolen();
+setInterval(lagerHolen, 120000);
 /* Liegengebliebene Bons beim Start und bei zurueckkehrendem Netz nachreichen. */
 if(WARTE.length)sendeWarteschlange();
 window.addEventListener("online",()=>sendeWarteschlange());
@@ -5837,7 +5922,7 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
 </script>
 
 <div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 14:13</div>
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 14:50</div>
 
 <script>
 (function(){
