@@ -5526,7 +5526,14 @@ const WHEY_NEIN =["1","2","3","5","6","7","12","13","15","16","18","19","22","24
 const KREA_TOP  =["17","30","39","44","41"];
 const KREA_NEIN =["43","29","15"];
 function eignung(code,nr){
-  nr=String(nr);
+  /* FEHLER GEFUNDEN 30.08.2026 beim Bau der Kalkulationstabelle:
+     Die Listen fuehren "1".."9" ohne fuehrende Null, die Rezepte heissen
+     aber "01".."09". Fuer NEUN Rezepte griff die Sperre damit gar nicht —
+     Nr. 01 (Gruener Tee + Passionsfrucht + Ananas) bot Whey an, obwohl es
+     genau der Fall ist, den die Liste verhindern soll. Aufgefallen ist es
+     erst, weil die Tabelle jede Kombination einzeln ausweist.
+     Deshalb auf beiden Seiten die fuehrende Null wegrechnen. */
+  nr=String(nr).replace(/^0+/,"");
   if(code==="WY"){
     if(WHEY_NEIN.indexOf(nr)>=0) return "nein";
     if(WHEY_KLEIN.indexOf(nr)>=0)return "klein";
@@ -5972,7 +5979,7 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
 </script>
 
 <div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 23:37</div>
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 23:41</div>
 
 <script>
 (function(){

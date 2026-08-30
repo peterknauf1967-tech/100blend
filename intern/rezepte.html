@@ -1660,7 +1660,10 @@ function list(){
             Protein anbieten kann, ohne 58 Rezepte einzeln zu oeffnen.
             💪 = ausdruecklich empfohlen · ½ = geht in halber Menge.
             Rezepte ohne Zeichen: entweder ungeeignet oder ohne Befund. */
-          const nr=String(r.n);
+          /* Fuehrende Null weg: die Listen fuehren "1".."9", die Rezepte
+             heissen "01".."09" — sonst greift die Sperre bei neun Rezepten
+             nicht (gefunden 30.08.2026). */
+          const nr=String(r.n).replace(/^0+/,"");
           if(WHEY_TOP.indexOf(nr)>=0)  return `<span class="pill" style="background:#2C5A3B" title="Whey Protein Isolat — passt besonders gut">💪</span>`;
           if(WHEY_KLEIN.indexOf(nr)>=0)return `<span class="pill" style="background:#c9a227" title="Whey Protein Isolat — nur halbe Menge">½💪</span>`;
           return "";
@@ -1704,7 +1707,7 @@ const KREA_NEIN =["43","29","15"];
    das ist eine Dosis, kein Geschmacksmittel. */
 const BOOST_G={WY:{"12":20,"16":25,"22":30}, KR:{"12":2.5,"16":2.5,"22":2.5}};
 function boosterZeile(r){
-  const nr=String(r.n);
+  const nr=String(r.n).replace(/^0+/,"");   /* siehe oben: "01" gegen "1" */
   let wy = WHEY_NEIN.indexOf(nr)>=0 ? "nein" : WHEY_KLEIN.indexOf(nr)>=0 ? "klein"
            : WHEY_TOP.indexOf(nr)>=0 ? "top" : "";
   /* Traegt der Becher schon Protein, wird die Zugabe halbiert — sonst
@@ -2037,7 +2040,7 @@ render();
 </script>
 
 <div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 23:37</div>
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 23:41</div>
 
 <script>
 (function(){
