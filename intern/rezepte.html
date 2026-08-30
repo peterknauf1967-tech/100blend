@@ -1731,6 +1731,64 @@ function boosterZeile(r){
   </div>`;
 }
 
+/* ①②③④ AN DER ZUTAT.
+   Peter, 30.08.2026: "Hanfsamen steht irgendwo am Ende."
+   Stimmt — und das ist richtig so, nur sah man den Grund nicht. Die
+   Zutatenliste ist seit dem 30.08. in der EINFUELLREIHENFOLGE sortiert,
+   nicht nach Wichtigkeit: erst Fluessigkeit, dann Frisches, dann Trockenes,
+   ganz zuletzt Gefrorenes. Hanfsamen sind trocken, also Gruppe ③.
+   Ohne Marker sieht die Reihenfolge willkuerlich aus, und wer sie fuer
+   willkuerlich haelt, kippt in beliebiger Folge ein — dann dreht die Klinge
+   im Hohlraum oder das Trockene staubt an den Deckel.
+   Die Zuordnung wird aus den Schritten des Rezepts gelesen, nicht geraten:
+   dort stehen die Zutatennamen bereits hinter ①②③④. */
+function gruppeJeZutat(r){
+  const map={};
+  (r.schritte||[]).forEach(s=>{
+    const txt=String(s[0]||"");
+    const m=txt.match(/^([①②③④])/);
+    if(!m) return;
+    const teil=txt.split(":")[1]||"";
+    (r.zut||[]).forEach((z,idx)=>{
+      const name=String(z[2]||"");
+      /* Der Schritt nennt den Kurznamen, die Zutat traegt oft noch einen
+         Zusatz nach dem Gedankenstrich ("Banane (frisch)" gegen
+         "Banane"). Deshalb auf den Kern vor Klammer/Gedankenstrich kuerzen. */
+      const kern=name.split("—")[0].split("(")[0].trim();
+      /* SCHLUESSEL IST DIE POSITION, nicht Code+Menge. Bei Nr. 43 stehen
+         235 g Wassermelone frisch UND 235 g gefroren — gleicher Code,
+         gleiche Menge, also derselbe Schluessel, und die frische bekam die
+         Markierung der gefrorenen. Gefunden 30.08. beim Gegenlesen. */
+      const key=idx;
+      /* ERSTER Treffer gilt. Sonst gewinnt der letzte Schritt, und weil
+         Schritt ④ die Frucht noch einmal nennt, landete die FRISCHE Banane
+         faelschlich bei ④. */
+      if(kern && teil.indexOf(kern)>=0 && map[key]===undefined) map[key]=m[1];
+    });
+  });
+  /* ZWEITER DURCHGANG mit dem ersten Wort. Manche Zutaten tragen im Rezept
+     einen Zusatz, den der Schritt nicht nennt — "Ananas FRISCH (Aroma +
+     Saeure)" gegen "④ Gefrorenes: Ananas". Der Kern-Vergleich greift dann
+     nicht, das erste Wort schon. */
+  (r.zut||[]).forEach((z,idx)=>{
+    if(map[idx]!==undefined) return;
+    const wort=String(z[2]||"").trim().split(/[\s(—,]/)[0];
+    if(wort.length<4) return;
+    (r.schritte||[]).forEach(s=>{
+      const txt=String(s[0]||""); const m=txt.match(/^([①②③④])/);
+      if(!m) return;
+      const teil=txt.split(":")[1]||"";
+      if(teil.indexOf(wort)>=0 && map[idx]===undefined) map[idx]=m[1];
+    });
+  });
+  /* Gefrorenes ist immer ④, egal was der Schritttext hergibt — die
+     Unterscheidung steht nur am Zutatennamen, seit dem TK/frisch-Split
+     vom 30.08. steht dieselbe Frucht zweimal im Rezept. */
+  (r.zut||[]).forEach((z,idx)=>{
+    if(/gefroren|แช่แข็ง|frozen/i.test(String(z[2]||""))) map[idx]="④";
+  });
+  return map;
+}
 function detail(r){
   const t=T[L];
   app.innerHTML=`
@@ -1745,7 +1803,7 @@ function detail(r){
     </div>
     ${r.todo?`<div class="warn">⚠ ${t.todo}</div>`:`
       <h2>${t.zut}</h2>
-      <div class="zut">${r.zut.map(z=>{
+      <div class="zut">${(()=>{const GRP=gruppeJeZutat(r);return r.zut.map((z,zi)=>{
         const v=VORSTUFEN[z[0]];
         return `
         <div class="${v?"mach":""}" ${v?`data-v="${z[0]}"`:""}>
@@ -1754,7 +1812,9 @@ function detail(r){
             <i>${esc(zweit(z,2))}</i></span>
           ${v?`<span class="pfeil">${L==="th"?"วิธีทำ ›":L==="en"?"how to ›":"Herstellung ›"}</span>`:""}
           <span class="zg">${typeof z[1]==="number"?z[1]+" g":esc(z[1])}</span>
-        </div>`;}).join("")}</div>
+          <span style="flex:0 0 auto;font:800 15px inherit;opacity:.5;width:1.1em;text-align:right"
+            >${GRP[zi]||""}</span>
+        </div>`;}).join("")})()}</div>
       <h2>${t.abl}</h2>
       <ol class="steps">${r.schritte.map(s=>`
         <li><b>${esc(haupt(s,0))}</b>
