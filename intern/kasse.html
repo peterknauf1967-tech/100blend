@@ -118,6 +118,12 @@
 }
 .bchip:active{transform:scale(.96)}
 .bchip.on{background:#2C5A3B;border-color:#2C5A3B;color:#fff}
+/* Eignung je Rezept: grauer durchgestrichener Chip = passt chemisch nicht
+   (Whey in Saeure oder roher Ananas). Nicht anklickbar, damit es am Tresen
+   gar nicht erst passieren kann. */
+.bchip.aus{opacity:.42;text-decoration:line-through;cursor:not-allowed;background:#f2efe9}
+.bchip.etop{border-color:#2C5A3B}
+.bchip.eklein{border-color:#c9a227}
 </style>
 <meta name="robots" content="noindex,nofollow">
 <title>MIXO Kasse</title>
@@ -293,7 +299,7 @@ const T={
   opt_phone:"Handynummer",opt_natid:"Steuer-/Personal-ID (13-stellig)",setup_note:"⚠️ Ohne echte PromptPay-ID erzeugt der QR nur einen Test-Code. Empfänger & Betrag stecken dann im QR.",
   pay_h:"Bezahlen",btn_pp_paid:"PromptPay bezahlt",btn_cash_paid:"Bar bezahlt",receiver:"Empfänger",ppid_notset:"⚠ nicht gesetzt",
   bon_h:"Kassenbon",btn_print:"Drucken",btn_next:"Nächster Kunde",
-  prep_h:"Zubereitung",prep_note:"Interne Liste — Gramm pro Becher, nach Zustand getrennt. 🔒 nicht an Kunden zeigen.",
+  prep_h:"Zubereitung",prep_note:"Interne Liste — Gramm pro Becher, in Einfüllreihenfolge ①②③④. Booster kommt zuletzt. 🔒 nicht an Kunden zeigen.",
   grp_fl:"Flüssig",grp_tk:"Gefroren (TK)",grp_fest:"Fest / frisch",grp_wirk:"Wirkstoffe",
   mix_line:"Mixen: harte Dinge + Flüssigkeit zuerst (Taste 60″) → TK-Pack 2–3× PULSE, dann 45″.",
   card_h:"Kundenausweis",no:"Nr.",halal:"Halal · Bio · ohne Zuckerzusatz",join_bon:"Member werden: jeder 10. gratis + Geburtstagsgeschenk — QR scannen:",thanks:"Danke! 🦊",
@@ -318,7 +324,7 @@ const T={
   opt_phone:"เบอร์มือถือ",opt_natid:"เลขประจำตัว/ผู้เสียภาษี (13 หลัก)",setup_note:"⚠️ ถ้ายังไม่ใส่พร้อมเพย์ไอดีจริง QR จะเป็นโค้ดทดสอบ · ผู้รับและจำนวนเงินจะอยู่ใน QR",
   pay_h:"ชำระเงิน",btn_pp_paid:"จ่ายพร้อมเพย์แล้ว",btn_cash_paid:"จ่ายเงินสดแล้ว",receiver:"ผู้รับเงิน",ppid_notset:"⚠ ยังไม่ตั้ง",
   bon_h:"ใบเสร็จ",btn_print:"พิมพ์",btn_next:"ลูกค้าคนถัดไป",
-  prep_h:"วิธีทำ",prep_note:"รายการภายใน — กรัมต่อแก้ว แยกตามชนิด 🔒 ห้ามให้ลูกค้าดู",
+  prep_h:"วิธีทำ",prep_note:"รายการภายใน — กรัมต่อแก้ว เรียงตามลำดับการใส่ ①②③④ บูสเตอร์ใส่ทีหลังสุด 🔒 ห้ามให้ลูกค้าดู",
   grp_fl:"ของเหลว",grp_tk:"แช่แข็ง",grp_fest:"ของแข็ง / สด",grp_wirk:"สารออกฤทธิ์",
   mix_line:"ปั่น: ของแข็ง+ของเหลวก่อน (ปุ่ม 60″) → ใส่ถุงแช่แข็ง กด PULSE 2–3 ครั้ง แล้ว 45″",
   card_h:"บัตรสมาชิก",no:"เบอร์",halal:"ฮาลาล · ออร์แกนิก · ไม่เติมน้ำตาล",join_bon:"สมัครสมาชิก: ทุกแก้วที่ 10 ฟรี + ของขวัญวันเกิด — สแกน QR:",thanks:"ขอบคุณค่ะ 🦊",
@@ -343,7 +349,7 @@ const T={
   opt_phone:"Mobile number",opt_natid:"Tax/National ID (13 digits)",setup_note:"⚠️ Without a real PromptPay ID the QR is only a test code. Receiver & amount are embedded in the QR.",
   pay_h:"Pay",btn_pp_paid:"PromptPay paid",btn_cash_paid:"Cash paid",receiver:"Receiver",ppid_notset:"⚠ not set",
   bon_h:"Receipt",btn_print:"Print",btn_next:"Next customer",
-  prep_h:"Preparation",prep_note:"Internal list — grams per cup, grouped by type. 🔒 do not show customers.",
+  prep_h:"Preparation",prep_note:"Internal list — grams per cup, in fill order ①②③④. Booster goes in last. 🔒 do not show customers.",
   grp_fl:"Liquid",grp_tk:"Frozen",grp_fest:"Solid / fresh",grp_wirk:"Actives",
   mix_line:"Blend: hard items + liquid first (button 60″) → frozen pack, PULSE 2–3×, then 45″.",
   card_h:"Member card",no:"No.",halal:"Halal · Organic · no added sugar",join_bon:"Join: every 10th free + birthday gift — scan QR:",thanks:"Thank you! 🦊",
@@ -5474,6 +5480,52 @@ function togBoost(k,code){
   delete order[k];
   renderOrder();
 }
+/* ═══════════ WHEY- UND KREATIN-EIGNUNG JE REZEPT ═══════════
+   Peter, 30.08.2026: "Was jetzt extrem wichtig ist — wo sehe ich, welche
+   Smoothies mit Protein zubereitet werden?"
+
+   Bisher: nirgends. Die Eignung stand nur in
+   konzept-bausteine/protein-creatin-booster-30-08.md, waehrend die Kasse den
+   Whey-Chip an JEDEM Becher angeboten hat. Damit konnte Lexi Whey in die
+   Wassermelone kippen — und der Becher flockt aus.
+
+   Die Chemie dahinter, kurz: Molkenprotein flockt bei pH 4,0-5,5 aus. Genau
+   dort liegen Limette, Passionsfrucht, Hibiskus und Orangensaft. Und rohe
+   Ananas enthaelt Bromelain, ein Enzym, das Molkenprotein in bittere Peptide
+   spaltet — Einfrieren daempft es, zerstoert es aber nicht.
+
+   nein     Whey wird gar nicht erst angeboten (Chip grau, durchgestrichen)
+   klein    geht, aber halbe Dosis und zuegig servieren
+   (fehlt)  keine Aussage — Chip normal, aber ohne Empfehlung
+   top      ausdruecklich empfohlen (Chip mit 💪) */
+const WHEY_TOP  =["9","17","20","21","26","30","34","35","36","37","39","41","44"];
+const WHEY_KLEIN=["4","8","10","11","32","33","38","40","42","48","51"];
+const WHEY_NEIN =["1","2","3","5","6","7","12","13","15","16","18","19","22","24",
+                  "25","27","28","29","43","45","46","47","49"];
+/* Kreatin ist kein Geschmacks-, sondern ein Textur-Thema: Es bleibt leicht
+   sandig. In dicken Bechern mit Kakao/Nuss/Hafer faellt das nicht auf, in
+   klaren duennen Bechern schmeckt man jedes Korn. */
+const KREA_TOP  =["17","30","39","44","41"];
+const KREA_NEIN =["43","29","15"];
+function eignung(code,nr){
+  nr=String(nr);
+  if(code==="WY"){
+    if(WHEY_NEIN.indexOf(nr)>=0) return "nein";
+    if(WHEY_KLEIN.indexOf(nr)>=0)return "klein";
+    if(WHEY_TOP.indexOf(nr)>=0)  return "top";
+  }
+  if(code==="KR"){
+    if(KREA_NEIN.indexOf(nr)>=0) return "nein";
+    if(KREA_TOP.indexOf(nr)>=0)  return "top";
+  }
+  return "";
+}
+const EIGNUNG_TXT={
+  nein :{de:"passt nicht zu diesem Smoothie",         th:"ไม่เข้ากับสูตรนี้",              en:"does not suit this smoothie"},
+  klein:{de:"nur halbe Menge, zügig servieren",       th:"ใส่แค่ครึ่งเดียว รีบเสิร์ฟ",        en:"half dose only, serve quickly"},
+  top  :{de:"passt besonders gut",                    th:"เข้ากันดีมาก",                   en:"suits this one especially well"}
+};
+
 function boosterCodes(k){ return (k.split("|")[2]||"").split("+").filter(Boolean); }
 /* Aufpreis aller Booster einer Zeile — je Becher. */
 function boosterAufpreis(k,g){
@@ -5535,26 +5587,41 @@ function renderOrder(){
     const aktiv=boosterCodes(r.k);
     const chips=boosterVerkaufbar().map(b=>{
       const an=aktiv.includes(b.code);
+      /* Passt der Booster ueberhaupt zu DIESEM Rezept? Ein Whey in der
+         Wassermelone flockt aus — das darf am Tresen nicht erst auffallen,
+         wenn der Becher schon steht. */
+      const eig=eignung(b.code, r.m.nr);
+      if(eig==="nein") return `<button class="bchip aus" disabled title="${
+          EIGNUNG_TXT.nein[LANG]||EIGNUNG_TXT.nein.de}"
+        >✗ ${b[LANG]||b.de}</button>`;
       /* ⊘ am Chip: dieser Booster nimmt dem Becher den Halal-Anspruch.
          Peter-Entscheidung 30.08.2026 — lieber den Anspruch fuer diesen einen
          Becher herausnehmen als das Produkt streichen. Das Zeichen steht am
          Chip UND als Zeile darunter, sobald er aktiv ist: am Tresen wird auf
          die Chips getippt, nicht in Fussnoten gelesen. */
-      return `<button class="bchip${an?" on":""}" onclick="togBoost('${r.k}','${b.code}')"
-        >${b[LANG]||b.de}${b.nichtHalal?" ⊘":""} +${boosterPreis(b,r.g)}฿</button>`;
+      const zeichen = eig==="top" ? "💪 " : eig==="klein" ? "½ " : "";
+      return `<button class="bchip${an?" on":""}${eig?" e"+eig:""}" onclick="togBoost('${r.k}','${b.code}')"
+        title="${eig?(EIGNUNG_TXT[eig][LANG]||EIGNUNG_TXT[eig].de):""}"
+        >${zeichen}${b[LANG]||b.de}${b.nichtHalal?" ⊘":""} +${boosterPreis(b,r.g)}฿</button>`;
     }).join("");
     const ohneHalal=aktiv.map(c=>boosterVon(c)).filter(b=>b&&b.nichtHalal);
+    const halbe=aktiv.filter(c=>eignung(c,r.m.nr)==="klein")
+      .map(c=>(boosterVon(c)||{})[LANG]||c);
     const halalHinweis=ohneHalal.length
       ? `<div style="margin-top:5px;font:700 11px/1.3 inherit;color:#a8471f">${
           LANG==="th" ? "⊘ แก้วนี้ไม่ใช่ฮาลาล (เวย์โปรตีน)"
         : LANG==="en" ? "⊘ This cup is not halal (whey protein)"
         :               "⊘ Dieser Becher ist nicht Halal (Whey)"}</div>`
       : "";
+    const halbHinweis=halbe.length
+      ? `<div style="margin-top:4px;font:700 11px/1.3 inherit;color:#8a6a12">½ ${halbe.join(" · ")} — ${
+          EIGNUNG_TXT.klein[LANG]||EIGNUNG_TXT.klein.de}</div>`
+      : "";
     const auf=boosterAufpreis(r.k,r.g);
     return `
     <div class="oli">
       <div class="t">${mName(r.m)}<br><small>${t('no')} ${r.m.nr} · ${GR_NAME[r.g]} · ${preisVon(r.m,r.g)} ฿${auf?` + ${auf} ฿`:""}</small>
-        <div class="bchips">${chips}</div>${halalHinweis}</div>
+        <div class="bchips">${chips}</div>${halalHinweis}${halbHinweis}</div>
       <div class="qty"><button onclick="chg('${r.k}',-1)">−</button><b>${r.q}</b><button onclick="chg('${r.k}',1)">+</button></div>
       <div class="lp">${baht(zeilenPreis(r)*r.q)}</div>
     </div>`;}).join(""):`<div class="empty">${t('empty_order')}</div>`;
@@ -5747,17 +5814,65 @@ function showBon(sale){
 function newSale(){clearOrder();setCust(null);}
 
 /* =================== ZUBEREITUNGS-BON =================== */
+/* BOOSTER AUF DEM ZUBEREITUNGS-BON.
+   Peter, 30.08.2026: "Wo sehe ich, welche Smoothies mit Protein zubereitet
+   werden?" — Auf dem Zubereitungs-Bon stand es bis heute NICHT. Der Bon
+   zeigte nur die Rezeptgruppen; ein Becher mit 25 g Whey sah aus wie jeder
+   andere. Lexi konnte gar nicht wissen, dass Protein hineingehoert.
+
+   Jetzt steht der Booster als eigener, hervorgehobener Block darunter — mit
+   Gramm-Menge und dem Arbeitsschritt: NACH dem Hauptgang, 5 Sekunden.
+   Nicht vorher, sonst schaeumt Whey und Kreatin wird sandig. */
+function boosterBlock(r){
+  const codes=boosterCodes(r.k); if(!codes.length)return "";
+  const zeilen=codes.map(c=>{
+    const b=boosterVon(c); if(!b)return "";
+    const g=boosterGramm(b,r.g), eig=eignung(c,r.m.nr);
+    const menge = eig==="klein" ? Math.round(g/2*10)/10 : g;
+    return `<li><span>${(b[LANG]||b.de)}${b.nichtHalal?" ⊘":""}</span><b>${
+      String(menge).replace(".",",")} g${eig==="klein"?" (½)":""}</b></li>`;
+  }).join("");
+  return `<div class="grp" style="border:2px solid #7a3ea8;border-radius:8px;padding:6px 8px">
+    <div class="gl" style="color:#7a3ea8">💪 ${
+      LANG==="th"?"บูสเตอร์ — ใส่ทีหลัง":LANG==="en"?"BOOSTER — add last":"BOOSTER — kommt zuletzt"}</div>
+    <ul>${zeilen}</ul>
+    <div class="note" style="margin-top:4px">${
+      LANG==="th"?"ใส่หลังปั่นเสร็จ แล้วปั่นต่อ 5 วินาที — ห้ามใส่ก่อน เวย์จะเป็นฟอง ครีเอทีนจะสาก"
+     :LANG==="en"?"Add after the main blend, then 5 seconds — never before: whey foams, creatine turns gritty"
+     :"Nach dem Hauptgang zugeben, dann 5 Sekunden — nie vorher: Whey schäumt, Kreatin wird sandig"}</div>
+  </div>`;
+}
+
 function showPrep(){
   const rows=orderRows();
   const COL={fl:"#0d3b2e",tk:"#13335a",fest:"#3a2f0c",wirk:"#3a1340"};
   const TC={fl:"#7fe0bf",tk:"#9cc8ff",fest:"#ffce4d",wirk:"#e3a0ff"};
   $("#prep").innerHTML=rows.map(r=>{
-    const m=r.m,z=m.z;
-    const grp=k=>z[k]?`<div class="grp"><div class="gl">${t('grp_'+k)}</div><ul>${z[k].map(x=>`<li><span>${tIng(x[0])}</span><b>${tUnit(x[1])}</b></li>`).join("")}</ul></div>`:"";
+    const m=r.m;
+    /* REPARIERT 30.08.2026: Der Bon las m.z — ein Feld, das der Menue-
+       Generator seit dem Umbau nicht mehr schreibt. Kein einziger Menue-
+       Eintrag hatte es noch, also warf der Bon bei JEDEM Rezept einen Fehler
+       und blieb leer. Aufgefallen erst, als Peter fragte, wo er sieht,
+       welcher Becher Protein bekommt.
+       Jetzt aus abzug gebaut — der Liste, die ohnehin den Bestand bucht.
+       Zwei Vorteile: die Gramm stimmen je Bechergroesse, und die Reihenfolge
+       ist automatisch die Einfuellfolge ①②③④, weil abzug aus der
+       sortierten Zutatenliste des Rezepts entsteht. */
+    const VERPACKUNG=["B12","D12","B16","D16","BE","DE","HA","SR","TB"];
+    const ab=((m.groessen||{})[r.g]||{}).abzug||{};
+    const zut=Object.keys(ab).filter(c=>VERPACKUNG.indexOf(c)<0);
+    const liste=zut.length
+      ? `<div class="grp"><div class="gl">${
+           LANG==="th"?"ใส่ตามลำดับนี้":LANG==="en"?"Fill in this order":"In dieser Reihenfolge einfüllen"
+         }</div><ul>${zut.map((c,i)=>`<li><span>${i+1}. ${tIng(ZUTATNAME[c]||c)}
+           <small style="opacity:.55">${c}</small></span><b>${
+           String(ab[c]).replace(".",",")} ${(EINHEIT[c]||"g")}</b></li>`).join("")}</ul></div>`
+      : "";
     const pn=m.prep?(LANG==="de"?m.prep:((PREPN[m.nr]||{})[LANG]||m.prep)):"";
-    return `<h4>${r.q}× ${t('no')} ${m.nr} — ${mName(m)} <span class="tag" style="background:${COL.fl};color:${TC.fl}">${m.size}</span></h4>
+    return `<h4>${r.q}× ${t('no')} ${m.nr} — ${mName(m)} <span class="tag" style="background:${COL.fl};color:${TC.fl}">${GR_NAME[r.g]}</span></h4>
       ${pn?`<div class="note">🔪 ${pn}</div>`:""}
-      ${grp('fl')}${grp('tk')}${grp('fest')}${grp('wirk')}
+      ${liste}
+      ${boosterBlock(r)}
       <div class="note">${t('mix_line')}</div>`;
   }).join("");
   on('m-prep');
