@@ -5238,6 +5238,17 @@ if(!CFG.sync)CFG.sync=SYNC_STANDARD;
    und wandert beim naechsten Versuch raus. So kann kein Bon verloren gehen.
    Der Server erkennt doppelt gesendete Bons an der Bon-Nummer. */
 let WARTE=LS("kb_warte")||[];
+/* KEIN SCHREIBEN AUS EINER TESTUMGEBUNG.
+   Am 30.08.2026 haben zwei Tests auf localhost den Kakao im ECHTEN
+   gemeinsamen Speicher auf 0 gesetzt — der Server nimmt jeden POST an, und
+   der frische Zeitstempel gewinnt gegen die echten Daten. Der Schutz sitzt
+   deshalb an der Wurzel, nicht an einer einzelnen Funktion: Gesendet wird
+   nur von der ausgelieferten Fassung ueber https, nie von localhost oder
+   aus einer Datei. Lesen bleibt erlaubt — das schadet nichts und macht
+   Tests mit echten Mengen erst moeglich. */
+const DARF_SENDEN = location.protocol==="https:" &&
+  !/^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(location.hostname);
+
 let SYNCSTAND={zeit:0,ok:null,knapp:[]};
 /* Thai ist die Arbeitssprache am Stand — Lexi kassiert, Peter kontrolliert.
    Peter, 30.08.2026: "in allen Bereichen Thai first".
@@ -5728,6 +5739,7 @@ function sendeWarteschlange(laut){
   if(!WARTE.length){ if(laut)alert(t('sync_ok')); syncChip(); return; }
   sendeLaeuft=true; syncChip();
   const paket=WARTE.slice(0,25);            /* nicht alles auf einmal */
+  if(!DARF_SENDEN){ console.log("[Test] kein Senden von",location.hostname); sendeLaeuft=false; syncChip(); return; }
   fetch(CFG.sync,{
     method:"POST",
     /* text/plain mit Absicht: Apps Script beantwortet die Vorab-Anfrage des
@@ -5922,7 +5934,7 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
 </script>
 
 <div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 14:54</div>
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 15:44</div>
 
 <script>
 (function(){
