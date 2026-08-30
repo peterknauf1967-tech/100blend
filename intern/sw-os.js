@@ -3,8 +3,8 @@
    Update erst beim übernächsten Öffnen die neue Fassung (Vorfall 14.08., iPhone).
    Nur wenn kein Netz da ist, kommt die gespeicherte Fassung. Bilder und Manifest
    bleiben Cache-zuerst, die ändern sich praktisch nie. */
-const CACHE = "blend-os-v5";
-const FILES = ["./standos.html", "./standos.webmanifest", "./icon-192.png", "./icon-512.png"];
+const CACHE = "blend-os-v6";   /* v6: Kasse und Rezeptkarte dazu, 30.08.2026 */
+const FILES = ["./standos.html", "./kasse.html", "./rezepte.html", "./standos.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
