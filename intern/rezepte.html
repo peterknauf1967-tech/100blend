@@ -1882,6 +1882,95 @@ function variantenZeile(v,nr){
       <b style="opacity:.7">${nr}${v.label}</b> <span>${esc(txt)}</span></li>`;
 }
 
+/* ═══════════ ZUTAT AM MIXPLATZ SPERREN ═══════════
+   Peter, 30.08.2026: "Wie löse ich das, wenn ich ein Rezept zubereite und
+   feststelle, ich kann etwas nicht mehr verarbeiten? Es ist nicht mehr
+   aromatisch, verdorben oder schlicht weg verbraucht? Wenn ich das dann
+   rausgenommen habe, muss sofort eine Kettenreaktion gestartet werden."
+
+   Genau hier gehoert der Griff hin — an die Zutat, im geoeffneten Rezept,
+   waehrend der Becher auf der Waage steht. Alles andere (App aufmachen,
+   Zutat suchen, Menge auf 0 tippen) passiert am Stand nicht.
+
+   WAS DER KNOPF AUSLOEST, in dieser Reihenfolge:
+     1. Bestand UND Gefriergut dieser Zutat auf 0
+     2. Zeitstempel auf jetzt, damit die Buchung beim Abgleich gewinnt
+     3. Grund + Datum werden mitgeschrieben (blend_sperrgrund)
+     4. sofortiger POST an den gemeinsamen Speicher — damit die KASSE den
+        Becher noch in derselben Minute sperrt und die App ihn rot faerbt
+     5. Die Zutat steht ab dann automatisch auf der Einkaufsliste, weil die
+        Reichweite auf 0 faellt. Das musste nicht gebaut werden, das kann
+        die App laengst.
+
+   DER GRUND IST DER EIGENTLICHE WERT. "Verbraucht" ist Alltag.
+   "Verdorben" heisst: Lieferant oder Lagerung pruefen. "Nicht mehr
+   aromatisch" heisst: Sorte oder Reifegrad pruefen. Ohne den Grund
+   verschwindet die Information, und im naechsten Monat kauft man dieselbe
+   schlechte Charge wieder.
+
+   Die Seiten teilen sich localStorage, weil sie auf derselben Adresse
+   liegen — die Rezeptkarte schreibt also in denselben Speicher wie die App
+   (blend_os_v1) und nutzt dieselbe Sync-Adresse (blend_os_sync). */
+const SKEY_OS="blend_os_v1", SYNCKEY_OS="blend_os_sync";
+const SYNC_STD="https://script.google.com/macros/s/AKfycbzDrg7mh6nIeGWYKNOXRYjs4bw0aAqmOyN1ZQQZcfbyWg5MZLt87B7FbiqyeN2p1f0S/exec";
+const GRUND_TXT={
+  verbraucht:{de:"aufgebraucht",         th:"ใช้หมดแล้ว",        en:"used up"},
+  verdorben :{de:"verdorben",            th:"เสียแล้ว",          en:"spoiled"},
+  fad       :{de:"nicht mehr aromatisch",th:"ไม่มีกลิ่นรสแล้ว",  en:"no aroma left"}
+};
+function osLesen(){ try{ return JSON.parse(localStorage.getItem(SKEY_OS)||"{}"); }catch(e){ return {}; } }
+function zutatSperren(code, grund){
+  const S=osLesen();
+  S.bestand=S.bestand||{}; S.tk=S.tk||{}; S.reift=S.reift||{}; S.ts=S.ts||{};
+  S.bestand[code]=0; S.tk[code]=0; S.reift[code]=0;
+  S.ts[code]=Date.now();
+  localStorage.setItem(SKEY_OS, JSON.stringify(S));
+  /* Grund getrennt fuehren — der gemeinsame Speicher kennt das Feld nicht,
+     und es soll den Abgleich nicht stoeren. */
+  let gr={}; try{ gr=JSON.parse(localStorage.getItem("blend_sperrgrund")||"{}"); }catch(e){}
+  gr[code]={grund:grund, zeit:new Date().toISOString().slice(0,16).replace("T"," ")};
+  localStorage.setItem("blend_sperrgrund", JSON.stringify(gr));
+  /* Sofort an den gemeinsamen Speicher — sonst verkauft die Kasse den
+     Becher weiter, bis das naechste Geraet zufaellig abgleicht. */
+  const url=(localStorage.getItem(SYNCKEY_OS)===null)?SYNC_STD:localStorage.getItem(SYNCKEY_OS);
+  /* KEIN SCHREIBEN AUS EINER TESTUMGEBUNG.
+     Am 30.08.2026 hat ein Test auf localhost den Kakao im ECHTEN
+     gemeinsamen Speicher auf 0 gesetzt — der Server nimmt jeden POST an,
+     egal woher er kommt, und der frische Zeitstempel gewinnt. Seitdem
+     schreibt nur noch die ausgelieferte Fassung. Lokal wird die Sperre
+     im Geraetespeicher gesetzt, aber nicht gesendet. */
+  const echt = location.protocol==="https:" && !/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname);
+  if(url && echt){
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({geraet:"Rezeptkarte", bestand:S.bestand, tk:S.tk,
+                           reift:S.reift, bestellt:S.bestellt||{}, ts:S.ts, wer:S.wer||{}, stand:S.stand||0})
+    }).catch(()=>{});
+  } else if(url && !echt){
+    console.log("[Test] Sperre nur lokal gesetzt, KEIN Senden an den gemeinsamen Speicher:", code, grund);
+  }
+  render();
+}
+function sperrDialog(code, name){
+  const T={th:{h:"เอาออกเพราะอะไร?",ab:"ยกเลิก"},de:{h:"Warum raus?",ab:"Abbrechen"},en:{h:"Why remove it?",ab:"Cancel"}}[L]||{};
+  const d=document.createElement("div");
+  d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px";
+  d.innerHTML=`<div style="background:var(--card);border-radius:14px;max-width:340px;width:100%;padding:16px;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+    <div style="font:800 15px/1.3 inherit;margin-bottom:2px">${esc(T.h)}</div>
+    <div style="font:600 13px/1.3 inherit;opacity:.7;margin-bottom:12px">${esc(name)} · ${code}</div>
+    ${Object.keys(GRUND_TXT).map(k=>`<button data-g="${k}" style="display:block;width:100%;margin:6px 0;padding:11px;
+      border:1px solid var(--line);border-radius:10px;background:#fff;font:700 14px inherit;cursor:pointer;text-align:left">
+      ${k==="verbraucht"?"📦":k==="verdorben"?"🦠":"😐"} ${esc(GRUND_TXT[k][L]||GRUND_TXT[k].de)}</button>`).join("")}
+    <button data-g="" style="display:block;width:100%;margin-top:10px;padding:9px;border:0;background:transparent;
+      font:600 13px inherit;opacity:.6;cursor:pointer">${esc(T.ab)}</button>
+  </div>`;
+  d.onclick=e=>{
+    const b=e.target.closest("button"); if(!b){ if(e.target===d)d.remove(); return; }
+    const g=b.dataset.g; d.remove();
+    if(g) zutatSperren(code, g);
+  };
+  document.body.appendChild(d);
+}
+
 function detail(r){
   const t=T[L];
   app.innerHTML=`
@@ -1907,6 +1996,10 @@ function detail(r){
           <span class="zg">${typeof z[1]==="number"?z[1]+" g":esc(z[1])}</span>
           <span style="flex:0 0 auto;font:800 15px inherit;opacity:.5;width:1.1em;text-align:right"
             >${GRP[zi]||""}</span>
+          <button class="raus" data-code="${z[0]}" data-nam="${esc(String(z[2]||"").split("—")[0].trim())}"
+            title="${L==="th"?"เอาออก":L==="en"?"remove":"rausnehmen"}"
+            style="flex:0 0 auto;margin-left:6px;border:1px solid var(--line);background:#fff;border-radius:8px;
+                   width:30px;height:30px;font:700 13px inherit;cursor:pointer;opacity:.55">✕</button>
         </div>`;}).join("")})()}</div>
       <h2>${t.abl}</h2>
       <ol class="steps">${(()=>{const VAR=varianten(r);return r.schritte.map((s,si)=>{
@@ -1924,6 +2017,12 @@ function detail(r){
       ${r.tip?`<div class="tip">💡 ${esc(L==="th"?r.tip[1]:L==="en"?r.tip[2]:r.tip[0])}</div>`:""}
     `}`;
   app.querySelector(".back").onclick=()=>{cur=null;scrollTo(0,0);render()};
+  /* Der Rausnehmen-Knopf sitzt IN der Zutatenzeile, die selbst anklickbar
+     sein kann (Vorstufen). Deshalb stopPropagation — sonst oeffnet der
+     Klick zusaetzlich die Herstellungsanleitung. */
+  app.querySelectorAll("button.raus").forEach(b=>b.onclick=e=>{
+    e.stopPropagation(); sperrDialog(b.dataset.code, b.dataset.nam);
+  });
   app.querySelectorAll(".zut div.mach").forEach(d=>
     d.onclick=()=>{curV=d.dataset.v;scrollTo(0,0);render()});
 }
@@ -1938,7 +2037,7 @@ render();
 </script>
 
 <div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 14:50</div>
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 14:54</div>
 
 <script>
 (function(){
