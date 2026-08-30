@@ -1789,6 +1789,46 @@ function gruppeJeZutat(r){
   });
   return map;
 }
+/* SCHRITT-VARIANTEN — die "4b"-Faelle.
+   Peter, 30.08.2026: "jeder Schritt eingekreist 1,2,3,4, wenn mit Option
+   z. B. 4b oder Alternative."
+
+   Bisher standen genau solche Abweichungen im TIPP-Fliesstext vergraben,
+   wo sie beim Arbeiten niemand liest. Zwei sind belegt:
+
+   ① JOGHURT BAUT KEINEN WIRBEL. Nr. 20 woertlich: "gestuft mixen: erst ein
+     Drittel der Mango, dann der Rest." Nr. 37: "GESTUFT MIXEN IST PFLICHT
+     ... bei Nr. 20 klebte die Masse aussen, und Peter musste 80 ml
+     nachgiessen. Das hat den Fruchtgeschmack auf 4 von 10 gedrueckt."
+     Gilt fuer jedes Rezept mit Joghurt — das ist die Zutat, die den Wirbel
+     bricht, nicht das einzelne Rezept.
+     ⚠ Nr. 37 nennt die gestufte Zugabe ausdruecklich eine HYPOTHESE, die
+     dort zum ersten Mal geprueft wird. Steht als Warnung dabei.
+     Gegenprobe Nr. 39: "OHNE JOGHURT LAEUFT ER OHNE GESTUFTES MIXEN" —
+     die Regel haengt also wirklich am Joghurt.
+
+   ② PULSE, WENN DIE KLINGE LEER DREHT. Aus der Original-Bedienungsanleitung
+     des OmniBlend V. Das ist der haeufigste Stoerfall und gehoert an den
+     Mixschritt, nicht in eine Fussnote. */
+function varianten(r){
+  const v=[];
+  if((r.zut||[]).some(z=>z[0]==="JO")) v.push({ziel:"vier", label:"b", warn:true, txt:{
+    de:"Joghurt baut keinen Wirbel: erst EIN DRITTEL der Frucht einfüllen, anmixen, dann den Rest. NICHT nachgießen — die Flüssigkeit steht schon im Rezept. (⚠ erst einmal so getestet)",
+    th:"โยเกิร์ตไม่สร้างวังวน: ใส่ผลไม้แค่หนึ่งในสามก่อน ปั่นให้เข้ากัน แล้วค่อยใส่ที่เหลือ ห้ามเติมของเหลว สูตรคำนวณไว้แล้ว (⚠ เพิ่งทดสอบครั้งแรก)",
+    en:"Yoghurt builds no vortex: put in ONE THIRD of the fruit first, blend, then the rest. Do NOT add liquid — the recipe already accounts for it. (⚠ tested once so far)"}});
+  v.push({ziel:"taste", label:"b", warn:false, txt:{
+    de:"Falls die Klinge leer dreht: 2–3× PULSE antippen, dann die Zeittaste noch einmal. Nicht länger laufen lassen.",
+    th:"ถ้าใบมีดหมุนฟรี: กด PULSE 2–3 ครั้ง แล้วกดปุ่มเวลาอีกครั้ง อย่าปั่นนานขึ้น",
+    en:"If the blade spins free: tap PULSE 2–3 times, then press the timer button again. Do not run it longer."}});
+  return v;
+}
+function variantenZeile(v,nr){
+  const txt=v.txt[L]||v.txt.de;
+  return `<li class="var" style="list-style:none;margin:2px 0 6px 0;padding:5px 8px;
+      border-left:3px solid ${v.warn?"#c9a227":"#7a3ea8"};background:rgba(0,0,0,.03);border-radius:0 6px 6px 0">
+      <b style="opacity:.7">${nr}${v.label}</b> <span>${esc(txt)}</span></li>`;
+}
+
 function detail(r){
   const t=T[L];
   app.innerHTML=`
@@ -1816,9 +1856,16 @@ function detail(r){
             >${GRP[zi]||""}</span>
         </div>`;}).join("")})()}</div>
       <h2>${t.abl}</h2>
-      <ol class="steps">${r.schritte.map(s=>`
-        <li><b>${esc(haupt(s,0))}</b>
-        <i>${esc(zweit(s,0))}</i></li>`).join("")}</ol>
+      <ol class="steps">${(()=>{const VAR=varianten(r);return r.schritte.map((s,si)=>{
+        const txt=String(s[0]||"");
+        /* Welche Variante haengt an diesem Schritt? "vier" = der
+           ④-Einfuellschritt, "taste" = der Mixschritt mit der Zeittaste. */
+        const art = /^④/.test(txt) ? "vier" : /"-Taste|-Taste/.test(txt) ? "taste" : "";
+        const dazu = art ? VAR.filter(v=>v.ziel===art) : [];
+        return `<li><b>${esc(haupt(s,0))}</b>
+        <i>${esc(zweit(s,0))}</i></li>`
+        + dazu.map(v=>variantenZeile(v,si+1)).join("");
+      }).join("")})()}</ol>
       ${boosterZeile(r)}
       <div class="tip">🔧 ${esc(HILFE[L]||HILFE.de)}</div>
       ${r.tip?`<div class="tip">💡 ${esc(L==="th"?r.tip[1]:L==="en"?r.tip[2]:r.tip[0])}</div>`:""}
