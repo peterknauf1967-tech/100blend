@@ -1669,6 +1669,68 @@ const HILFE={
   en:"If the blade spins free and no vortex forms — tap PULSE 2–3 times, then press the timer button. Do not blend longer: a motor spinning in a void only warms the drink. Keep a hand on the lid, the machine can jump when it restarts after the built-in pause."
 };
 
+/* BOOSTER IN DER REZEPTKARTE.
+   Peter, 30.08.2026: "ich finde kein Rezept mit Proteinpulver in Rezepte."
+   Richtig — und das war kein Suchfehler: Whey und Kreatin sind BOOSTER, die
+   der Gast dazubestellt, keine Rezeptzutat. Sie standen deshalb nur in der
+   Kasse. Lexi arbeitet aber aus dieser Karte heraus; wenn hier nichts steht,
+   weiss sie nicht, dass ein Becher Protein bekommen kann — und erst recht
+   nicht, bei welchem es schiefgeht.
+
+   Whey flockt bei pH 4,0-5,5 aus (Limette, Passionsfrucht, Hibiskus,
+   Orangensaft), und rohe Ananas spaltet es per Bromelain in bittere Peptide.
+   Deshalb drei Zustaende statt einer pauschalen Ansage.
+   Quelle: konzept-bausteine/protein-creatin-booster-30-08.md */
+const WHEY_TOP  =["9","17","20","21","26","30","34","35","36","37","39","41","44"];
+const WHEY_KLEIN=["4","8","10","11","32","33","38","40","42","48","51"];
+const WHEY_NEIN =["1","2","3","5","6","7","12","13","15","16","18","19","22","24",
+                  "25","27","28","29","43","45","46","47","49"];
+const KREA_TOP  =["17","30","39","44","41"];
+const KREA_NEIN =["43","29","15"];
+/* Menge je Bechergroesse. Whey steigt mit dem Becher, Kreatin nicht —
+   das ist eine Dosis, kein Geschmacksmittel. */
+const BOOST_G={WY:{"12":20,"16":25,"22":30}, KR:{"12":2.5,"16":2.5,"22":2.5}};
+function boosterZeile(r){
+  const nr=String(r.n);
+  const wy = WHEY_NEIN.indexOf(nr)>=0 ? "nein" : WHEY_KLEIN.indexOf(nr)>=0 ? "klein"
+           : WHEY_TOP.indexOf(nr)>=0 ? "top" : "";
+  const kr = KREA_NEIN.indexOf(nr)>=0 ? "nein" : KREA_TOP.indexOf(nr)>=0 ? "top" : "";
+  if(!wy && !kr) return "";
+  /* Die Rezeptkarte hat keine Bechergroessen-Variable wie die Kasse — die
+     Rezepte stehen auf 473 ml (16 oz). Deshalb fest die 16-oz-Dosis, und
+     zwar bewusst: Lexi liest hier den Standardbecher, alles andere rechnet
+     die Kasse. */
+  const g = BOOST_G.WY["16"];
+  const T={
+    th:{kopf:"บูสเตอร์ (ลูกค้าสั่งเพิ่ม)", nein:"❌ ห้ามใส่", klein:"½ ครึ่งเดียว", top:"✅ เข้ากันดี", ok:"ใส่ได้",
+        wy:"เวย์โปรตีนไอโซเลท", kr:"ครีเอทีน",
+        end:"ใส่หลังปั่นเสร็จ แล้วปั่นต่อ 5 วินาที"},
+    de:{kopf:"Booster (Zubestellung durch den Gast)", nein:"❌ nicht anbieten", klein:"½ halbe Menge", top:"✅ passt gut", ok:"möglich",
+        wy:"Whey Protein Isolat", kr:"Kreatin",
+        end:"Kommt nach dem Hauptgang, dann 5 Sekunden"},
+    en:{kopf:"Boosters (customer add-on)", nein:"❌ do not offer", klein:"½ half dose", top:"✅ suits well", ok:"possible",
+        wy:"Whey protein isolate", kr:"Creatine",
+        end:"Goes in after the main blend, then 5 seconds"}
+  }[L]||{};
+  const zeile=(name,zustand,menge)=>{
+    const txt = zustand==="nein"?T.nein : zustand==="klein"?T.klein : zustand==="top"?T.top : T.ok;
+    const farbe = zustand==="nein"?"var(--accent)" : zustand==="klein"?"#c9a227" : "var(--ok)";
+    /* Komma statt Punkt — 2,5 g, nicht 2.5 g. Auf einem Arbeitsblatt in
+       Thailand und Deutschland liest sich der Punkt als Tausendertrenner. */
+    const zahl = zustand==="klein" ? Math.round(menge/2*10)/10 : menge;
+    const m = zustand==="nein" ? "" : " · <b>"+String(zahl).replace(".",",")+" g</b>";
+    return `<li><span>${esc(name)}</span> <span style="color:${farbe};font-weight:700">${txt}</span>${m}</li>`;
+  };
+  return `<div class="tip" style="border-left:3px solid #7a3ea8">
+    <b>💪 ${esc(T.kopf)}</b>
+    <ul style="margin:4px 0 0;padding-left:16px">
+      ${zeile(T.wy, wy||"", g)}
+      ${zeile(T.kr, kr||"", BOOST_G.KR["16"])}
+    </ul>
+    <div style="margin-top:4px;opacity:.75">${esc(T.end)}</div>
+  </div>`;
+}
+
 function detail(r){
   const t=T[L];
   app.innerHTML=`
@@ -1697,6 +1759,7 @@ function detail(r){
       <ol class="steps">${r.schritte.map(s=>`
         <li><b>${esc(haupt(s,0))}</b>
         <i>${esc(zweit(s,0))}</i></li>`).join("")}</ol>
+      ${boosterZeile(r)}
       <div class="tip">🔧 ${esc(HILFE[L]||HILFE.de)}</div>
       ${r.tip?`<div class="tip">💡 ${esc(L==="th"?r.tip[1]:L==="en"?r.tip[2]:r.tip[0])}</div>`:""}
     `}`;
