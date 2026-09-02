@@ -62,10 +62,19 @@ async function starte() {
   return { browser, page, fehler };
 }
 
+// Netzfehler sind keine JS-Fehler. Im Testcontainer ist der Weg nach
+// draussen gesperrt, also scheitert z. B. der Firebase-Abruf -- die App faengt
+// das ab und arbeitet weiter, genau wie am Marktstand ohne Netz. Diese
+// Meldungen werden gezeigt, aber nicht gewertet.
+const NETZ = /net::ERR_|Failed to fetch|Failed to load resource/;
+
 function fehlerAusgeben(fehler) {
-  if (fehler.length) {
+  const netz  = fehler.filter(e => NETZ.test(e));
+  const echte = fehler.filter(e => !NETZ.test(e));
+  if (netz.length) console.log('(' + netz.length + ' Netzmeldung(en), im Container erwartet)');
+  if (echte.length) {
     console.log('--- JS-FEHLER ---');
-    fehler.slice(0, 8).forEach(e => console.log(e));
+    echte.slice(0, 8).forEach(e => console.log(e));
     return 1;
   }
   console.log('Keine JS-Fehler.');

@@ -1114,6 +1114,8 @@
     inboxView.classList.add('open');
     renderInbox();
     scheduleInboxPoll(true);
+    // Beim Oeffnen sofort nachsehen, statt bis zum naechsten Takt zu warten.
+    refreshAnswers();
     navPush('inbox', closeInboxDirekt);
   }
   function closeInboxDirekt(){
@@ -1196,16 +1198,56 @@
   }
 
   // ---------- Postkorb: Polling ----------
-  function scheduleInboxPoll(fast){
-    if (inboxPollTmo) { clearInterval(inboxPollTmo); inboxPollTmo = null; }
-    var ms = fast ? 30000 : 300000;   // 30 s wenn offen, sonst 5 min
-    inboxPollTmo = setInterval(function(){
+  /* Antworten direkt aus der Realtime Database holen -- ohne Firebase-SDK
+     und ohne dass jemand eine Config eintragen muss.
+     firebase-sync.js kann dasselbe, braucht dafuer aber localStorage
+     'firebase_config'. Wer das nie eingetragen hat (also alle ausser dem,
+     der es gebaut hat), sah nie eine Antwort, obwohl sie in der Datenbank
+     stand. Ein GET auf den .json-Pfad reicht voellig. */
+  var DB_URL = 'https://blend-live-default-rtdb.asia-southeast1.firebasedatabase.app';
+  function dbUrl(){ return (q('firebase_db_url') || DB_URL).replace(/\/+$/, ''); }
+
+  function pullAnswersRest(){
+    // Wenn firebase-sync laeuft, macht das ohnehin schon jemand.
+    if (q('firebase_config')) return Promise.resolve(false);
+    return fetch(dbUrl() + '/claude_answers.json', { cache: 'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(v){
+        if (!v || typeof v !== 'object') return false;
+        var next = {};
+        for (var id in v) {
+          var a = v[id] || {};
+          next[id] = {
+            ts:   a.ts   || isoLocal(),
+            text: a.text || '',
+            kind: a.kind || 'info',
+            by:   a.by   || 'claude'
+          };
+        }
+        var neu = JSON.stringify(next);
+        if (neu === (q(ANSWERS_KEY) || '{}')) return false;
+        qs(ANSWERS_KEY, neu);
+        return true;
+      })
+      .catch(function(){ return false; });   // offline ist kein Fehler
+  }
+
+  // Einmal holen, einmischen, Ansicht auffrischen.
+  function refreshAnswers(){
+    return pullAnswersRest().then(function(){
       var changed = mergeAnswers();
       if (changed || (inboxView && inboxView.classList.contains('open'))) {
         if (inboxView && inboxView.classList.contains('open')) renderInbox();
         updateBadge();
       }
-    }, ms);
+      return changed;
+    });
+  }
+
+  function scheduleInboxPoll(fast){
+    if (inboxPollTmo) { clearInterval(inboxPollTmo); inboxPollTmo = null; }
+    var ms = fast ? 30000 : 300000;   // 30 s wenn offen, sonst 5 min
+    inboxPollTmo = setInterval(refreshAnswers, ms);
   }
   /* --- POSTKORB: ENDE --- */
 
@@ -1286,7 +1328,7 @@
     setTimeout(flushQueue, 3000);
     /* --- POSTKORB: START --- */
     // Initial merge + Slow-Polling (5 min) fuer Antworten
-    setTimeout(function(){ mergeAnswers(); updateBadge(); }, 1500);
+    setTimeout(function(){ refreshAnswers(); }, 1500);
     scheduleInboxPoll(false);
     /* --- POSTKORB: ENDE --- */
   }
