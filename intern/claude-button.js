@@ -616,7 +616,10 @@
         toast(tr().save + ' ✓', 'ok');
         break;
     }
-    if (e.target === gearBtn) {
+    // e.target === gearBtn scheiterte auf Mobile, wenn der Touch das ⚙-Zeichen
+    // innerhalb des Buttons trifft statt den Button selbst. closest() steigt
+    // die Elternkette hoch und findet den Button auch dann.
+    if (e.target.closest && e.target.closest('.cbtn-gear')) {
       whUrlIn.value = q('claude_webhook_url') || '';
       whoIn.value   = q('who') || '';
       weWhIn.value  = q('wareneingang_webhook_url') || '';
