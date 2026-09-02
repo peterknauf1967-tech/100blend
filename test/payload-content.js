@@ -71,8 +71,13 @@ const MINI_JPEG =
     process.exit(1);
   }
 
-  const p = JSON.parse(roh);
+  // Ab 02.09.2026 gehen die Felder als Formulardaten raus (Make zerlegt nur
+  // die in echte Felder; bei text/plain war der ganze Rumpf ein Textbrocken
+  // und {{2.msg_id}} blieb leer).
+  const p = {};
+  for (const [k, v] of new URLSearchParams(roh)) p[k] = v;
   console.log('Felder:', Object.keys(p).join(', '));
+  console.log('Rumpf-Anfang:', roh.slice(0, 60));
   console.log('msg_id :', p.msg_id);
   console.log('lang   :', p.lang, '| user:', p.user, '| page:', p.page);
 
@@ -86,6 +91,8 @@ const MINI_JPEG =
   const bild = inhalt.find(b => b.type === 'image');
 
   const pruefungen = [
+    ['als Formulardaten gesendet',        roh.indexOf('msg_id=') === 0],
+    ['msg_id nicht leer',                 !!p.msg_id && p.msg_id.length > 5],
     ['content_json ist ein Array',        Array.isArray(inhalt)],
     ['Textblock vorhanden',               !!text && text.text.indexOf('Mango ist alle') > -1],
     ['Bildblock vorhanden',               !!bild],

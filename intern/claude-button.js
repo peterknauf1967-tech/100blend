@@ -984,20 +984,38 @@
   function postToWebhook(payload){
     var url = q('claude_webhook_url');
     if (!url) return Promise.reject('nowebhook');
-    // Wichtig: mode 'no-cors' + Content-Type 'text/plain' machen daraus eine
-    // "simple request" -- kein CORS-Preflight, keine Header-Auslese auf der
-    // Response. Make.com Custom-Webhooks (und die meisten Automations-
-    // Plattformen) beantworten JSON-POSTs ohne die noetigen CORS-Header,
-    // sodass ein normales `fetch({headers:{'Content-Type':'application/json'}})`
-    // die Response als Fehler wirft -- obwohl die Nachricht laengst
-    // angekommen ist. Body bleibt JSON-Text, Make parst ihn automatisch.
-    // Opaque Response = wir koennen den Status nicht lesen, aber wenn fetch
-    // resolved, ist die Uebertragung erfolgt. Fuer Fire-and-Forget-Send ok.
+    // Warum Formulardaten und nicht JSON:
+    //
+    // 'no-cors' ist noetig, weil Make.coms Custom-Webhooks die CORS-Header
+    // nicht setzen -- ein normaler JSON-POST wuerde im Browser als Fehler
+    // ankommen, obwohl die Nachricht laengst da ist. 'no-cors' erlaubt aber
+    // nur drei Content-Types: text/plain, multipart/form-data und
+    // application/x-www-form-urlencoded. 'application/json' ist dort
+    // ausgeschlossen.
+    //
+    // Frueher stand hier text/plain mit JSON im Rumpf und der Annahme, Make
+    // parse das schon. Tut es nicht: bei text/plain ist der ganze Rumpf ein
+    // einziger Textbrocken, also war {{2.msg_id}} leer. Firebase bekam damit
+    // den Pfad claude_answers/.json -- die Antwort landete in der Wurzel und
+    // ueberschrieb den ganzen Zweig, und {{2.content_json}} war ebenfalls
+    // leer, also antwortete Claude auf nichts.
+    //
+    // Formulardaten sind ebenso preflight-frei, werden von Make aber in
+    // echte, benannte Felder zerlegt.
+    var form = new URLSearchParams();
+    for (var k in payload) {
+      if (!Object.prototype.hasOwnProperty.call(payload, k)) continue;
+      var v = payload[k];
+      if (v === null || v === undefined) continue;
+      form.append(k, typeof v === 'string' ? v : JSON.stringify(v));
+    }
+    // Opaque Response: den Status koennen wir nicht lesen, aber wenn fetch
+    // aufloest, ist die Uebertragung erfolgt. Fuer Senden-und-vergessen ok.
     return fetch(url, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-      body: JSON.stringify(payload)
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: form.toString()
     }).then(function(){ return; });
   }
   function enqueue(p){
