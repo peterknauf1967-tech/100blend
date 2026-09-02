@@ -247,6 +247,9 @@ details.tipp .inhalt .en{display:block;margin-top:4px}
   <button data-v="ruesten"><b>🧊</b><span id="nv_ruesten"></span></button>
   <button data-v="bestand"><b>📦</b><span id="nv_bestand"></span></button>
   <button data-v="rezepte"><b>📖</b><span id="nv_rezepte"></span></button>
+  <!-- --- AUSWERTUNG: START --- -->
+  <button data-v="auswertung"><b>📊</b><span id="nv_auswertung"></span></button>
+  <!-- --- AUSWERTUNG: ENDE --- -->
   <!-- KASSE UND ARBEITSKARTE AUS DER APP HERAUS ERREICHBAR.
        Peter, 30.08.2026: "Baue auch die Kasse in die App ein, im Moment
        arbeiten wir nur outside mit dem Smartphone, da nutzt die Kasse am PC
@@ -456,6 +459,76 @@ function ampelAutoAusEntsorgt(){
   }catch(e){}
 }
 /* --- AMPEL: ENDE --- */
+
+/* --- ZERT-CHIPS: START ---
+ * Kleine Pflege-UI je Zutat: 9 farbige Emoji-Pills. Angehaucht = gesetzt,
+ * grau = nicht gesetzt. Klick togglet den Cert-Key für die Zutat in
+ * localStorage.blend_zertifikate_v1 und feuert ein storage-Event (das
+ * firebase-sync live nach Firebase durchreicht). Die Kunden-Landingpage
+ * (order.html) beobachtet denselben Key und schaltet ihre Werbe-Badges
+ * automatisch nach.
+ */
+const ZERTKEY = "blend_zertifikate_v1";
+const ZERT_META = [
+  ["haccp",       "🛡️"],
+  ["gmp",         "🏭"],
+  ["organic",     "🌿"],
+  ["organic_th",  "🌱"],
+  ["non_gmo",     "🚫"],
+  ["halal",       "🕋"],
+  ["human_grade", "👤"],
+  ["iso_22000",   "📋"],
+  ["fair_trade",  "🤝"],
+];
+const ZERT_TITEL = {
+  haccp:"HACCP", gmp:"GMP", organic:"Bio", organic_th:"Bio Thailand",
+  non_gmo:"Non-GMO", halal:"Halal", human_grade:"Lebensmittel-Qualität",
+  iso_22000:"ISO 22000", fair_trade:"Fair Trade"
+};
+function _zertLesen(){ try{ return JSON.parse(localStorage.getItem(ZERTKEY)||"{}")||{}; }catch(e){ return {}; } }
+function _zertSchreiben(o){
+  try{ localStorage.setItem(ZERTKEY, JSON.stringify(o||{})); }catch(e){}
+  /* explizit ein storage-Event für DIESES Tab feuern, damit auch die eigene
+     UI (und andere Tabs derselben Origin ohne echten Wechsel) synchronisiert. */
+  try{ window.dispatchEvent(new StorageEvent("storage",{key:ZERTKEY})); }catch(e){}
+}
+if(localStorage.getItem(ZERTKEY)==null) _zertSchreiben({});
+
+function zertsVon(code){
+  const o = _zertLesen();
+  return Array.isArray(o[code]) ? o[code] : [];
+}
+function zertToggle(code, key){
+  const o = _zertLesen();
+  const cur = Array.isArray(o[code]) ? o[code].slice() : [];
+  const i = cur.indexOf(key);
+  if(i>=0) cur.splice(i,1); else cur.push(key);
+  o[code] = cur;
+  _zertSchreiben(o);
+}
+function zertChipReihe(code){
+  const gesetzt = zertsVon(code);
+  const chips = ZERT_META.map(([k,em])=>{
+    const on = gesetzt.indexOf(k)>=0;
+    const st = on
+      ? "background:#e6f2e6;border:1px solid #7bb37b;opacity:1"
+      : "background:#f4f2ed;border:1px solid #d8d3c6;opacity:.45;filter:grayscale(.6)";
+    return `<button type="button" data-zert-toggle="${k}" data-code="${code}" title="${ZERT_TITEL[k]||k}"
+      style="width:24px;height:24px;padding:0;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;${st}">${em}</button>`;
+  }).join("");
+  return `<span class="zert-chips" data-zert-code="${code}"
+    style="display:flex;flex-wrap:wrap;gap:3px;flex:1 0 100%;margin:4px 0 2px;padding:4px 0;border-top:1px dashed #e6e0d0">
+    <span style="font-size:10.5px;color:#888;letter-spacing:1px;text-transform:uppercase;align-self:center;margin-right:4px">Zert.</span>
+    ${chips}</span>`;
+}
+window.addEventListener("storage", ev=>{
+  /* fremdes Tab hat Zerts geändert oder Cloud-Sync: neu rendern. */
+  if(ev && ev.key===ZERTKEY && typeof render==="function") render();
+});
+window.addEventListener("zertifikate-cloud-sync", ()=>{
+  if(typeof render==="function") render();
+});
+/* --- ZERT-CHIPS: ENDE --- */
 
 /* --- CHARGEN: START --- */
 /* Baustein 2 aus docs/frische-konzept.md — jede angesetzte Menge einer
@@ -1008,6 +1081,25 @@ const TXT={
  ausbeuteTxt:{de:"Ausbeute",en:"Yield",th:"อัตราที่ใช้ได้"},
  nvKasse:{de:"Kasse",en:"Till",th:"แคชเชียร์"},
  nvKarte:{de:"Zubereitung",en:"Prep",th:"วิธีทำ"},
+ /* --- AUSWERTUNG: START --- */
+ auswertung:{de:"Auswertung",en:"Analytics",th:"สรุป"},
+ auswTitel:{de:"📊 Chargen-Auswertung",en:"📊 Batch analytics",th:"📊 สรุปล็อตของสด"},
+ auswAlle:{de:"Alle Zeit",en:"All time",th:"ทั้งหมด"},
+ ausw30:{de:"Letzte 30 Tage",en:"Last 30 days",th:"30 วันล่าสุด"},
+ ausw7:{de:"Letzte 7 Tage",en:"Last 7 days",th:"7 วันล่าสุด"},
+ auswKpiGes:{de:"Chargen ges.",en:"Batches total",th:"ล็อตทั้งหมด"},
+ auswKpiAuf:{de:"aufgebraucht",en:"used up",th:"ใช้หมด"},
+ auswKpiEnt:{de:"entsorgt",en:"discarded",th:"ทิ้ง"},
+ auswKpiLeb:{de:"Ø Lebensdauer",en:"Ø lifetime",th:"อายุเฉลี่ย"},
+ auswKpiVerl:{de:"Verlust (gesch.)",en:"Loss (est.)",th:"สูญเสีย (ประมาณ)"},
+ auswRankTitel:{de:"Am häufigsten weggeworfen",en:"Most often discarded",th:"ทิ้งบ่อยที่สุด"},
+ auswKarTitel:{de:"Karenz-Statistik",en:"Grace period stats",th:"สถิติช่วงยืด"},
+ auswZeitTitel:{de:"Letzte 30 Tage · Tageszahlen",en:"Last 30 days · per day",th:"30 วันล่าสุด · รายวัน"},
+ auswEmpfTitel:{de:"Empfehlungen",en:"Recommendations",th:"คำแนะนำ"},
+ auswCsvBtn:{de:"📥 CSV exportieren",en:"📥 Export CSV",th:"📥 ส่งออก CSV"},
+ auswLeer:{de:"Noch keine Chargen erfasst.",en:"No batches recorded yet.",th:"ยังไม่มีล็อตในระบบ"},
+ auswTileOff:{de:"Auswertung öffnen",en:"Open analytics",th:"เปิดสรุป"},
+ /* --- AUSWERTUNG: ENDE --- */
  rausTitel:{de:"Zutat rausnehmen — verbraucht, verdorben oder ohne Aroma",en:"Remove ingredient — used up, spoiled or no aroma",th:"เอาวัตถุดิบออก — หมด เสีย หรือไม่มีกลิ่นรส"},
  fruchtfleisch:{de:"฿/kg Fruchtfleisch",en:"฿/kg usable flesh",th:"฿/กก. เนื้อที่ใช้ได้"},
  /* Verarbeiten */
@@ -1748,6 +1840,9 @@ function vStart(){
     <div class="${kpiOffen==="da"?"auf":""}" data-kpi="da"><b>${daZahl}</b><span>${h("posDa")}</span></div>
     <div class="${kpiOffen==="neu"?"auf":""}" data-kpi="neu"><b>${frischZahl}</b><span>${h("zuletztGeaendert")}</span></div>
     ${wegZahl?`<div class="${kpiOffen==="weg"?"auf":""}" data-kpi="weg"><b>${wegZahl}</b><span>${h("unterwegs")}</span></div>`:""}
+    <!-- --- AUSWERTUNG: START --- -->
+    <div data-navto="auswertung" title="${h("auswTileOff")}"><b>📊</b><span>${h("auswertung")}</span></div>
+    <!-- --- AUSWERTUNG: ENDE --- -->
   </div>
   ${kpiDetail(defizite)}
   ${(()=>{ if(mixbar)return "";
@@ -1844,7 +1939,8 @@ function vBestand(){
           ${istFrisch(k.code)?`<span class="frisch">🕒 ${vorZeit((S.ts||{})[k.code])}${(S.wer||{})[k.code]?" · "+esc(S.wer[k.code]):""}</span>`:""}
           ${brauchtRezepte(k).length?`<span class="rz">${brauchtRezepte(k).map(r=>`<span>${r==="*"?"alle":r}</span>`).join("")}</span>`:""}
           ${/* --- AMPEL: START --- */ (ampelStatus(k.code)==="rot" && ampelGrund(k.code)) ? `<span class="a-grund">⚠ ${esc(ampelGrund(k.code))}</span>` : "" /* --- AMPEL: ENDE --- */}
-          <span class="pr">${preisText(k)}</span></span>
+          <span class="pr">${preisText(k)}</span>
+          ${/* --- ZERT-CHIPS: START --- */ zertChipReihe(k.code) /* --- ZERT-CHIPS: ENDE --- */}</span>
         ${hoerBtn(k)}
         ${own?`<button class="del" data-del="${k.code}">✕</button>`:""}
         ${istHausvorrat(k.code)
@@ -2341,6 +2437,297 @@ function vRezepte(){
       <span class="ampel rt">${h("rezFehlt")}</span></div></div>`).join("")}`:""}`;
 }
 
+/* --- AUSWERTUNG: START ------------------------------------------------------
+   Chargen-Historie-Auswertung: welche Zutat wird am haeufigsten weggeworfen?
+   Liest S.chargen_frisch (Baustein 2), aendert nichts an ihnen. Rein Read.
+   ------------------------------------------------------------------------- */
+let aFilter="all";                 /* Zeitfilter: "all" | "30" | "7" */
+const AUSW_KOSTEN_FALLBACK = 0.05; /* THB je g/ml wenn kein Katalogpreis */
+
+/* Alle Chargen (auch aufgebraucht/entsorgt) fuer die Auswertung. */
+function auswChargen(){
+  return Object.entries(S.chargen_frisch||{}).map(([id,c])=>Object.assign({_id:id},c||{}));
+}
+/* Chargen nach Zeitfilter (Bezugspunkt: produziert_am). */
+function auswGefiltert(){
+  const all = auswChargen();
+  if(aFilter==="all") return all;
+  const tage = aFilter==="7" ? 7 : 30;
+  const grenze = Date.now() - tage*24*3600*1000;
+  return all.filter(c=>c.produziert_am && new Date(c.produziert_am).getTime()>=grenze);
+}
+/* Grobe Kosten je g/ml der Zutat. Wenn Katalogpreis (฿/kg oder ฿/L) bekannt,
+   dann ฿/g bzw. ฿/ml daraus; sonst Fallback. */
+function auswKosten(code){
+  const k = (typeof findeCode==="function") ? findeCode(code) : null;
+  let ref = null;
+  if(k){
+    if(k.pmin!=null) ref = k.pmin;
+    else if(typeof letzterPreis==="function"){ try{ ref = letzterPreis(code); }catch(e){} }
+  }
+  if(ref==null || !isFinite(+ref) || +ref<=0) return AUSW_KOSTEN_FALLBACK;
+  return (+ref)/1000; /* ฿/kg oder ฿/L -> ฿/g bzw. ฿/ml */
+}
+/* Kern-Statistik: KPIs + Ranking je Zutat. */
+function auswStats(){
+  const rows = auswGefiltert();
+  const gesamt = rows.length;
+  const aufgebraucht = rows.filter(c=>c.status==="aufgebraucht").length;
+  const entsorgt = rows.filter(c=>c.status==="entsorgen").length;
+  /* Lebensdauer nur fuer abgeschlossene Chargen (Status aufgebraucht/entsorgen).
+     Endzeitpunkt approximieren: letzter peter_freigabe-Eintrag, sonst ablauf_am,
+     sonst jetzt. */
+  let stundenSumme=0, stundenZahl=0;
+  rows.forEach(c=>{
+    if(c.status!=="aufgebraucht" && c.status!=="entsorgen") return;
+    const start = c.produziert_am ? new Date(c.produziert_am).getTime() : 0;
+    if(!start) return;
+    let ende = 0;
+    const letzte = (c.peter_freigaben||[]).slice(-1)[0];
+    if(letzte && letzte.ts) ende = +letzte.ts;
+    else if(c.ablauf_am) ende = new Date(c.ablauf_am).getTime();
+    else ende = Date.now();
+    if(ende>start){ stundenSumme += (ende-start)/3600000; stundenZahl++; }
+  });
+  const oLeben = stundenZahl ? Math.round(stundenSumme/stundenZahl) : 0;
+  /* Verlust in THB. */
+  let verlustTHB = 0;
+  rows.filter(c=>c.status==="entsorgen").forEach(c=>{
+    const rest = +(c.menge_rest||c.menge_ml||c.menge_g||0);
+    verlustTHB += rest * auswKosten(c.zutat_code);
+  });
+  /* Ranking je Zutat. */
+  const byCode = {};
+  rows.forEach(c=>{
+    const code = c.zutat_code||"?";
+    const b = byCode[code] || (byCode[code] = {code, ges:0, entsorgt:0, aufgebraucht:0, restSumme:0, restZahl:0});
+    b.ges++;
+    if(c.status==="entsorgen"){
+      b.entsorgt++;
+      b.restSumme += +(c.menge_rest||c.menge_ml||c.menge_g||0);
+      b.restZahl++;
+    }
+    if(c.status==="aufgebraucht") b.aufgebraucht++;
+  });
+  const rank = Object.values(byCode).map(b=>{
+    const abges = b.entsorgt + b.aufgebraucht;
+    const quote = abges>0 ? Math.round(b.entsorgt/abges*100) : 0;
+    const restAvg = b.restZahl>0 ? Math.round(b.restSumme/b.restZahl) : 0;
+    const H = chHaltbar(b.code);
+    return {code:b.code, name:H.name, einheit:H.einheit, ges:b.ges, entsorgt:b.entsorgt,
+            aufgebraucht:b.aufgebraucht, quote, restAvg};
+  }).sort((x,y)=> y.quote-x.quote || y.entsorgt-x.entsorgt || y.ges-x.ges);
+  return {gesamt, aufgebraucht, entsorgt, oLeben, verlustTHB, rank};
+}
+/* Karenz-Statistik: wie oft genutzt, Peter-Freigaben, Erfolgsquote. */
+function auswKarenzStats(){
+  const rows = auswGefiltert();
+  let karenzChargen=0, freigOK=0, freigWeg=0, karenzDannAuf=0, karenzDannEnt=0;
+  rows.forEach(c=>{
+    const fr = c.peter_freigaben||[];
+    const hatKarenz = fr.length>0 || c.status==="karrenz" || c.karrenz_bis;
+    if(!hatKarenz) return;
+    karenzChargen++;
+    fr.forEach(f=>{
+      if(!f) return;
+      if(f.entscheidung==="weg") freigWeg++;
+      else if(String(f.entscheidung||"").indexOf("ok")===0) freigOK++;
+    });
+    if(c.status==="aufgebraucht") karenzDannAuf++;
+    else if(c.status==="entsorgen") karenzDannEnt++;
+  });
+  const abges = karenzDannAuf + karenzDannEnt;
+  const erfolg = abges>0 ? Math.round(karenzDannAuf/abges*100) : 0;
+  return {karenzChargen, freigOK, freigWeg, karenzDannAuf, karenzDannEnt, erfolg};
+}
+/* Zeitreihe der letzten 30 Tage (auch wenn Filter="7", die Reihe zeigt 30). */
+function auswZeitreihe(){
+  const tage = 30;
+  const heute = new Date(); heute.setHours(0,0,0,0);
+  const arr = [];
+  for(let i=tage-1;i>=0;i--){
+    const d = new Date(heute.getTime() - i*24*3600*1000);
+    arr.push({tag:d, aufgebraucht:0, entsorgt:0});
+  }
+  const idx = new Map(arr.map((x,i)=>[x.tag.getTime(), i]));
+  auswChargen().forEach(c=>{
+    if(c.status!=="aufgebraucht" && c.status!=="entsorgen") return;
+    const letzte = (c.peter_freigaben||[]).slice(-1)[0];
+    const t = letzte && letzte.ts ? new Date(+letzte.ts)
+            : c.ablauf_am ? new Date(c.ablauf_am)
+            : c.produziert_am ? new Date(c.produziert_am) : null;
+    if(!t) return;
+    const dd = new Date(t); dd.setHours(0,0,0,0);
+    const i = idx.get(dd.getTime()); if(i==null) return;
+    if(c.status==="aufgebraucht") arr[i].aufgebraucht++; else arr[i].entsorgt++;
+  });
+  return arr;
+}
+/* Handlungsempfehlungen aus dem Ranking + Karenz. */
+function auswEmpfehlungen(){
+  const {rank} = auswStats();
+  const kar = auswKarenzStats();
+  const tips = [];
+  rank.filter(r=>r.ges>=3 && r.quote>=60).slice(0,3).forEach(r=>{
+    /* -20 % als grobe Schaetzung fuer die Einkaufsempfehlung. */
+    tips.push(`✋ ${r.name} wird zu ${r.quote}% entsorgt — Einkaufsmenge um 20% reduzieren?`);
+  });
+  rank.filter(r=>r.ges>=3 && r.quote===0 && r.aufgebraucht>=2).slice(0,3).forEach(r=>{
+    tips.push(`🌟 ${r.name} wird zu 100% aufgebraucht — Einkauf könnte um 20% erhöht werden.`);
+  });
+  if(kar.freigWeg > kar.freigOK && (kar.freigOK+kar.freigWeg)>=3){
+    tips.push(`⚠ Karenz wird oft abgelehnt (weg ${kar.freigWeg} > ok ${kar.freigOK}) — Kühlkette / Herstellung prüfen.`);
+  }
+  return tips;
+}
+/* CSV-Export aller Chargen-Rohdaten. */
+function auswCSVExport(){
+  const rows = auswChargen();
+  const head = ["produziert_am","zutat_code","zutat_name","status","menge","einheit",
+                "menge_rest","karenz_ja","lebensdauer_h","peter_freigaben","notiz"];
+  const zeilen = [head.join(";")];
+  rows.forEach(c=>{
+    const H = chHaltbar(c.zutat_code);
+    const menge = +(c.menge_ml||c.menge_g||0);
+    const rest  = +(c.menge_rest||0);
+    const start = c.produziert_am ? new Date(c.produziert_am).getTime() : 0;
+    const letzte = (c.peter_freigaben||[]).slice(-1)[0];
+    const ende = letzte && letzte.ts ? +letzte.ts
+               : (c.status==="aufgebraucht"||c.status==="entsorgen") && c.ablauf_am ? new Date(c.ablauf_am).getTime()
+               : 0;
+    const lebH = (start && ende && ende>start) ? Math.round((ende-start)/3600000) : "";
+    const karJa = (c.peter_freigaben && c.peter_freigaben.length) || c.status==="karrenz" || c.karrenz_bis ? "ja":"nein";
+    const frText = (c.peter_freigaben||[]).map(f=>f.entscheidung||"?").join("|");
+    const notiz  = (c.notiz||"").replace(/[;\n\r]/g," ");
+    zeilen.push([
+      c.produziert_am||"", c.zutat_code||"", (H.name||"").replace(/;/g,","),
+      c.status||"", menge, H.einheit||"", rest, karJa, lebH, frText, notiz
+    ].join(";"));
+  });
+  const txt = "﻿" + zeilen.join("\n");
+  const name = "100blend_chargen_" + heute() + ".csv";
+  const url = URL.createObjectURL(new Blob([txt],{type:"text/csv"}));
+  const a = document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function vAuswertung(){
+  const rows = auswGefiltert();
+  if(!auswChargen().length){
+    return `<h2>${h("auswTitel")}</h2><div class="empty">${h("auswLeer")}</div>`;
+  }
+  const S1 = auswStats();
+  const kar = auswKarenzStats();
+  const zeit = auswZeitreihe();
+  const emp = auswEmpfehlungen();
+
+  const pct = (n,ges)=> ges>0 ? Math.round(n/ges*100) : 0;
+  const filterBar = `<div class="bar" style="margin:0 0 10px;flex-wrap:wrap">
+    <button class="b ${aFilter==="all"?"p":""}" data-af="all">${h("auswAlle")}</button>
+    <button class="b ${aFilter==="30"?"p":""}" data-af="30">${h("ausw30")}</button>
+    <button class="b ${aFilter==="7"?"p":""}" data-af="7">${h("ausw7")}</button>
+  </div>`;
+
+  const kpi = `<div class="kpi">
+    <div><b>${S1.gesamt}</b><span>${h("auswKpiGes")}</span></div>
+    <div class="ok"><b>${S1.aufgebraucht}</b><span>${h("auswKpiAuf")} · ${pct(S1.aufgebraucht,S1.gesamt)}%</span></div>
+    <div class="miss"><b>${S1.entsorgt}</b><span>${h("auswKpiEnt")} · ${pct(S1.entsorgt,S1.gesamt)}%</span></div>
+    <div><b>${S1.oLeben}h</b><span>${h("auswKpiLeb")}</span></div>
+    <div class="miss"><b>${Math.round(S1.verlustTHB)}฿</b><span>${h("auswKpiVerl")}</span></div>
+  </div>`;
+
+  /* Ranking-Tabelle. Top 3 rot umrahmt, Chips je nach Quote. */
+  const ampelChip = q => q>40 ? `<span style="background:var(--missbg);color:var(--miss);border:1px solid var(--missln);padding:2px 7px;border-radius:20px;font:700 11px inherit">🔴 Kritisch</span>`
+                     : q>=15 ? `<span style="background:#fffaf0;color:var(--warn);border:1px solid #ecdfae;padding:2px 7px;border-radius:20px;font:700 11px inherit">🟡 Beobachten</span>`
+                     :         `<span style="background:var(--okbg);color:var(--ok);border:1px solid var(--okln);padding:2px 7px;border-radius:20px;font:700 11px inherit">🟢 OK</span>`;
+  const rankHTML = !S1.rank.length ? `<div class="mini">Keine Zutaten im Zeitraum.</div>` :
+    `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">
+      <thead><tr style="text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em">
+        <th style="padding:5px 4px">#</th>
+        <th style="padding:5px 4px">Zutat</th>
+        <th style="padding:5px 4px;text-align:right">Ges.</th>
+        <th style="padding:5px 4px;text-align:right">Ent.</th>
+        <th style="padding:5px 4px;text-align:right">Auf.</th>
+        <th style="padding:5px 4px;text-align:right">Quote</th>
+        <th style="padding:5px 4px;text-align:right">Ø Rest</th>
+        <th style="padding:5px 4px"></th>
+      </tr></thead><tbody>
+      ${S1.rank.map((r,i)=>{
+        const top3 = i<3 && r.quote>0;
+        const rahmen = top3 ? "border:2px solid var(--miss)" : "border-bottom:1px solid var(--line)";
+        return `<tr style="${rahmen}">
+          <td style="padding:6px 4px;font-weight:700">${i+1}</td>
+          <td style="padding:6px 4px"><b>${esc(r.name)}</b> <span class="mini">${r.code}</span></td>
+          <td style="padding:6px 4px;text-align:right">${r.ges}</td>
+          <td style="padding:6px 4px;text-align:right;color:var(--miss);font-weight:700">${r.entsorgt}</td>
+          <td style="padding:6px 4px;text-align:right;color:var(--ok);font-weight:700">${r.aufgebraucht}</td>
+          <td style="padding:6px 4px;text-align:right;font-weight:800">${r.quote}%</td>
+          <td style="padding:6px 4px;text-align:right">${r.restAvg} ${r.einheit}</td>
+          <td style="padding:6px 4px">${ampelChip(r.quote)}</td>
+        </tr>`;
+      }).join("")}
+    </tbody></table></div>`;
+
+  /* Karenz-Panel. */
+  const karHTML = `<div class="card">
+    <div class="mini" style="margin-bottom:6px">
+      Karenz genutzt: <b>${kar.karenzChargen}</b> ·
+      Peter OK: <b style="color:var(--ok)">${kar.freigOK}</b> ·
+      Peter WEG: <b style="color:var(--miss)">${kar.freigWeg}</b>
+    </div>
+    <div class="mini">Erfolg (nach Karenz verkauft): <b>${kar.karenzDannAuf}</b> von ${kar.karenzDannAuf+kar.karenzDannEnt} = <b>${kar.erfolg}%</b></div>
+  </div>`;
+
+  /* Zeitreihe (kein externes Chart). */
+  const maxTag = Math.max(1, ...zeit.map(x=>Math.max(x.aufgebraucht,x.entsorgt)));
+  const zeitHTML = `<div class="card" style="padding:12px 10px">
+    <div style="display:flex;align-items:flex-end;gap:3px;height:70px;overflow-x:auto">
+      ${zeit.map((x,i)=>{
+        const hAuf = Math.round(x.aufgebraucht/maxTag*60);
+        const hEnt = Math.round(x.entsorgt/maxTag*60);
+        return `<div style="display:flex;flex-direction:column;align-items:center;flex:0 0 auto;min-width:14px">
+          <div style="display:flex;gap:1px;align-items:flex-end;height:60px">
+            <div title="aufgebraucht ${x.aufgebraucht}" style="width:6px;height:${hAuf}px;background:var(--ok);border-radius:2px 2px 0 0"></div>
+            <div title="entsorgt ${x.entsorgt}" style="width:6px;height:${hEnt}px;background:var(--miss);border-radius:2px 2px 0 0"></div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>
+    <div style="display:flex;gap:3px;margin-top:4px;overflow-x:auto">
+      ${zeit.map((x,i)=>{
+        const lab = (i%5===0) ? (x.tag.getDate()+"."+(x.tag.getMonth()+1)) : "";
+        return `<div style="flex:0 0 auto;min-width:14px;text-align:center;font-size:9px;color:var(--muted)">${lab}</div>`;
+      }).join("")}
+    </div>
+    <div class="mini" style="margin-top:6px">
+      <span style="color:var(--ok)">■ aufgebraucht</span> ·
+      <span style="color:var(--miss)">■ entsorgt</span>
+    </div>
+  </div>`;
+
+  const empHTML = emp.length
+    ? emp.map(t=>`<div class="tip">${esc(t)}</div>`).join("")
+    : `<div class="mini">Noch keine klaren Muster erkennbar.</div>`;
+
+  return `
+    <h2>${h("auswTitel")} <em>· ${rows.length} Chargen</em></h2>
+    ${filterBar}
+    ${kpi}
+    <h2>${h("auswRankTitel")}</h2>
+    ${rankHTML}
+    <h2>${h("auswKarTitel")}</h2>
+    ${karHTML}
+    <h2>${h("auswZeitTitel")}</h2>
+    ${zeitHTML}
+    <h2>${h("auswEmpfTitel")}</h2>
+    ${empHTML}
+    <div class="bar" style="margin-top:14px">
+      <button class="b p" id="ausw_csv">${h("auswCsvBtn")}</button>
+    </div>`;
+}
+/* --- AUSWERTUNG: ENDE ---------------------------------------------------- */
+
 /* ---- Rendern + Ereignisse ---------------------------------------------- */
 function render(){
   /* --- AMPEL: START --- */
@@ -2354,14 +2741,14 @@ function render(){
   if(sy)sy.textContent = !syncUrl() ? "" :
     (syncLauft ? "⟳" : syncFehler ? "⚠ " + h("nichtSynchron") : "🔗 " + syncStand);
   document.documentElement.lang = thaiZuerst()?"th":"de";
-  ["start","einkauf","ruesten","bestand","vorschlag","rezepte"].forEach(k=>{
+  ["start","einkauf","ruesten","bestand","vorschlag","rezepte","auswertung"].forEach(k=>{
     const el=$("nv_"+k); if(el)el.textContent=h(k);
   });
   /* Die zwei Wege nach draussen tragen andere Schluessel, weil sie keine
      Ansicht dieser App sind, sondern eigene Seiten. */
   if($("nv_kasse")) $("nv_kasse").textContent=h("nvKasse");
   if($("nv_karte")) $("nv_karte").textContent=h("nvKarte");
-  $("view").innerHTML=qrKarte()+{start:vStart,bestand:vBestand,einkauf:vEinkauf,ruesten:vRuesten,vorschlag:vVorschlag,rezepte:vRezepte}[V]();
+  $("view").innerHTML=qrKarte()+{start:vStart,bestand:vBestand,einkauf:vEinkauf,ruesten:vRuesten,vorschlag:vVorschlag,rezepte:vRezepte,auswertung:vAuswertung}[V]();
   binde();
 }
 
@@ -2471,6 +2858,13 @@ function binde(){
     render();
   });
   /* --- AMPEL: ENDE --- */
+  /* --- ZERT-CHIPS: START --- */
+  document.querySelectorAll("[data-zert-toggle]").forEach(b=>b.onclick=(ev)=>{
+    ev.stopPropagation();
+    zertToggle(b.dataset.code, b.dataset.zertToggle);
+    render();
+  });
+  /* --- ZERT-CHIPS: ENDE --- */
   const qo=$("qr_ok"), qa=$("qr_ab");
   if(qo)qo.onclick=()=>{ const a=qrAngebot(); if(a)qrUebernehmen(a); };
   if(qa)qa.onclick=()=>{ history.replaceState(null,"",location.pathname); render(); };
@@ -2622,6 +3016,15 @@ function binde(){
     stempel(i.dataset.c); save(); syncSpaeter();
   });
   document.querySelectorAll("[data-bf]").forEach(b=>b.onclick=()=>{bFilter=b.dataset.bf;bLimit=30;render()});
+  /* --- AUSWERTUNG: START --- */
+  document.querySelectorAll("[data-af]").forEach(b=>b.onclick=()=>{ aFilter=b.dataset.af; render(); });
+  document.querySelectorAll("[data-navto]").forEach(d=>d.onclick=()=>{
+    V=d.dataset.navto;
+    document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.v===V));
+    scrollTo(0,0); render();
+  });
+  const csvBtn=$("ausw_csv"); if(csvBtn) csvBtn.onclick=()=>auswCSVExport();
+  /* --- AUSWERTUNG: ENDE --- */
   /* --- CHARGEN: START --- */
   document.querySelectorAll("[data-chneu]").forEach(b=>b.onclick=()=>chargeNeuOeffnen(b.dataset.chneu));
   document.querySelectorAll("[data-ch4sinne]").forEach(b=>b.onclick=()=>ch4Sinne(b.dataset.ch4sinne));

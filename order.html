@@ -254,6 +254,13 @@
     </div>
   </div>
 
+  <!-- --- ZERTIFIKATE: START --- -->
+  <div id="cert-badges" style="display:none;margin:12px 0 18px;text-align:center">
+    <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px" data-i18n="certs_title">Garantiert durch</div>
+    <div id="cert-list" style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center"></div>
+  </div>
+  <!-- --- ZERTIFIKATE: ENDE --- -->
+
   <button id="offer-cta" class="cta" onclick="go(3)" data-i18n="cta_claim">Ja, ich hol ihn mir</button>
   <button class="back" onclick="go(1)" data-i18n="back">← zurück</button>
 </section>
@@ -336,6 +343,7 @@ const STRINGS = {
     offer_paused_title: "งดแจกชั่วคราว 🍉",
     offer_paused_msg: "วัตถุดิบสำหรับ ‘แตงโม-มินต์ ปั่นสด’ หมดในวันนี้ กลับมาใหม่พรุ่งนี้เช้าค่ะ ขอบคุณที่เข้าใจ 🙏",
     offer_paused_cta: "ดูเราที่ Instagram",
+    certs_title: "รับประกันโดย",
   },
   en: {
     tag: "Pattaya",
@@ -364,6 +372,7 @@ const STRINGS = {
     offer_paused_title: "Sold out for today 🍉",
     offer_paused_msg: "The fruit for our Watermelon-Mint Pure is used up for today. We are back tomorrow morning with a fresh batch — thanks for your patience 🙏",
     offer_paused_cta: "Follow us on Instagram",
+    certs_title: "Guaranteed by",
   },
   de: {
     tag: "Pattaya",
@@ -392,6 +401,7 @@ const STRINGS = {
     offer_paused_title: "Heute leider aus 🍉",
     offer_paused_msg: "Für unser Wassermelone-Minze Pur ist die Frucht heute alle. Morgen früh sind wir mit frischer Charge wieder da — danke fürs Verständnis 🙏",
     offer_paused_cta: "Auf Instagram folgen",
+    certs_title: "Garantiert durch",
   },
 };
 
@@ -505,6 +515,81 @@ window.addEventListener("storage", e => {
 window.addEventListener("ampel-cloud-sync", updateOfferAvailability);
 /* Sicherheits-Poll alle 30 Sek. für Browser die storage-Events verschlucken. */
 setInterval(updateOfferAvailability, 30000);
+
+/* =========================================================
+   ZERTIFIKATE — automatische Werbe-Claims.
+   Regel: Ein Badge erscheint nur, wenn ALLE Zutaten des Angebots
+   dieses Zertifikat tragen. Fällt eine Zutat ohne Zertifikat rein,
+   verschwindet das Badge — nie falsche Werbe-Aussagen.
+   Datenquelle: localStorage.blend_zertifikate_v1 (via firebase-sync).
+   Schema: { "WM": ["haccp","organic_th"], "MI": ["haccp"], ... }
+   ========================================================= */
+const CERT_META = {
+  haccp:      { emoji: "🛡️",  th:"มาตรฐาน HACCP",         en:"HACCP-certified",       de:"HACCP-zertifiziert" },
+  gmp:        { emoji: "🏭",   th:"มาตรฐาน GMP",           en:"Good Manufacturing Practice", de:"GMP" },
+  organic:    { emoji: "🌿",   th:"ออร์แกนิก",              en:"Organic",               de:"Bio" },
+  organic_th: { emoji: "🌿",   th:"เกษตรอินทรีย์ไทย",       en:"Organic Thailand",      de:"Bio Thailand" },
+  non_gmo:    { emoji: "🚫🧬", th:"ปลอด GMO",              en:"Non-GMO",               de:"Non-GMO" },
+  halal:      { emoji: "🕋",   th:"ฮาลาล",                  en:"Halal",                 de:"Halal" },
+  human_grade:{ emoji: "👤",   th:"เกรดอาหาร",              en:"Human-grade",           de:"Lebensmittel-Qualität" },
+  iso_22000:  { emoji: "📋",   th:"ISO 22000",             en:"ISO 22000",             de:"ISO 22000" },
+  fair_trade: { emoji: "🤝",   th:"การค้าเป็นธรรม",         en:"Fair Trade",            de:"Fair Trade" },
+};
+
+function readZerts(){
+  try {
+    const raw = localStorage.getItem("blend_zertifikate_v1");
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    return (obj && typeof obj === "object") ? obj : {};
+  } catch (_) { return {}; }
+}
+
+function updateCertBadges(){
+  const wrap = document.getElementById("cert-badges");
+  const list = document.getElementById("cert-list");
+  if (!wrap || !list) return;
+
+  /* Wenn das Angebot pausiert ist (Kernzutat 🔴), Badges auch aus. */
+  const paused = document.getElementById("paused-banner");
+  if (paused && paused.style.display !== "none") {
+    wrap.style.display = "none";
+    list.innerHTML = "";
+    return;
+  }
+
+  const zerts = readZerts();
+  /* Nur Certs übernehmen, die JEDE Zutat des Angebots trägt. */
+  const listen = OFFER_ZUTATEN.map(code => Array.isArray(zerts[code]) ? zerts[code] : []);
+  if (!listen.length || listen.some(a => a.length === 0)) {
+    wrap.style.display = "none"; list.innerHTML = ""; return;
+  }
+  const gemeinsam = listen[0].filter(c => listen.every(l => l.indexOf(c) !== -1));
+
+  if (!gemeinsam.length) { wrap.style.display = "none"; list.innerHTML = ""; return; }
+
+  const lang = document.documentElement.lang || "en";
+  list.innerHTML = gemeinsam.map(key => {
+    const m = CERT_META[key];
+    if (!m) return "";
+    const label = m[lang] || m.en || key;
+    return `<span style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;background:#f2f5f0;color:#2d4a2d;border:1px solid #d6e0d1;border-radius:14px;font-size:12px;font-weight:500">${m.emoji} ${label}</span>`;
+  }).join("");
+  wrap.style.display = "block";
+}
+
+/* Beim Sprach-Wechsel neu übersetzen (Labels), beim Angebot-Toggle neu prüfen. */
+const _origSetLang = setLang;
+setLang = function(l){ _origSetLang(l); updateCertBadges(); };
+const _origUpdateOffer = updateOfferAvailability;
+updateOfferAvailability = function(){ _origUpdateOffer(); updateCertBadges(); };
+
+updateCertBadges();
+window.addEventListener("storage", e => {
+  if (e.key === "blend_zertifikate_v1") updateCertBadges();
+});
+window.addEventListener("zertifikate-cloud-sync", updateCertBadges);
+setInterval(updateCertBadges, 30000);
 </script>
 <script src="intern/firebase-sync.js" defer></script>
 </body>

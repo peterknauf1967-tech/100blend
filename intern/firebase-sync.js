@@ -71,6 +71,9 @@
     bindAmpel();
     bindChargen();
     bindWareneingang();
+    /* --- ZERTIFIKATE: START --- */
+    bindZertifikate();
+    /* --- ZERTIFIKATE: ENDE --- */
 
     log('firebase-sync ready', cfg.projectId || cfg.databaseURL);
   }).catch(function(err){
@@ -282,6 +285,77 @@
     window.addEventListener('online', flush);
     setTimeout(flush, 2500);
   }
+
+  /* --- ZERTIFIKATE: START ---
+   * Spiegelt localStorage.blend_zertifikate_v1 (Objekt {code:[cert,...]}) mit
+   * Firebase-Zweig 'zutaten/{code}/zertifikate'. Symmetrisches Muster wie
+   * die Ampel: Cloud → Local per Listener, Local → Cloud per Poll + Storage-
+   * Event. Feuert bei Cloud-Aktualisierung 'zertifikate-cloud-sync'.
+   */
+  var ZERTKEY = 'blend_zertifikate_v1';
+  function readZerts(){
+    var z = parseJSON(q(ZERTKEY), null);
+    return (z && typeof z === 'object') ? z : {};
+  }
+  function writeZerts(next){ qs(ZERTKEY, JSON.stringify(next || {})); }
+
+  function bindZertifikate(){
+    // sicherstellen, dass der Key existiert
+    if (q(ZERTKEY) == null) writeZerts({});
+
+    var lastSent = {};                 // code -> JSON-string des Arrays
+    var suppressNextLocal = false;     // Cloud-Pull soll kein Echo triggern
+
+    // 1) Cloud → Local
+    var zutRef = refs.ref(db, 'zutaten');
+    refs.onValue(zutRef, function(snap){
+      var v = snap.val() || {};
+      var cur = readZerts();
+      var next = Object.assign({}, cur);
+      var changed = false;
+      for (var code in v) {
+        var cloudList = v[code] && v[code].zertifikate;
+        if (!Array.isArray(cloudList)) continue;
+        var localList = Array.isArray(next[code]) ? next[code] : [];
+        var a = cloudList.slice().sort().join('|');
+        var b = localList.slice().sort().join('|');
+        if (a !== b) {
+          next[code] = cloudList.slice();
+          lastSent[code] = JSON.stringify(next[code]);
+          changed = true;
+        }
+      }
+      if (changed) {
+        suppressNextLocal = true;
+        writeZerts(next);
+        try { window.dispatchEvent(new Event('zertifikate-cloud-sync')); } catch(_){}
+        log('zerts: pulled from cloud');
+      }
+    });
+
+    // 2) Local → Cloud
+    function pushLocal(){
+      if (suppressNextLocal) { suppressNextLocal = false; return; }
+      var cur = readZerts();
+      for (var code in cur) {
+        if (!Array.isArray(cur[code])) continue;
+        var s = JSON.stringify(cur[code].slice().sort());
+        if (lastSent[code] === s) continue;
+        markPending();
+        refs.set(refs.ref(db, 'zutaten/'+code+'/zertifikate'), cur[code])
+          .then(function(){ markDone(); })
+          .catch(function(err){ markDone(); log('zerts push fail', code, err); });
+        lastSent[code] = s;
+        log('zerts push', code, '→', cur[code]);
+      }
+    }
+    setInterval(pushLocal, 2500);
+    window.addEventListener('storage', function(e){
+      if (e.key === ZERTKEY) pushLocal();
+    });
+    setTimeout(pushLocal, 1800);
+  }
+  /* --- ZERTIFIKATE: ENDE --- */
 
   // ---------- Debug-Chip ----------
   function buildChip(){
