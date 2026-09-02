@@ -16,8 +16,19 @@
   if (window.__claudeButtonLoaded) return;   // Doppel-Laden verhindern
   window.__claudeButtonLoaded = true;
 
-  // ---------- Sprache ermitteln (Thai wenn kb_lang_th="1" oder <html lang=th>) ----------
+  // ---------- Sprache ermitteln ----------
+  // Vorrang: explizite CFG.lang aus kb_cfg (die Kasse-Einstellung des Users),
+  // dann Alt-Flag kb_lang_th="1", dann <html lang>. Ohne diesen Vorrang wurde
+  // Peter (CFG.lang='de') faelschlich Thai gezeigt, weil kb_lang_th einmal in
+  // einer frueheren Session gesetzt wurde und geblieben ist.
   function isThai() {
+    try {
+      var raw = localStorage.getItem('kb_cfg');
+      if (raw) {
+        var cfg = JSON.parse(raw);
+        if (cfg && typeof cfg.lang === 'string') return cfg.lang.toLowerCase().indexOf('th') === 0;
+      }
+    } catch (_) {}
     try { if (localStorage.getItem('kb_lang_th') === '1') return true; } catch (_) {}
     var l = (document.documentElement.lang || '').toLowerCase();
     return l.indexOf('th') === 0;
