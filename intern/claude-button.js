@@ -50,6 +50,14 @@
     return false;
   }
   function isThai() {
+    // 1) Explizite Wahl im Zahnrad gewinnt immer -- keine Heuristik, die
+    //    danebenliegen kann.
+    try {
+      var forced = localStorage.getItem('claude_lang');
+      if (forced === 'de') return false;
+      if (forced === 'th') return true;
+    } catch (_) {}
+    // 2) Sonst: automatische Erkennung (Peter -> Deutsch, alle anderen Thai).
     if (isPeter()) return false;
     try { if (localStorage.getItem('kb_lang_th') === '1') return true; } catch (_) {}
     return true; // Default am Stand
@@ -89,6 +97,7 @@
       send: '✅ Senden',
       cancel: 'Abbrechen',
       settings: '⚙',
+      lang_label: 'Sprache · ภาษา:',
       webhook_label: 'Webhook-URL (Make.com):',
       who_label: 'Benutzername:',
       we_webhook_label: 'Wareneingang-Webhook (separat, optional):',
@@ -138,6 +147,7 @@
       send: '✅ ส่ง',
       cancel: 'ยกเลิก',
       settings: '⚙',
+      lang_label: 'ภาษา · Sprache:',
       webhook_label: 'Webhook URL (Make.com):',
       who_label: 'ชื่อผู้ใช้:',
       we_webhook_label: 'Webhook รับสินค้า (แยก, ไม่บังคับ):',
@@ -216,6 +226,8 @@
   '.cbtn-set{border-top:1px solid #eee;margin-top:12px;padding-top:12px;display:none;}' +
   '.cbtn-set.open{display:block;}' +
   '.cbtn-set label{display:block;font-size:13px;margin:6px 0 3px;color:#444;}' +
+  '.cbtn-set select{width:100%;box-sizing:border-box;padding:8px;font-size:14px;' +
+    'border:1px solid #ccc;border-radius:6px;background:#fff;color:#222;}' +
   '.cbtn-set input,.cbtn-set textarea{width:100%;box-sizing:border-box;padding:8px;font-size:14px;' +
     'border:1px solid #ccc;border-radius:6px;font-family:inherit;background:#fff;color:#222;}' +
   '.cbtn-set textarea{min-height:70px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;resize:vertical;}' +
@@ -391,7 +403,7 @@
 
   // ---------- Widget aufbauen ----------
   var fab, badge, overlay, modal, ta, cameraIn, shotIn, prev, prevImg, sendBtn, micBtn;
-  var setPanel, whUrlIn, whoIn, weWhIn, fbCfgIn, gearBtn, ctxLine;
+  var setPanel, whUrlIn, whoIn, weWhIn, fbCfgIn, gearBtn, ctxLine, langSel;
   var currentPhoto = null;      // Data-URL des aktuellen Fotos
   var recognizer = null;        // aktives SpeechRecognition-Objekt
   var recActive = false;
@@ -431,7 +443,7 @@
     modal = document.createElement('div');
     modal.className = 'cbtn-modal';
     modal.innerHTML =
-      '<button type="button" class="cbtn-gear" title="Einstellungen">⚙</button>' +
+      '<button type="button" class="cbtn-gear" data-act="gear" title="Einstellungen">⚙</button>' +
       /* --- POSTKORB: START --- */
       '<button type="button" class="cbtn-inbox-btn" data-act="inbox-open" title="Postkorb">📬' +
         '<span class="cbtn-pill" style="display:none"></span>' +
@@ -452,6 +464,16 @@
         '<button type="button" class="cbtn-b primary" data-act="send" disabled></button>' +
       '</div>' +
       '<div class="cbtn-set">' +
+        // Expliziter Sprachschalter -- schlaegt die isPeter()-Heuristik.
+        // Ohne ihn war der Nutzer davon abhaengig, dass irgendein
+        // localStorage-Feld ihn korrekt als Peter erkennt; in einem frischen
+        // Profil (Inkognito, neues Geraet) ist da nichts, und das Widget
+        // fiel auf Thai zurueck, ohne dass man es umstellen konnte.
+        '<label></label><select data-fld="lang">' +
+          '<option value="auto">Automatisch · อัตโนมัติ</option>' +
+          '<option value="de">Deutsch</option>' +
+          '<option value="th">ไทย (Thai)</option>' +
+        '</select>' +
         '<label></label><input type="url" data-fld="wh" placeholder="https://hook.eu2.make.com/…">' +
         '<label></label><input type="text" data-fld="who" placeholder="peter">' +
         '<label></label><input type="url" data-fld="wewh" placeholder="https://hook.eu2.make.com/… (leer = wie oben)">' +
@@ -495,6 +517,7 @@
     cameraIn  = modal.querySelector('input[data-fld="cam"]');
     shotIn    = modal.querySelector('input[data-fld="shot"]');
     setPanel  = modal.querySelector('.cbtn-set');
+    langSel   = modal.querySelector('select[data-fld="lang"]');
     whUrlIn   = modal.querySelector('input[data-fld="wh"]');
     whoIn     = modal.querySelector('input[data-fld="who"]');
     weWhIn    = modal.querySelector('input[data-fld="wewh"]');
@@ -546,11 +569,14 @@
     sendBtn.textContent = t.send;
     ta.placeholder = t.placeholder;
     gearBtn.title = t.settings;
+    // Reihenfolge muss zur Reihenfolge im Settings-Markup passen.
+    // Das Sprach-Feld steht ganz oben, deshalb Index 0.
     var labels = setPanel.querySelectorAll('label');
-    labels[0].textContent = t.webhook_label;
-    labels[1].textContent = t.who_label;
-    labels[2].textContent = t.we_webhook_label;
-    labels[3].textContent = t.fb_cfg_label;
+    labels[0].textContent = t.lang_label;
+    labels[1].textContent = t.webhook_label;
+    labels[2].textContent = t.who_label;
+    labels[3].textContent = t.we_webhook_label;
+    labels[4].textContent = t.fb_cfg_label;
     modal.querySelector('[data-act="setclose"]').textContent = t.close;
     modal.querySelector('[data-act="setsave"]').textContent = t.save;
     // Mikro verstecken, wenn nicht unterstuetzt
@@ -580,6 +606,12 @@
     /* --- POSTKORB: ENDE --- */
     var b = e.target.closest('[data-act]'); if (!b) return;
     switch (b.dataset.act) {
+      /* Der Zahnrad-Knopf hatte frueher KEIN data-act. Dadurch brach die
+         Zeile darueber (`if (!b) return;`) den Handler ab, bevor der
+         Gear-Code ganz unten in der Funktion erreicht wurde -- der Knopf
+         zeigte nur den CSS-Hover ("wird gruen"), tat aber nichts.
+         Jetzt laeuft er ueber dasselbe data-act-Schema wie alle anderen. */
+      case 'gear':     openSettings(); break;
       case 'cam':      cameraIn.click(); break;
       case 'shot':     shotIn.click(); break;
       case 'mic':      toggleMic(); break;
@@ -592,6 +624,13 @@
       case 'inbox-detail-back': renderInbox(); break;
       /* --- POSTKORB: ENDE --- */
       case 'setsave':
+        // Sprache zuerst, damit der Erfolgs-Toast schon in der neuen
+        // Sprache erscheint.
+        if (langSel) {
+          var lv = langSel.value;
+          if (lv === 'de' || lv === 'th') qs('claude_lang', lv);
+          else { try { localStorage.removeItem('claude_lang'); } catch(_){} }
+        }
         qs('claude_webhook_url', (whUrlIn.value||'').trim());
         var w = (whoIn.value||'').trim(); if (w) qs('who', w);
         // Wareneingang-Webhook (separat; leer = kein separater)
@@ -613,19 +652,21 @@
           }
         }
         setPanel.classList.remove('open');
+        applyLabels();          // Sprachwechsel sofort sichtbar (setzt auch
+                                // den FAB-Text badge-sicher via firstChild)
         toast(tr().save + ' ✓', 'ok');
         break;
     }
-    // e.target === gearBtn scheiterte auf Mobile, wenn der Touch das ⚙-Zeichen
-    // innerhalb des Buttons trifft statt den Button selbst. closest() steigt
-    // die Elternkette hoch und findet den Button auch dann.
-    if (e.target.closest && e.target.closest('.cbtn-gear')) {
-      whUrlIn.value = q('claude_webhook_url') || '';
-      whoIn.value   = q('who') || '';
-      weWhIn.value  = q('wareneingang_webhook_url') || '';
-      fbCfgIn.value = q('firebase_config') || '';
-      setPanel.classList.toggle('open');
-    }
+  }
+
+  // Einstellungen oeffnen/schliessen. Wird aus dem data-act-Switch gerufen.
+  function openSettings(){
+    whUrlIn.value = q('claude_webhook_url') || '';
+    whoIn.value   = q('who') || '';
+    weWhIn.value  = q('wareneingang_webhook_url') || '';
+    fbCfgIn.value = q('firebase_config') || '';
+    if (langSel) langSel.value = q('claude_lang') || 'auto';
+    setPanel.classList.toggle('open');
   }
 
   function openModal(){
