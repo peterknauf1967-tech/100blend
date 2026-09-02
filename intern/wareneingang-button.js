@@ -343,12 +343,14 @@
       pushBacklog(p); toast(tr().err_queued, 'warn'); closeModal(); return;
     }
     sendBtn.disabled = true;
+    // no-cors + text/plain -> simple request, kein Preflight, keine CORS-
+    // Fehler bei Make.com-Webhooks. Body bleibt JSON, Make parst.
     fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       body: JSON.stringify(p)
-    }).then(function(r){
-      if (!r.ok) throw new Error('HTTP '+r.status);
+    }).then(function(){
       toast(tr().ok_sent, 'ok');
       closeModal();
     }).catch(function(){

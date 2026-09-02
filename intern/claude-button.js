@@ -804,11 +804,21 @@
   function postToWebhook(payload){
     var url = q('claude_webhook_url');
     if (!url) return Promise.reject('nowebhook');
+    // Wichtig: mode 'no-cors' + Content-Type 'text/plain' machen daraus eine
+    // "simple request" -- kein CORS-Preflight, keine Header-Auslese auf der
+    // Response. Make.com Custom-Webhooks (und die meisten Automations-
+    // Plattformen) beantworten JSON-POSTs ohne die noetigen CORS-Header,
+    // sodass ein normales `fetch({headers:{'Content-Type':'application/json'}})`
+    // die Response als Fehler wirft -- obwohl die Nachricht laengst
+    // angekommen ist. Body bleibt JSON-Text, Make parst ihn automatisch.
+    // Opaque Response = wir koennen den Status nicht lesen, aber wenn fetch
+    // resolved, ist die Uebertragung erfolgt. Fuer Fire-and-Forget-Send ok.
     return fetch(url, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
       body: JSON.stringify(payload)
-    }).then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r; });
+    }).then(function(){ return; });
   }
   function enqueue(p){
     var a = getQueue(); a.push(p); setQueue(a); updateBadge();
