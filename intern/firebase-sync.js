@@ -74,6 +74,9 @@
     /* --- ZERTIFIKATE: START --- */
     bindZertifikate();
     /* --- ZERTIFIKATE: ENDE --- */
+    /* --- POSTKORB: START --- */
+    bindClaudeAnswers();
+    /* --- POSTKORB: ENDE --- */
 
     log('firebase-sync ready', cfg.projectId || cfg.databaseURL);
   }).catch(function(err){
@@ -356,6 +359,42 @@
     setTimeout(pushLocal, 1800);
   }
   /* --- ZERTIFIKATE: ENDE --- */
+
+  /* --- POSTKORB: START ---
+   * Spiegelt Firebase 'claude_answers/{msg_id}' (Antworten, die Make.com nach
+   * dem WhatsApp-Modul dorthin schreibt) in den localStorage-Schluessel
+   * 'claude_answers_v1' ({msg_id: {ts, text, kind, by}}). NUR Read von der
+   * Cloud — geschrieben wird ausschliesslich von Make, nicht vom Client.
+   * Feuert 'claude-answers-cloud-sync', damit das Claude-Button-Widget die
+   * neuen Antworten in seinen Postkorb einmischen kann.
+   */
+  var ANSKEY = 'claude_answers_v1';
+  function bindClaudeAnswers(){
+    if (q(ANSKEY) == null) qs(ANSKEY, '{}');
+    var lastJson = q(ANSKEY) || '{}';
+    var ansRef = refs.ref(db, 'claude_answers');
+    refs.onValue(ansRef, function(snap){
+      var v = snap.val() || {};
+      // Nur die vier relevanten Felder uebernehmen — falls Make mehr schreibt.
+      var next = {};
+      for (var id in v) {
+        var a = v[id] || {};
+        next[id] = {
+          ts:   a.ts   || nowIso(),
+          text: a.text || '',
+          kind: a.kind || 'info',
+          by:   a.by   || 'claude'
+        };
+      }
+      var j = JSON.stringify(next);
+      if (j === lastJson) return;
+      lastJson = j;
+      qs(ANSKEY, j);
+      try { window.dispatchEvent(new Event('claude-answers-cloud-sync')); } catch(_){}
+      log('claude_answers: pulled from cloud', Object.keys(next).length);
+    });
+  }
+  /* --- POSTKORB: ENDE --- */
 
   // ---------- Debug-Chip ----------
   function buildChip(){
