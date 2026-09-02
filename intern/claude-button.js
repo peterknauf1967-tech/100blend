@@ -17,23 +17,42 @@
   window.__claudeButtonLoaded = true;
 
   // ---------- Sprache ermitteln ----------
-  // Kontext: das Widget kennt genau zwei Sprachen -- DE und TH. Peter ist am
-  // Stand der einzige DE-Sprecher; jeder andere (Lexi, Aushilfen, Kunden im
-  // Notfall) ist mit TH besser bedient als mit DE. Deshalb Regel:
-  //   Deutsch NUR wenn explizit deutsch konfiguriert. Sonst immer Thai.
-  //   (Vorher: TH nur wenn explizit th -- das liess Lexi mit CFG.lang='en'
-  //    auf Deutsch landen, was sie fuer 'Englisch' hielt.)
-  function isThai() {
+  // Widget kennt DE + TH. Peter ist am Stand der einzige DE-Sprecher.
+  // Der 'Peter'-Status kann an drei Stellen stehen (unterschiedliche Apps
+  // pflegen unterschiedliche Storage-Keys):
+  //   1) kb_cfg.who  in Kasse
+  //   2) S.cfg.who   in blend_os_v1 (Standos-App)
+  //   3) localStorage.who  (vom Widget selbst gesetzt)
+  //   4) kb_cfg.lang beginnt mit 'de' (Kasse-Spracheinstellung)
+  // Wenn eins davon eindeutig 'peter'/'de' sagt -> Deutsch. Sonst Thai
+  // (Standard am Stand; Lexis 'en' fiel vorher irrtuemlich auf Deutsch).
+  function isPeter() {
+    function whoIs(v){ return typeof v === 'string' && v.toLowerCase().indexOf('peter') === 0; }
+    function langIsDE(v){ return typeof v === 'string' && v.toLowerCase().indexOf('de') === 0; }
     try {
       var raw = localStorage.getItem('kb_cfg');
       if (raw) {
         var cfg = JSON.parse(raw);
-        if (cfg && typeof cfg.lang === 'string') return cfg.lang.toLowerCase().indexOf('de') !== 0;
+        if (cfg) {
+          if (whoIs(cfg.who))   return true;
+          if (langIsDE(cfg.lang)) return true;
+        }
       }
     } catch (_) {}
+    try {
+      var os = localStorage.getItem('blend_os_v1');
+      if (os) {
+        var s = JSON.parse(os);
+        if (s && s.cfg && whoIs(s.cfg.who)) return true;
+      }
+    } catch (_) {}
+    try { if (whoIs(localStorage.getItem('who'))) return true; } catch (_) {}
+    return false;
+  }
+  function isThai() {
+    if (isPeter()) return false;
     try { if (localStorage.getItem('kb_lang_th') === '1') return true; } catch (_) {}
-    var l = (document.documentElement.lang || '').toLowerCase();
-    return l.indexOf('de') !== 0;
+    return true; // Default am Stand
   }
 
   var T = {

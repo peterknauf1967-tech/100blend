@@ -5,7 +5,7 @@
    weil alter JS-Handler noch aus Cache kam). Nur wenn kein Netz da ist, kommt
    die gespeicherte Fassung. Bilder und Manifest bleiben Cache-zuerst — die
    ändern sich praktisch nie. */
-const CACHE = "blend-os-v7";   /* v7: Ampel + Chargen + Claude/Wareneingang-Buttons + Firebase-Sync + JS Netz-first, 02.09.2026 */
+const CACHE = "blend-os-v8";   /* v8: Peter-Erkennung robuster; Ampel + Chargen + Claude/Wareneingang-Buttons + Firebase-Sync + JS Netz-first, 02.09.2026 */
 const FILES = [
   "./standos.html", "./kasse.html", "./rezepte.html",
   "./standos.webmanifest",

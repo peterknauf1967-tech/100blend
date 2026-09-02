@@ -16,20 +16,30 @@
   window.__weButtonLoaded = true;
 
   // ---------- Sprache ----------
-  // Widget kennt nur DE + TH. Peter ist der einzige DE-Sprecher am Stand;
-  // alle anderen (Lexi mit CFG.lang='en', Aushilfen, etc.) sollen TH sehen,
-  // nicht DE. Regel: Deutsch NUR wenn explizit deutsch. Sonst immer Thai.
-  function isThai() {
+  // Widget kennt DE + TH. Peter ist der einzige DE-Sprecher am Stand.
+  // 'Peter'-Status kann an vier Stellen stehen (kb_cfg.who, S.cfg.who in
+  // blend_os_v1, localStorage.who, kb_cfg.lang='de*'). Wenn irgendeine
+  // davon Peter meldet -> Deutsch. Sonst Thai.
+  function isPeter() {
+    function whoIs(v){ return typeof v === 'string' && v.toLowerCase().indexOf('peter') === 0; }
+    function langIsDE(v){ return typeof v === 'string' && v.toLowerCase().indexOf('de') === 0; }
     try {
       var raw = localStorage.getItem('kb_cfg');
-      if (raw) {
-        var cfg = JSON.parse(raw);
-        if (cfg && typeof cfg.lang === 'string') return cfg.lang.toLowerCase().indexOf('de') !== 0;
-      }
+      if (raw) { var cfg = JSON.parse(raw);
+        if (cfg && (whoIs(cfg.who) || langIsDE(cfg.lang))) return true; }
     } catch (_) {}
+    try {
+      var os = localStorage.getItem('blend_os_v1');
+      if (os) { var s = JSON.parse(os);
+        if (s && s.cfg && whoIs(s.cfg.who)) return true; }
+    } catch (_) {}
+    try { if (whoIs(localStorage.getItem('who'))) return true; } catch (_) {}
+    return false;
+  }
+  function isThai() {
+    if (isPeter()) return false;
     try { if (localStorage.getItem('kb_lang_th') === '1') return true; } catch (_) {}
-    var l = (document.documentElement.lang || '').toLowerCase();
-    return l.indexOf('de') !== 0;
+    return true;
   }
   var T = {
     de: {

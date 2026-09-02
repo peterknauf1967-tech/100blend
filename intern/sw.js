@@ -1,7 +1,7 @@
 /* 100blend Einkaufs-Protokoll — Offline-Cache.
    Auf dem Markt gibt es oft kein Netz. Die App muss trotzdem starten.
    Strategie: HTML + JS Netz-first (sonst kleben Bugs im Cache), Rest Cache-first. */
-const CACHE = "blend-einkauf-v18";   /* v18: Claude-Button + Firebase-Sync + JS Netz-first, 02.09.2026 */
+const CACHE = "blend-einkauf-v19";   /* v19: Peter-Erkennung robuster; Claude-Button + Firebase-Sync + JS Netz-first, 02.09.2026 */
 const FILES = [
   "./einkauf.html", "./einkauf.webmanifest",
   "./icon-192.png", "./icon-512.png",
