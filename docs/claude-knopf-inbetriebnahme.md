@@ -4,7 +4,7 @@ Stand 02.09.2026, **läuft und ist Ende zu Ende geprüft.** Das Make-Szenario
 ist per API gebaut, nicht zusammengeklickt. Wer daran etwas ändert, ändert es
 am besten auch per API — sonst driften Anleitung und Wirklichkeit auseinander.
 
-Make-Team `1388828`, Szenario `7200451`, Webhook `3648636`.
+Make-Team `1388828`, Szenario `7200451`, Webhook `3647422`.
 
 ## Der Weg einer Meldung
 
@@ -13,8 +13,8 @@ Widget (claude-button.js)
    │  POST, mode:'no-cors', Content-Type text/plain
    │  msg_id, ts, page, context, message, content_json, user, lang, ua
    ▼
-Modul 2 — Custom Webhook   (Hook 3648636, "10bld-claude-v2")
-   │  https://hook.eu1.make.com/syvpd1xo91yea3rdg5hc1b5nh8bw6ocj
+Modul 2 — Custom Webhook   (Hook 3647422, "10bld-claude")
+   │  https://hook.eu1.make.com/v26u2e3zndv7u1jh7fgucyn14tuvbyo6
    ▼
 Modul 3 — HTTP POST https://api.anthropic.com/v1/messages
    │  x-api-key, anthropic-version: 2023-06-01
@@ -26,7 +26,7 @@ Modul 5 — JSON "Transform to JSON"
 Modul 4 — HTTP PUT  …/claude_answers/{{2.msg_id}}.json
    │  Rumpf: {{5.json}}
    ▼
-firebase-sync.js  (onValue auf claude_answers)
+Widget holt claude_answers.json per GET (oder firebase-sync, falls Config da)
    ▼
 localStorage claude_answers_v1  →  Postkorb im Widget
 ```

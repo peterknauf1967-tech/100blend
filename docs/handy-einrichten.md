@@ -9,13 +9,13 @@ Danach nur noch der Knopf auf den Startbildschirm.
 **Für Lexi** (Oberfläche auf Thai, Benutzer `lexi`):
 
 ```
-https://peterknauf1967-tech.github.io/100blend/intern/standos.html?wh=https%3A%2F%2Fhook.eu1.make.com%2Fsyvpd1xo91yea3rdg5hc1b5nh8bw6ocj&lang=th&user=lexi
+https://peterknauf1967-tech.github.io/100blend/intern/standos.html?wh=https%3A%2F%2Fhook.eu1.make.com%2Fv26u2e3zndv7u1jh7fgucyn14tuvbyo6&lang=th&user=lexi
 ```
 
 **Für Peter** (Oberfläche auf Deutsch, Benutzer `peter`):
 
 ```
-https://peterknauf1967-tech.github.io/100blend/intern/standos.html?wh=https%3A%2F%2Fhook.eu1.make.com%2Fsyvpd1xo91yea3rdg5hc1b5nh8bw6ocj&lang=de&user=peter
+https://peterknauf1967-tech.github.io/100blend/intern/standos.html?wh=https%3A%2F%2Fhook.eu1.make.com%2Fv26u2e3zndv7u1jh7fgucyn14tuvbyo6&lang=de&user=peter
 ```
 
 Beim ersten Öffnen übernimmt die App Webhook, Sprache und Benutzer in den
