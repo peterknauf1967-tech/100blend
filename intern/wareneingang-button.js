@@ -16,7 +16,16 @@
   window.__weButtonLoaded = true;
 
   // ---------- Sprache ----------
+  // Vorrang: kb_cfg.lang (explizite User-Wahl), dann Alt-Flag kb_lang_th,
+  // dann <html lang>. Sonst wird Peter (CFG.lang='de') faelschlich Thai gezeigt.
   function isThai() {
+    try {
+      var raw = localStorage.getItem('kb_cfg');
+      if (raw) {
+        var cfg = JSON.parse(raw);
+        if (cfg && typeof cfg.lang === 'string') return cfg.lang.toLowerCase().indexOf('th') === 0;
+      }
+    } catch (_) {}
     try { if (localStorage.getItem('kb_lang_th') === '1') return true; } catch (_) {}
     var l = (document.documentElement.lang || '').toLowerCase();
     return l.indexOf('th') === 0;
