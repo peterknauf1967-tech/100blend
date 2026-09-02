@@ -91,6 +91,11 @@ html[lang="th"] .zn i,
 html[lang="th"] ol.steps i{font-size:14px; color:var(--muted); font-weight:600}
 html[lang="th"] .rname{font-size:25px}
 .zg{font-weight:800; white-space:nowrap}
+/* Frisch/Gefroren-Chip in Zutaten-Zeile — deutlich sichtbar */
+.fg{display:inline-flex;align-items:center;flex:0 0 auto;padding:3px 8px;border-radius:999px;
+    font:800 10px/1 inherit;letter-spacing:.4px;margin-left:4px;white-space:nowrap;text-transform:uppercase}
+.fg-tk{background:#dbeafe;color:#1e3a8a;border:1px solid #93c5fd}
+.fg-fr{background:#dcfce7;color:#166534;border:1px solid #86efac}
 
 /* ---- Schritte mit Nummernkreis ---- */
 ol.steps{list-style:none; margin:0; padding:0; counter-reset:s}
@@ -1990,11 +1995,21 @@ function detail(r){
       <h2>${t.zut}</h2>
       <div class="zut">${(()=>{const GRP=gruppeJeZutat(r);return r.zut.map((z,zi)=>{
         const v=VORSTUFEN[z[0]];
+        /* Frisch/Gefroren-Chip: Peter 02.09.: 'Mango 99 g und Mango 100 g,
+           welche ist frisch, welche gefroren?' Der Hinweis stand nur in
+           Klammern im Namen (z[2]) und war zu leise. Jetzt gross und farbig. */
+        const nmDe=String(z[2]||"");
+        const chip = /gefroren|แช่แข็ง|frozen/i.test(nmDe)
+          ? '<span class="fg fg-tk" title="gefroren · แช่แข็ง · frozen">❄ TK</span>'
+          : /frisch|\(สด\)|fresh/i.test(nmDe)
+            ? '<span class="fg fg-fr" title="frisch · สด · fresh">🍃 FRISCH</span>'
+            : '';
         return `
         <div class="${v?"mach":""}" ${v?`data-v="${z[0]}"`:""}>
           <span class="code">${z[0]}</span>
           <span class="zn"><b>${esc(haupt(z,2))}</b>
             <i>${esc(zweit(z,2))}</i></span>
+          ${chip}
           ${v?`<span class="pfeil">${L==="th"?"วิธีทำ ›":L==="en"?"how to ›":"Herstellung ›"}</span>`:""}
           <span class="zg">${typeof z[1]==="number"?z[1]+" g":esc(z[1])}</span>
           <span style="flex:0 0 auto;font:800 15px inherit;opacity:.5;width:1.1em;text-align:right"

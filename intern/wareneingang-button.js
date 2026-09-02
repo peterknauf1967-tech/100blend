@@ -41,6 +41,20 @@
     try { if (localStorage.getItem('kb_lang_th') === '1') return true; } catch (_) {}
     return true;
   }
+  // FAB ueber fixe Bottom-Nav heben (standos/kasse/rezepte haben eine),
+  // damit die Nav-Buttons erreichbar bleiben.
+  function positionFabAboveNav() {
+    if (!fab) return;
+    var nav = document.querySelector('nav');
+    var below = 16;
+    if (nav) {
+      var cs = window.getComputedStyle(nav);
+      if (cs.position === 'fixed' && parseFloat(cs.bottom) < 5) {
+        below = nav.getBoundingClientRect().height + 12;
+      }
+    }
+    fab.style.bottom = below + 'px';
+  }
   var T = {
     de: {
       btn_top: '📸', btn_sub: 'WE',
@@ -191,6 +205,8 @@
     fab.appendChild(badge);
     fab.addEventListener('click', onFabClick);
     document.body.appendChild(fab);
+    positionFabAboveNav();
+    window.addEventListener('resize', positionFabAboveNav);
 
     overlay = document.createElement('div');
     overlay.className = 'we-overlay';

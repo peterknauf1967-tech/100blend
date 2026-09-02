@@ -55,6 +55,25 @@
     return true; // Default am Stand
   }
 
+  // ---------- FAB ueber die fixe Bottom-Nav heben ----------
+  // standos.html, kasse.html und rezepte.html haben eine <nav>, die unten
+  // festgeklebt sitzt. Der FAB an bottom:16px verdeckte deren letzte 1-2
+  // Buttons (Rezepte/Auswertung). Diese Funktion misst die tatsaechliche
+  // Nav-Hoehe und schiebt den FAB drueber (plus 12px Luft). Wenn keine
+  // fixe Nav da ist, bleibt der FAB bei 16px.
+  function positionFabAboveNav() {
+    if (!fab) return;
+    var nav = document.querySelector('nav');
+    var below = 16;
+    if (nav) {
+      var cs = window.getComputedStyle(nav);
+      if (cs.position === 'fixed' && parseFloat(cs.bottom) < 5) {
+        below = nav.getBoundingClientRect().height + 12;
+      }
+    }
+    fab.style.bottom = below + 'px';
+  }
+
   var T = {
     de: {
       btn: '🤖 Claude',
@@ -63,6 +82,7 @@
       context: 'Kontext',
       time: 'Zeit',
       photo: '📸 Foto',
+      shot: '🖼 Screenshot',
       mic_start: '🎤 Sprechen',
       mic_stop: '⏹ Stopp',
       placeholder: 'Was ist zu tun? Sprich einfach frei — z.B. „Preis der Sonnenblumenkerne war 169 für 2 kg, nicht pro kg"',
@@ -111,6 +131,7 @@
       context: 'บริบท',
       time: 'เวลา',
       photo: '📸 ถ่ายรูป',
+      shot: '🖼 ภาพหน้าจอ',
       mic_start: '🎤 พูด',
       mic_stop: '⏹ หยุด',
       placeholder: 'ต้องการทำอะไร? พูดได้เลย เช่น „ราคาเมล็ดทานตะวัน 169 บาท ต่อ 2 กก. ไม่ใช่ต่อ กก."',
@@ -369,7 +390,7 @@
   /* --- POSTKORB: ENDE --- */
 
   // ---------- Widget aufbauen ----------
-  var fab, badge, overlay, modal, ta, cameraIn, prev, prevImg, sendBtn, micBtn;
+  var fab, badge, overlay, modal, ta, cameraIn, shotIn, prev, prevImg, sendBtn, micBtn;
   var setPanel, whUrlIn, whoIn, weWhIn, fbCfgIn, gearBtn, ctxLine;
   var currentPhoto = null;      // Data-URL des aktuellen Fotos
   var recognizer = null;        // aktives SpeechRecognition-Objekt
@@ -397,6 +418,11 @@
     /* --- POSTKORB: ENDE --- */
     fab.addEventListener('click', openModal);
     document.body.appendChild(fab);
+    // Nav-Bar-Kollision vermeiden: wenn die Seite eine fixe Nav am unteren
+    // Rand hat (standos, kasse, rezepte haben eine), FAB darueber schieben,
+    // damit Rezepte-/Auswertung-Button erreichbar bleiben.
+    positionFabAboveNav();
+    window.addEventListener('resize', positionFabAboveNav);
 
     overlay = document.createElement('div');
     overlay.className = 'cbtn-overlay';
@@ -416,6 +442,7 @@
       '<div class="cbtn-ctx"></div>' +
       '<div class="cbtn-row">' +
         '<button type="button" class="cbtn-b" data-act="cam"></button>' +
+        '<button type="button" class="cbtn-b" data-act="shot"></button>' +
         '<button type="button" class="cbtn-b" data-act="mic"></button>' +
       '</div>' +
       '<div class="cbtn-prev"><img alt=""/><button type="button" title="entfernen">✕</button></div>' +
@@ -449,9 +476,12 @@
         '<div class="cbtn-inbox-list"></div>' +
       '</div>' +
       /* --- POSTKORB: ENDE --- */
-      // verstecktes Datei-Input fuer Kamera:
+      // verstecktes Datei-Input fuer Kamera (capture=environment erzwingt Kamera):
       '<input type="file" accept="image/*" capture="environment" ' +
-        'style="display:none" data-fld="cam">';
+        'style="display:none" data-fld="cam">' +
+      // Zweites Input ohne capture: Bildergalerie / Screenshot / beliebige Datei
+      '<input type="file" accept="image/*" ' +
+        'style="display:none" data-fld="shot">';
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
@@ -463,6 +493,7 @@
     prev      = modal.querySelector('.cbtn-prev');
     prevImg   = prev.querySelector('img');
     cameraIn  = modal.querySelector('input[data-fld="cam"]');
+    shotIn    = modal.querySelector('input[data-fld="shot"]');
     setPanel  = modal.querySelector('.cbtn-set');
     whUrlIn   = modal.querySelector('input[data-fld="wh"]');
     whoIn     = modal.querySelector('input[data-fld="who"]');
@@ -482,6 +513,7 @@
     modal.addEventListener('click', onModalClick);
     ta.addEventListener('input', updateSendState);
     cameraIn.addEventListener('change', onCameraFile);
+    shotIn.addEventListener('change', onCameraFile);
     prev.querySelector('button').addEventListener('click', clearPhoto);
 
     applyLabels();
@@ -508,6 +540,7 @@
     fab.firstChild.nodeValue = t.btn;  // Text vor dem Badge
     modal.querySelector('.cbtn-h').textContent = t.title;
     modal.querySelector('[data-act="cam"]').textContent = t.photo;
+    modal.querySelector('[data-act="shot"]').textContent = t.shot;
     micBtn.textContent = recActive ? t.mic_stop : t.mic_start;
     modal.querySelector('[data-act="cancel"]').textContent = t.cancel;
     sendBtn.textContent = t.send;
@@ -548,6 +581,7 @@
     var b = e.target.closest('[data-act]'); if (!b) return;
     switch (b.dataset.act) {
       case 'cam':      cameraIn.click(); break;
+      case 'shot':     shotIn.click(); break;
       case 'mic':      toggleMic(); break;
       case 'cancel':   closeModal(); break;
       case 'send':     doSend(); break;
@@ -627,7 +661,7 @@
     });
   }
 
-  // ---------- Foto ----------
+  // ---------- Foto / Screenshot ----------
   function onCameraFile(e){
     var f = e.target.files && e.target.files[0]; if (!f) return;
     readFileAsDataURL(f).then(function(d){
@@ -636,6 +670,8 @@
       prev.style.display = 'block';
       updateSendState();
     }).catch(function(){ toast('Foto-Fehler', 'warn'); });
+    // Beide Inputs zuruecksetzen, damit dieselbe Datei erneut auswaehlbar bleibt
+    try { e.target.value = ''; } catch(_){}
   }
   function clearPhoto(){
     currentPhoto = null;
