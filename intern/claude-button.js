@@ -751,26 +751,35 @@
     var p = buildPayload();
     stopMic();
     /* --- POSTKORB: START --- */
-    // Eintrag im Postkorb anlegen (async wegen Thumb)
+    // SYNCHRON zuerst den Eintrag anlegen -- vorher lief das async, und mit
+    // dem CORS-Fix (no-cors) resolvt postToWebhook schneller als
+    // makeThumb.then(). Ergebnis: updateInboxStatus fand keinen Eintrag,
+    // Status blieb 'queue' obwohl der Post durchging.
     var photoOrig = currentPhoto;
     var textOrig  = p.message;
+    var entry = {
+      id: p.msg_id,
+      ts: isoLocal(),
+      page: p.page,
+      text: textOrig,
+      photo_thumb: null,       // wird gleich nachgetragen
+      user: (isPeter() ? 'peter' : 'lexi'),
+      status: 'queue',
+      sent_at: null,
+      answer: null,
+      unread: false
+    };
+    var box = getInbox();
+    box.push(entry);
+    setInbox(box);
+    updateBadge();
+    // Thumb asynchron nachtragen (Bildkomprimierung darf lange dauern)
     makeThumb(photoOrig).then(function(thumb){
-      var entry = {
-        id: p.msg_id,
-        ts: isoLocal(),
-        page: p.page,
-        text: textOrig,
-        photo_thumb: thumb,
-        user: (isPeter() ? 'peter' : 'lexi'),
-        status: 'queue',
-        sent_at: null,
-        answer: null,
-        unread: false
-      };
-      var box = getInbox();
-      box.push(entry);
-      setInbox(box);
-      updateBadge();
+      if (!thumb) return;
+      var b = getInbox();
+      for (var i = 0; i < b.length; i++) {
+        if (b[i].id === p.msg_id) { b[i].photo_thumb = thumb; setInbox(b); break; }
+      }
     });
     /* --- POSTKORB: ENDE --- */
     if (!navigator.onLine) { enqueue(p); toast(tr().err_queued,'warn'); closeModal(); return; }
@@ -883,6 +892,10 @@
       }
       var item = remaining[0];
       postToWebhook(item).then(function(){
+        // Auch den Postkorb-Eintrag auf 'sent' setzen, damit die Anzeige
+        // stimmt. Ohne diese Zeile blieben die alten Queue-Nachrichten auf
+        // 'Warteschlange', obwohl sie erfolgreich nachgesendet wurden.
+        if (item && item.msg_id) updateInboxStatus(item.msg_id, 'sent', { sent_at: isoLocal() });
         remaining.shift();
         setQueue(remaining); updateBadge();
         next();
