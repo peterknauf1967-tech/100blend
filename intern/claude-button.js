@@ -787,12 +787,33 @@
       /* --- POSTKORB: START --- */
       updateInboxStatus(p.msg_id, 'sent', { sent_at: isoLocal() });
       /* --- POSTKORB: ENDE --- */
-      toast(tr().ok_sent,'ok');
+      // Kurze URL-Bestaetigung im Toast: dass Peter sieht, WOHIN gerade
+      // gesendet wurde. Hilft beim Erkennen 'ich habe die falsche URL im
+      // Widget vs. der die in Make offen ist'.
+      var url = q('claude_webhook_url') || '';
+      var tail = url ? url.slice(-8) : '';
+      toast(tr().ok_sent + (tail ? ' → …' + tail : ''), 'ok');
       closeModal();
       flushQueue();          // gleich mal alte Eintraege mitversuchen
     }).catch(function(err){
-      if (err === 'nowebhook') offerDownload(p);
-      else { enqueue(p); toast(tr().err_queued,'warn'); }
+      var msg = (err && err.message) ? err.message : String(err || 'unbekannt');
+      if (err === 'nowebhook') {
+        // Keine URL konfiguriert -> Postkorb-Status auf 'error' setzen
+        // und JSON zum Download anbieten.
+        updateInboxStatus(p.msg_id, 'error', { answer:{ ts:isoLocal(),
+          text:'Kein Webhook konfiguriert. ⚙ Einstellungen oeffnen.',
+          kind:'error', by:'widget' } });
+        offerDownload(p);
+      } else {
+        // Netzwerk-/Fetch-Fehler -> Status 'error' MIT Klartext, so dass
+        // Peter im Postkorb sieht, warum das Senden gescheitert ist.
+        // Zusaetzlich in die alte Queue -- naechste Retry-Runde probiert
+        // es nochmal, und beim Erfolg schaltet flushQueue auf 'sent'.
+        updateInboxStatus(p.msg_id, 'error', { answer:{ ts:isoLocal(),
+          text:'Sendefehler: ' + msg, kind:'error', by:'widget' } });
+        enqueue(p);
+        toast('⚠ Sendefehler: ' + msg, 'warn');
+      }
       closeModal();
     });
   }
@@ -1046,7 +1067,9 @@
     void toastEl.offsetWidth;
     toastEl.classList.add('show');
     clearTimeout(toastTmo);
-    toastTmo = setTimeout(function(){ toastEl.classList.remove('show'); }, 3000);
+    // Fehler-Toasts laenger stehen lassen -- Peter muss den Text lesen koennen.
+    var dur = (kind === 'warn' || kind === 'error') ? 7000 : 3000;
+    toastTmo = setTimeout(function(){ toastEl.classList.remove('show'); }, dur);
   }
 
   // ---------- Lifecycle ----------
