@@ -1340,10 +1340,10 @@ function vStart(){
      const k=findeCode(c.code)||{de:c.code};
      return `<div class="row"><span class="code">${c.code}</span>
        <span class="nm"><b>${esc(nm1(k))}</b><i>${esc(c.dat)} · ${esc(c.markt||"")}</i>
-         <span class="pr">${c.pr?`${c.pr} ฿/${k.einheit||"kg"}`:""}${c.note?` · ${h("note")} ${c.note}/5`:""}${c.duft?` · 👃 ${c.duft}/5`:""}</span></span></div>`;
+         <span class="pr">${c.pr?`${c.pr} ฿/${k.einheit==="Stk"?"Stk":"kg"}`:""}${c.note?` · ${h("note")} ${c.note}/5`:""}${c.duft?` · 👃 ${c.duft}/5`:""}</span></span></div>`;
    }).join("")}`:""}
 
-  ${offenePreise?`<div class="tip">💰 <b>${offenePreise} ${h("ohnePreis")}</b> ${h("ohnePreisHint")}</div>`:""}
+  ${offenePreise?`<div class="tip" id="tip-nopreis" style="cursor:pointer" role="button" tabindex="0">💰 <b>${offenePreise} ${h("ohnePreis")}</b> ${h("ohnePreisHint")} <span style="text-decoration:underline;white-space:nowrap">→ ${h("anzeigen")}</span></div>`:""}
 
   <div class="tip bad">🚫 <b>${ENTSORGT.length} ${h("gesperrt")}</b> (${h("durchgefallen")}, ${h("note")} 1–2). <button class="b" id="zeigetot" style="padding:5px 10px;font-size:12.5px;margin-left:4px">${h("anzeigen")}</button></div>
   <div id="totbox"></div>
@@ -1364,6 +1364,7 @@ function vBestand(){
       <button class="b ${bFilter==="all"?"p":""}" data-bf="all">${h("alle")}</button>
       <button class="b ${bFilter==="miss"?"p":""}" data-bf="miss">${h("nurFehlt")}</button>
       <button class="b ${bFilter==="have"?"p":""}" data-bf="have">${h("nurDa")}</button>
+      <button class="b ${bFilter==="nopreis"?"p":""}" data-bf="nopreis" title="${h("ohnePreis")}">💰 ${h("ohnePreis")}</button>
       <button class="b" id="neuzutat">➕ ${h("neueZutat")}</button></div>
     <div id="neuform"></div>
     <div class="mini" style="margin:-6px 0 10px">${h("zweiFelder")}</div>`;
@@ -1371,6 +1372,7 @@ function vBestand(){
   Object.entries(grp).forEach(([g,items])=>{
     const gefiltert=items.filter(k=>{
       if(bSuche)return passt(k,bSuche);              /* Suche ignoriert den Filter */
+      if(bFilter==="nopreis")return k.pmin==null && letzterPreis(k.code)==null && brauchtRezepte(k).length;
       return bFilter==="all"||(bFilter==="miss"?fehlt(k):daIst(k.code));
     /* Frisch Geaendertes zuerst — Peter 17.08.: "sofort erkennen, welche sie
        gerade geaendert hat". Innerhalb der Gruppe bleibt die Reihenfolge. */
@@ -2089,6 +2091,9 @@ function binde(){
     kpiOffen = (kpiOffen===d.dataset.kpi) ? "" : d.dataset.kpi;
     render();
   });
+  /* Klick auf "N Zutaten ohne Preis"-Tip springt in den Bestand mit Filter. */
+  const tipNP=document.getElementById("tip-nopreis");
+  if(tipNP){ tipNP.onclick=()=>{ V="bestand"; bFilter="nopreis"; bLimit=200; bSuche=""; kpiOffen=""; render(); }; }
   /* Lieferung ist da: aus "unterwegs" wird ganz normale Rohware. Der Knopf
      sitzt bewusst in der Lieferungs-Kachel — genau dort schaut man nach,
      wenn der Fahrer vor der Tuer steht. */
