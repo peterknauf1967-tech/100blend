@@ -778,16 +778,51 @@
     var has = (ta.value && ta.value.trim().length > 0) || !!currentPhoto;
     sendBtn.disabled = !has;
   }
+  /* Baut den content-Block, den die Anthropic-API erwartet, schon hier fertig.
+     Grund: in Make.com muesste man denselben Block sonst mit if()-Formeln und
+     doppelt escapten Anfuehrungszeichen im Rohtext zusammenbauen -- fehler-
+     anfaellig und nicht testbar. Hier ist es normales JS, das der Browser-Test
+     mitprueft. Make setzt nur noch Modell, System-Prompt und den API-Key davor. */
+  function buildContent(text, dataUrl, kontext, seite){
+    var teile = [];
+    var kopf = 'Seite: ' + seite + '\n' +
+               (kontext ? 'Kontext:\n' + kontext + '\n\n' : '') +
+               'Meldung:\n' + (text || '(kein Text, nur Bild)');
+    teile.push({ type: 'text', text: kopf });
+
+    // Data-URL zerlegen: "data:image/jpeg;base64,XXXX" -> Typ + reines base64.
+    // Anthropic will beides getrennt und das base64 OHNE Praefix.
+    if (dataUrl && dataUrl.indexOf('data:') === 0) {
+      var komma = dataUrl.indexOf(',');
+      var kopfteil = dataUrl.slice(5, komma);              // "image/jpeg;base64"
+      var typ = kopfteil.split(';')[0] || 'image/jpeg';
+      var rein = dataUrl.slice(komma + 1);
+      if (rein) {
+        teile.push({
+          type: 'image',
+          source: { type: 'base64', media_type: typ, data: rein }
+        });
+      }
+    }
+    return teile;
+  }
+
   function buildPayload(){
+    var text = (ta.value||'').trim();
+    var kontext = ctxText();
+    var seite = pageName();
     return {
       /* --- POSTKORB: START --- */
       msg_id: makeMsgId(),
       /* --- POSTKORB: ENDE --- */
       ts: new Date().toISOString(),
-      page: pageName(),
-      context: ctxText(),
-      message: (ta.value||'').trim(),
+      page: seite,
+      context: kontext,
+      message: text,
       photo_base64: currentPhoto || null,
+      // Fertiger Anthropic-content-Block als JSON-Text. Make setzt ihn 1:1
+      // in den Rumpf ein, ohne selbst etwas zusammenbauen zu muessen.
+      content_json: JSON.stringify(buildContent(text, currentPhoto, kontext, seite)),
       user: getUser(),
       lang: isThai() ? 'th' : 'de',
       ua: navigator.userAgent
