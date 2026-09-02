@@ -97,6 +97,7 @@
       send: '✅ Senden',
       cancel: 'Abbrechen',
       settings: '⚙',
+      ask_webhook: 'Noch keine Webhook-URL auf diesem Gerät.\n\nMake.com-URL hier einfügen:',
       lang_label: 'Sprache · ภาษา:',
       webhook_label: 'Webhook-URL (Make.com):',
       who_label: 'Benutzername:',
@@ -147,6 +148,7 @@
       send: '✅ ส่ง',
       cancel: 'ยกเลิก',
       settings: '⚙',
+      ask_webhook: 'ยังไม่มี Webhook URL บนเครื่องนี้\n\nวาง URL ของ Make.com ที่นี่:',
       lang_label: 'ภาษา · Sprache:',
       webhook_label: 'Webhook URL (Make.com):',
       who_label: 'ชื่อผู้ใช้:',
@@ -842,8 +844,34 @@
     }).catch(function(err){
       var msg = (err && err.message) ? err.message : String(err || 'unbekannt');
       if (err === 'nowebhook') {
-        // Keine URL konfiguriert -> Postkorb-Status auf 'error' setzen
-        // und JSON zum Download anbieten.
+        // Keine URL konfiguriert. Statt den Nutzer ins Zahnrad zu schicken
+        // (das auf einem frischen Geraet vielleicht gar nicht gefunden wird),
+        // direkt hier per prompt() danach fragen und den Versand sofort
+        // wiederholen. prompt() ist nativ und funktioniert auf jedem Geraet,
+        // unabhaengig von DOM/CSS des Widgets.
+        var typed = null;
+        try {
+          typed = window.prompt(tr().ask_webhook, q('claude_webhook_url') || '');
+        } catch (_) {}
+        if (typed && typed.trim().indexOf('http') === 0) {
+          qs('claude_webhook_url', typed.trim());
+          // Zweiter Versuch mit der frisch eingetragenen URL.
+          postToWebhook(p).then(function(){
+            updateInboxStatus(p.msg_id, 'sent', { sent_at: isoLocal() });
+            toast(tr().ok_sent, 'ok');
+            closeModal();
+            flushQueue();
+          }).catch(function(e2){
+            var m2 = (e2 && e2.message) ? e2.message : String(e2 || 'unbekannt');
+            updateInboxStatus(p.msg_id, 'error', { answer:{ ts:isoLocal(),
+              text:'Sendefehler: ' + m2, kind:'error', by:'widget' } });
+            enqueue(p);
+            toast('⚠ Sendefehler: ' + m2, 'warn');
+            closeModal();
+          });
+          return;   // closeModal() passiert in den Zweigen oben
+        }
+        // Abgebrochen oder nichts Brauchbares eingegeben -> wie bisher.
         updateInboxStatus(p.msg_id, 'error', { answer:{ ts:isoLocal(),
           text:'Kein Webhook konfiguriert. ⚙ Einstellungen oeffnen.',
           kind:'error', by:'widget' } });
