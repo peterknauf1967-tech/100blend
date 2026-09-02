@@ -1,0 +1,291 @@
+{
+  "_meta": {
+    "_comment": "Firebase Realtime Database Schema fuer 100blend (Pattaya). Zentrale Wahrheitsquelle fuer Zutaten-Ampel, Frische-Chargen und Wareneingang. Die Kasse (intern/kasse.html) und die Kundenseite lesen live per onValue-Listener; localStorage bleibt nur noch Offline-Fallback.",
+    "region": "asia-southeast1",
+    "db_name": "hundredblend-prod",
+    "version": "1.0.0",
+    "stand": "2026-09-02",
+    "owner": "peterknauf1967@gmail.com",
+    "_konvention_keys": "Alle IDs snake_case, ASCII-only. Zeitstempel als ISO-8601 UTC-String ODER als serverTimestamp() (dann Zahl in ms). Preise immer in THB als integer satang (1 THB = 100 satang), um Float-Rundungsfehler zu vermeiden."
+  },
+
+  "zutaten": {
+    "_comment": "Baustein 1 -- Zutaten-Ampel. Key = stabile Zutaten-ID (snake_case, deutsch). Aendert sich der Ampelstatus, reagiert die App ueberall: Kasse graut betroffene Becher aus, Kundenseite blendet sie aus, Einkauf sortiert Zutat nach oben. status ist DENORMALISIERT (aus chargen/ abgeleitet), aber hier persistiert damit Kunden-PWA nicht die ganze chargen-Node laden muss.",
+
+    "passionsfrucht": {
+      "name_de": "Passionsfrucht",
+      "name_th": "เสาวรส",
+      "name_en": "Passion fruit",
+      "kategorie": "frucht",
+      "_kategorie_werte": "frucht | gemuese | nuss | kern | gewuerz | wurzel | kraut | fluessigkeit | protein | suessung | sonstiges",
+      "status": "gruen",
+      "_status_werte": "gruen (alle Chargen frisch) | gelb (mind. eine Charge in Karenz oder abgelaufen_pruefen) | rot (keine verwertbare Charge / manuell gesperrt)",
+      "status_grund": null,
+      "updated_at": "2026-09-02T04:12:33Z",
+      "updated_by": "auto_charge_engine",
+      "_updated_by_werte": "auto_charge_engine | auto_wareneingang | lexi | peter | manuell",
+      "zertifikate": ["lokal_pattaya_markt"],
+      "haltbarkeit_tage_frisch": 5,
+      "haltbarkeit_tage_angebrochen": 2,
+      "_verwendet_in_rezepten_hint": "Denormalisierungs-Idee: hier optional rezept_keys[] spiegeln, damit Ampel-rot direkt die betroffenen Becher findet ohne rezepte-Node zu scannen."
+    },
+
+    "hafermilch_hausgemacht": {
+      "name_de": "Hafermilch (hausgemacht)",
+      "name_th": "นมโอ๊ตทำเอง",
+      "name_en": "Oat milk (in-house)",
+      "kategorie": "fluessigkeit",
+      "status": "gelb",
+      "status_grund": "aktive_charge_in_karenz",
+      "updated_at": "2026-09-02T09:45:11Z",
+      "updated_by": "auto_charge_engine",
+      "zertifikate": [],
+      "haltbarkeit_tage_frisch": 3,
+      "haltbarkeit_tage_angebrochen": 1,
+      "_hinweis": "Hausgemacht = zwingend chargen/-Eintrag beim Ansetzen. Keine Charge => status wird nightly job auf rot gesetzt."
+    },
+
+    "sonnenblumenkerne": {
+      "name_de": "Sonnenblumenkerne (roh)",
+      "name_th": "เมล็ดทานตะวัน",
+      "name_en": "Sunflower seeds (raw)",
+      "kategorie": "kern",
+      "status": "gruen",
+      "status_grund": null,
+      "updated_at": "2026-09-01T11:20:07Z",
+      "updated_by": "auto_wareneingang",
+      "zertifikate": ["human_grade", "non_gmo"],
+      "haltbarkeit_tage_frisch": 180,
+      "haltbarkeit_tage_angebrochen": 30,
+      "_zertifikate_hinweis": "Werden von der Kundenseite fuer Auto-Claims genutzt (z.B. 'Non-GMO' Badge am Becher)."
+    },
+
+    "ceylon_zimt_pulver": {
+      "name_de": "Ceylon-Zimt (Pulver)",
+      "name_th": "อบเชยศรีลังกา",
+      "name_en": "Ceylon cinnamon (powder)",
+      "kategorie": "gewuerz",
+      "status": "rot",
+      "status_grund": "manuell_gesperrt_falsches_produkt_cassia",
+      "updated_at": "2026-08-30T14:02:00Z",
+      "updated_by": "peter",
+      "zertifikate": [],
+      "haltbarkeit_tage_frisch": 365,
+      "haltbarkeit_tage_angebrochen": 180,
+      "_hinweis": "Peter hat manuell auf rot gestellt weil Lieferung als Cassia enttarnt wurde. Nur Peter darf status_grund=manuell_* wieder auf gruen zuruecksetzen (Security-Rule, siehe _hinweise)."
+    }
+  },
+
+  "chargen": {
+    "_comment": "Baustein 2 -- Frische-Chargen. Key = <zutat_key>_<yyyy-mm-dd>_<hhmm>, garantiert eindeutig und chronologisch sortierbar (RTDB sortiert lexikografisch nach Key). Eine Charge durchlaeuft den Lifecycle: frisch -> abgelaufen_pruefen -> karrenz -> entsorgen. Beim Wechsel auf entsorgen prueft ein Cloud Function Trigger, ob noch andere frische/karrenz-Chargen der Zutat existieren; falls nein -> zutaten/<key>/status = rot.",
+
+    "hafermilch_hausgemacht_2026-08-31_1430": {
+      "zutat_key": "hafermilch_hausgemacht",
+      "produziert_am": "2026-08-31T14:30:00+07:00",
+      "produziert_von": "lexi",
+      "menge_ml": 3000,
+      "menge_rest_ml": 850,
+      "ablauf_am": "2026-09-03T14:30:00+07:00",
+      "_ablauf_regel": "produziert_am + zutaten/<zutat_key>/haltbarkeit_tage_frisch (hier 3 Tage). Wird beim Anlegen serverseitig gesetzt, nicht clientseitig.",
+      "karrenz_bis": "2026-09-04T14:30:00+07:00",
+      "_karrenz_regel": "Beim 4-Sinne-Check (alle ✅) automatisch +24h. Verlaengerung darueber hinaus nur mit peter_freigaben[].",
+      "status": "karrenz",
+      "_status_werte": "frisch | abgelaufen_pruefen | karrenz | entsorgen",
+      "sinnes_check": {
+        "durchgefuehrt_am": "2026-09-03T14:35:12+07:00",
+        "durchgefuehrt_von": "lexi",
+        "nase_ok": true,
+        "auge_ok": true,
+        "zunge_ok": true,
+        "ohr_ok": true,
+        "_ohr_hinweis": "Ohr = beim Umruehren/Schuetteln kein 'blubbern' / keine CO2-Blasen = keine Faulgas-Bildung.",
+        "foto_url": "https://storage.googleapis.com/hundredblend-prod.appspot.com/checks/hafermilch_2026-09-03.jpg"
+      },
+      "peter_freigaben": [
+        {
+          "ts": "2026-09-04T13:50:00+07:00",
+          "entscheidung": "verlaengert",
+          "_entscheidung_werte": "verlaengert | abgelehnt_entsorgen | pending",
+          "karrenz_stunden": 12,
+          "kommentar": "Nase/Auge nochmal ok, aber morgen frueh entsorgen egal was.",
+          "trigger": "push_von_lexi"
+        }
+      ],
+      "beleg_foto_url": "https://storage.googleapis.com/hundredblend-prod.appspot.com/chargen/hafermilch_2026-08-31_1430.jpg",
+      "wareneingang_ref": null,
+      "_wareneingang_ref_hinweis": "Bei hausgemachten Chargen leer; bei gekauften Zutaten Key aus wareneingang/."
+    },
+
+    "passionsfrucht_2026-09-01_0710": {
+      "zutat_key": "passionsfrucht",
+      "produziert_am": "2026-09-01T07:10:00+07:00",
+      "produziert_von": "lexi",
+      "menge_g": 4200,
+      "menge_rest_g": 3100,
+      "ablauf_am": "2026-09-06T07:10:00+07:00",
+      "karrenz_bis": null,
+      "status": "frisch",
+      "sinnes_check": null,
+      "peter_freigaben": [],
+      "beleg_foto_url": null,
+      "wareneingang_ref": "we_2026-09-01_markt_pattaya_003",
+      "_notiz": "Ganze Fruechte -- Einkauf am Naklua-Markt; wird bei Bedarf portioniert, dann entstehen keine Sub-Chargen."
+    },
+
+    "sonnenblumenkerne_2026-09-01_1120": {
+      "zutat_key": "sonnenblumenkerne",
+      "produziert_am": "2026-09-01T11:20:00+07:00",
+      "produziert_von": "auto_wareneingang",
+      "menge_g": 5000,
+      "menge_rest_g": 5000,
+      "ablauf_am": "2027-03-01T11:20:00+07:00",
+      "karrenz_bis": null,
+      "status": "frisch",
+      "sinnes_check": null,
+      "peter_freigaben": [],
+      "beleg_foto_url": "https://storage.googleapis.com/hundredblend-prod.appspot.com/wareneingang/we_2026-09-01_lazada_007.jpg",
+      "wareneingang_ref": "we_2026-09-01_lazada_007"
+    }
+  },
+
+  "wareneingang": {
+    "_comment": "Baustein 3 -- Wareneingang per Foto. Lexi fotografiert Produktetikett -> Google Drive -> Make.com ruft Claude API (Vision + structured extraction) -> POST an Firebase (nur mit Server-Service-Account, siehe Security-Rules). Bei Erfolg entsteht automatisch eine Charge in chargen/ und die Zutat wird auf gruen gesetzt. Key-Schema: we_<yyyy-mm-dd>_<quelle>_<lfd_nr_3stellig>.",
+
+    "we_2026-09-01_lazada_007": {
+      "erfasst_am": "2026-09-01T11:18:44+07:00",
+      "erfasst_von": "make_claude_pipeline",
+      "_erfasst_von_werte": "make_claude_pipeline | lexi_manuell | peter_manuell",
+      "quelle": "lazada",
+      "_quelle_werte": "lazada | shopee | markt_naklua | markt_thepprasit | makro | tops | villa | grosshandel | sonstige",
+      "foto_urls": [
+        "https://drive.google.com/uc?id=1AbCdEfGhIjKlMnOpQrStUvWxYz_etikett_vorne",
+        "https://drive.google.com/uc?id=2AbCdEfGhIjKlMnOpQrStUvWxYz_etikett_hinten"
+      ],
+      "claude_extraktion": {
+        "hersteller": "Sunny Seeds Co., Ltd.",
+        "produkt_name_raw": "Raw Sunflower Kernels 500g Human Grade",
+        "zutat_key_matched": "sonnenblumenkerne",
+        "_matching_hinweis": "Fuzzy-Match gegen zutaten/-Keys; unter 0.8 confidence -> peter_review_pending=true.",
+        "matching_confidence": 0.97,
+        "menge_g": 5000,
+        "einheiten_anzahl": 10,
+        "einheit_g": 500,
+        "preis_satang_gesamt": 89000,
+        "preis_satang_pro_kg": 17800,
+        "waehrung": "THB",
+        "mfg": "2026-07-15",
+        "mhd": "2027-03-15",
+        "zertifikate_erkannt": ["human_grade", "non_gmo"],
+        "_zertifikate_werte": "human_grade | non_gmo | organic | organic_th | haccp | halal | iso_22000 | fair_trade | rainforest_alliance",
+        "batch_nr_hersteller": "SSC-2026-W29-B04",
+        "rohtext_ocr": "Sunny Seeds Co Ltd | Raw Sunflower Kernels | Net 500g | Human Grade Non-GMO | MFG 15/07/2026 | BBE 15/03/2027 | Batch SSC-2026-W29-B04",
+        "modell": "claude-opus-4-7",
+        "extrahiert_am": "2026-09-01T11:19:02+07:00"
+      },
+      "peter_review_pending": false,
+      "peter_review_erledigt_am": null,
+      "charge_ref": "sonnenblumenkerne_2026-09-01_1120",
+      "_charge_ref_hinweis": "Wird von Cloud Function nach Buchung eingetragen; Verknuepfung bidirektional zu chargen/<key>/wareneingang_ref.",
+      "kosten_gebucht": true,
+      "notiz": null
+    },
+
+    "we_2026-09-01_markt_pattaya_003": {
+      "erfasst_am": "2026-09-01T07:05:00+07:00",
+      "erfasst_von": "lexi_manuell",
+      "quelle": "markt_naklua",
+      "foto_urls": [
+        "https://drive.google.com/uc?id=3Passionsfrucht_marktbon"
+      ],
+      "claude_extraktion": {
+        "hersteller": "Marktstand #14 (kein Etikett)",
+        "produkt_name_raw": "เสาวรส",
+        "zutat_key_matched": "passionsfrucht",
+        "matching_confidence": 1.0,
+        "menge_g": 4200,
+        "einheiten_anzahl": 1,
+        "einheit_g": 4200,
+        "preis_satang_gesamt": 25200,
+        "preis_satang_pro_kg": 6000,
+        "waehrung": "THB",
+        "mfg": null,
+        "mhd": null,
+        "zertifikate_erkannt": [],
+        "batch_nr_hersteller": null,
+        "rohtext_ocr": "เสาวรส 4.2 กก. x 60 บาท = 252 บาท",
+        "modell": "claude-opus-4-7",
+        "extrahiert_am": "2026-09-01T07:06:11+07:00"
+      },
+      "peter_review_pending": false,
+      "peter_review_erledigt_am": null,
+      "charge_ref": "passionsfrucht_2026-09-01_0710",
+      "kosten_gebucht": true,
+      "notiz": "Frischware ohne MHD -- Ablauf wird aus zutaten/passionsfrucht/haltbarkeit_tage_frisch berechnet."
+    }
+  },
+
+  "_hinweise": {
+    "_comment": "Betriebshandbuch fuer diese DB -- Security, Indexierung, Denormalisierung. Kein Runtime-Node; darf beim Deploy weggelassen werden.",
+
+    "security_rules_kern": {
+      "_prosa": "Rollen: 'lexi' (Barista/Einkauf, taeglicher Betrieb), 'peter' (Owner, Freigaben), 'kunde' (nur Read auf gefilterte Views), 'make_server' (Service-Account fuer Wareneingang-Pipeline). Zuordnung ueber Firebase Auth Custom Claim 'role'.",
+      "regeln": {
+        "zutaten": {
+          "read": "auth != null || request.path in offentliche_kundensicht",
+          "write_gesamter_knoten": "auth.token.role == 'peter'",
+          "write_status_feld": "auth.token.role in ['peter','lexi'] AND newData.val() in ['gruen','gelb','rot']",
+          "_ausnahme_manuell_gesperrt": "Wenn data.status_grund startet mit 'manuell_' -> nur peter darf zuruecksetzen. Verhindert dass Lexi Peters Sperrung ueberschreibt.",
+          "write_zertifikate": "auth.token.role in ['peter','make_server']"
+        },
+        "chargen": {
+          "read": "auth != null",
+          "create": "auth.token.role in ['lexi','peter','make_server']",
+          "update_status_und_sinnes_check": "auth.token.role in ['lexi','peter']",
+          "update_karrenz_bis": "auth.token.role == 'peter' OR (auth.token.role == 'lexi' AND newValue - oldValue <= 24*3600*1000)",
+          "_karrenz_regel_prosa": "Lexi darf die automatische +24h-Karenz setzen (einmalig nach positivem 4-Sinne-Check). Jede weitere Verlaengerung braucht peter-Token -- App triggert dazu Push-Nachricht 'zweite Nase gesucht'.",
+          "write_peter_freigaben": "auth.token.role == 'peter'",
+          "delete": "false"
+        },
+        "wareneingang": {
+          "read": "auth.token.role in ['peter','lexi']",
+          "write": "auth.token.role == 'make_server'",
+          "_prosa": "NIEMAND darf wareneingang/* von Hand aendern -- nur der Make-Serverkey. Verhindert Kostenmanipulation und garantiert dass jeder Wareneingang eine Foto-Evidence hat. Manuelle Nacherfassung durch Lexi/Peter laeuft ueber denselben Make-Endpoint (mit erfasst_von='lexi_manuell') statt direktem DB-Schreiben.",
+          "update_peter_review_erledigt_am": "auth.token.role == 'peter'"
+        }
+      }
+    },
+
+    "indexierung": {
+      "_prosa": "RTDB indexOn in database.rules.json ergaenzen -- ohne Index fallen orderByChild-Queries auf full-node-scan zurueck.",
+      "rules_json_snippet": {
+        "zutaten": {".indexOn": ["status", "kategorie"]},
+        "chargen": {".indexOn": ["zutat_key", "status", "ablauf_am", "produziert_am"]},
+        "wareneingang": {".indexOn": ["erfasst_am", "quelle", "claude_extraktion/zutat_key_matched", "peter_review_pending"]}
+      },
+      "typische_queries": [
+        "chargen orderByChild('status').equalTo('abgelaufen_pruefen') -> Lexi-Dashboard 'was muss ich heute frueh pruefen'",
+        "chargen orderByChild('zutat_key').equalTo('hafermilch_hausgemacht') -> alle Chargen einer Zutat fuer FIFO-Verbrauch",
+        "chargen orderByChild('ablauf_am').endAt(now+86400000) -> was laeuft in den naechsten 24h ab",
+        "zutaten orderByChild('status').equalTo('rot') -> Kunden-PWA blendet diese Zutaten und darauf basierende Becher aus",
+        "wareneingang orderByChild('peter_review_pending').equalTo(true) -> Peters Freigabe-Inbox"
+      ]
+    },
+
+    "denormalisierung": {
+      "_prosa": "RTDB belohnt flache Nodes und Redundanz. Bewusst duplizierte Felder:",
+      "punkte": [
+        "zutaten/<k>/status ist ABGELEITET aus chargen/, aber persistiert -- so kann die Kunden-PWA nur die zutaten-Node (~5KB) laden statt aller Chargen (~MB).",
+        "chargen/<k>/zutat_key ist redundant zum Key-Praefix, aber explizit gespeichert, damit orderByChild queries funktionieren (RTDB kann nicht auf Key-Substrings indexieren).",
+        "wareneingang/<k>/claude_extraktion/zutat_key_matched wird zusaetzlich auf oberster Ebene der Extraktion gehalten, damit Peters Review-Inbox ohne Deep-Fetch filtern kann.",
+        "Preise als preis_satang_gesamt UND preis_satang_pro_kg -- Redundanz erspart Rechenlogik im Kassen-Client und im Reporting-Sheet.",
+        "chargen/<k>/wareneingang_ref und wareneingang/<k>/charge_ref bilden bidirektionale Verknuepfung -- eine Cloud Function haelt beide konsistent.",
+        "Rezept-Verwendung (welches Rezept braucht welche Zutat) NICHT hier denormalisieren -- lebt in rezepte/ und wird beim Ampel-rot-Event von einer Cloud Function 'gejoined', um die Kasse zu benachrichtigen."
+      ],
+      "aufraeum_jobs": [
+        "nightly: chargen/ nach status=='entsorgen' AND ablauf_am < now-30d -> Archiv-Node chargen_archiv/ verschieben (RTDB-Kosten begrenzen).",
+        "nightly: zutaten/ Recompute status aus lebendigen chargen/ -- Selbstheilung falls ein Trigger mal aussetzt.",
+        "hourly: chargen/ status frisch->abgelaufen_pruefen wenn ablauf_am < now; abgelaufen_pruefen->karrenz nur ueber sinnes_check-Update; karrenz->entsorgen wenn karrenz_bis < now."
+      ]
+    }
+  }
+}
