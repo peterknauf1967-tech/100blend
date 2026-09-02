@@ -386,8 +386,10 @@ function setAmpel(code,status,grund){
   if(!code)return;
   S.ampel = S.ampel || {};
   const wer = (S.cfg && S.cfg.who) || (typeof istLexi==="function" && istLexi() ? "Lexi" : "Peter");
+  /* CHARGEN: manuell-Marker, damit die Auto-Ableitung aus Chargen die
+     bewusste Wahl nicht ueberschreibt (Baustein 1/2 verzahnt). */
   S.ampel[code] = {status:String(status), grund: (grund==null?"":String(grund)),
-                   ts: Date.now(), wer};
+                   ts: Date.now(), wer, manuell:true};
   saveAmpel();
   syncAmpel(code,status,grund||"");
 }
@@ -454,6 +456,343 @@ function ampelAutoAusEntsorgt(){
   }catch(e){}
 }
 /* --- AMPEL: ENDE --- */
+
+/* --- CHARGEN: START --- */
+/* Baustein 2 aus docs/frische-konzept.md — jede angesetzte Menge einer
+   verderblichen Zutat lebt fuer sich, mit Ablauf, Karenz, 4-Sinne-Check.
+   Persistenz: primaer in S.chargen_frisch (Teil von SKEY=blend_os_v1),
+   gespiegelt in CHFRKEY damit die Kasse (kennt SKEY nicht) live lesen kann. */
+const CHFRKEY = "blend_chargen_frisch_v1";
+function _chargenFrischLesen(){ try{ return JSON.parse(localStorage.getItem(CHFRKEY)||"{}")||{}; }catch(e){ return {}; } }
+S.chargen_frisch = Object.assign({}, _chargenFrischLesen(), S.chargen_frisch||{});
+function chargenSaveMirror(){
+  try{ localStorage.setItem(CHFRKEY, JSON.stringify(S.chargen_frisch||{})); }catch(e){}
+  save();
+}
+function chargenSync(payload){
+  const url = (typeof syncUrl==="function") ? syncUrl() : "";
+  if(!url || !DARF_SENDEN) return;
+  try{
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(Object.assign({ts:Date.now(),wer:(S.cfg&&S.cfg.who)||""},payload||{}))
+    }).catch(()=>{});
+  }catch(e){}
+}
+window.addEventListener("storage", ev=>{
+  if(ev && ev.key===CHFRKEY){
+    S.chargen_frisch = _chargenFrischLesen();
+    if(typeof render==="function") render();
+  }
+});
+
+/* Basiswerte aus docs/frische-konzept.md — im Zweifel entsorgen. */
+const HALTBARKEIT = {
+  HF:  {name:"Hafermilch",           einheit:"ml", tage_frisch:3,   tage_angebrochen:5,  kategorie:"fluessigkeit_selbst"},
+  MM:  {name:"Mandelmilch",          einheit:"ml", tage_frisch:3,   tage_angebrochen:5,  kategorie:"fluessigkeit_tetra"},
+  KO:  {name:"Kokosmilch (Tetra)",   einheit:"ml", tage_frisch:5,   tage_angebrochen:5,  kategorie:"fluessigkeit_tetra"},
+  KW:  {name:"Kokoswasser frisch",   einheit:"ml", tage_frisch:1,   tage_angebrochen:2,  kategorie:"fluessigkeit_frisch"},
+  LS:  {name:"Limettensaft frisch",  einheit:"ml", tage_frisch:1,   tage_angebrochen:1,  kategorie:"fluessigkeit_frisch"},
+  IG:  {name:"Ingwerwasser",         einheit:"ml", tage_frisch:3,   tage_angebrochen:3,  kategorie:"fluessigkeit_selbst"},
+  KU:  {name:"Kurkuma-Aufguss",      einheit:"ml", tage_frisch:2,   tage_angebrochen:2,  kategorie:"fluessigkeit_selbst"},
+  PD:  {name:"Pandan-Wasser",        einheit:"ml", tage_frisch:1,   tage_angebrochen:2,  kategorie:"fluessigkeit_selbst"},
+  TE:  {name:"Grüner Tee kalt",      einheit:"ml", tage_frisch:1,   tage_angebrochen:1,  kategorie:"fluessigkeit_selbst"},
+  OS:  {name:"Orangensaft frisch",   einheit:"ml", tage_frisch:1,   tage_angebrochen:1,  kategorie:"fluessigkeit_frisch"},
+  SK:  {name:"Sonnenblumenkerne",    einheit:"g",  tage_frisch:180, tage_angebrochen:28, kategorie:"trockenware_nuss"},
+  KE:  {name:"Kürbiskerne",          einheit:"g",  tage_frisch:180, tage_angebrochen:35, kategorie:"trockenware_nuss"},
+  MA:  {name:"Mandeln",              einheit:"g",  tage_frisch:180, tage_angebrochen:60, kategorie:"trockenware_nuss"},
+  HS:  {name:"Hanfsamen",            einheit:"g",  tage_frisch:180, tage_angebrochen:56, kategorie:"trockenware_nuss"}
+};
+const CHARGE_DEFAULT_TAGE = 3;
+function chHaltbar(code){
+  const k = (typeof findeCode==="function") ? findeCode(code) : null;
+  return HALTBARKEIT[code] || {name:(k&&k.de)||code, einheit:(k&&k.einheit)||"g",
+    tage_frisch:CHARGE_DEFAULT_TAGE, tage_angebrochen:CHARGE_DEFAULT_TAGE, kategorie:"unbekannt"};
+}
+function chargeId(code){
+  const d=new Date(), pad=n=>String(n).padStart(2,"0");
+  return code+"_"+d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())
+        +"_"+pad(d.getHours())+pad(d.getMinutes())+"_"+Math.random().toString(36).slice(2,5);
+}
+
+/* Ableitungsregel Chargen -> Ampel (Baustein 1). */
+function ampelAusChargen(code){
+  const alle = Object.values(S.chargen_frisch||{}).filter(c=>c && c.zutat_code===code);
+  const aktiv = alle.filter(c=>c.status==="frisch"||c.status==="karrenz");
+  if(!aktiv.length) return "rot";
+  const frischOK = aktiv.some(c=>{
+    if(c.status!=="frisch") return false;
+    const menge = +(c.menge_ml||c.menge_g||0);
+    const rest  = +(c.menge_rest||0);
+    return menge>0 && (rest/menge) > 0.20;
+  });
+  return frischOK ? "gruen" : "gelb";
+}
+function chargenAmpelSyncAll(){
+  Object.keys(HALTBARKEIT).forEach(code=>{
+    const hatChargen = Object.values(S.chargen_frisch||{}).some(c=>c && c.zutat_code===code);
+    if(!hatChargen) return;                           /* keine Chargen: nichts anfassen */
+    S.ampel = S.ampel || {};
+    const cur = S.ampel[code];
+    if(cur && cur.manuell) return;                    /* manuell hat Vorrang */
+    const soll = ampelAusChargen(code);
+    if(!cur || cur.status !== soll){
+      S.ampel[code] = {status:soll, grund:"auto: aus Chargen abgeleitet",
+        ts:Date.now(), wer:"System", manuell:false};
+    }
+  });
+  saveAmpel();
+}
+/* Status-Autoruecker (Ablauf -> Check, Karenz-Ablauf -> entsorgen, Rest 0 -> aufgebraucht). */
+function chargenAutoStatus(){
+  const jetzt = Date.now();
+  let ver = false;
+  Object.values(S.chargen_frisch||{}).forEach(c=>{
+    if(!c) return;
+    if((+c.menge_rest||0)<=0 && c.status!=="entsorgen" && c.status!=="aufgebraucht"){
+      c.status = "aufgebraucht"; ver=true;
+    }
+    if(c.status==="frisch" && c.ablauf_am && new Date(c.ablauf_am).getTime()<=jetzt){
+      c.status = "abgelaufen_pruefen"; ver=true;
+    }
+    if(c.status==="karrenz" && c.karrenz_bis && new Date(c.karrenz_bis).getTime()<=jetzt){
+      const letzte = (c.peter_freigaben||[]).slice(-1)[0];
+      const jung = letzte && (jetzt - new Date(letzte.ts).getTime()) < 2*3600*1000;
+      if(!jung){ c.status = "entsorgen"; ver=true; }
+    }
+  });
+  if(ver){ chargenSaveMirror(); }
+  chargenAmpelSyncAll();
+  if(ver && typeof render==="function") render();
+}
+setInterval(chargenAutoStatus, 5*60*1000);
+setTimeout(chargenAutoStatus, 600);
+
+/* Neue Charge anlegen. */
+function chargeAnlegen(code, menge, produziertLocal, von, notiz){
+  const H = chHaltbar(code);
+  const prod = produziertLocal ? new Date(produziertLocal) : new Date();
+  const ablauf = new Date(prod.getTime() + H.tage_frisch*24*3600*1000);
+  const id = chargeId(code);
+  const ist_ml = (H.einheit==="ml");
+  S.chargen_frisch = S.chargen_frisch || {};
+  S.chargen_frisch[id] = {
+    zutat_code: code,
+    zutat_key: (H.name||code).toLowerCase().replace(/[^a-z0-9]+/g,"_"),
+    produziert_am: prod.toISOString(),
+    produziert_von: von||"unbekannt",
+    [ist_ml?"menge_ml":"menge_g"]: menge,
+    menge_rest: menge,
+    ablauf_am: ablauf.toISOString(),
+    haltbarkeit_tage: H.tage_frisch,
+    karrenz_bis: null,
+    status: "frisch",
+    sinnes_check: null,
+    peter_freigaben: [],
+    beleg_foto_url: null,
+    notiz: notiz||""
+  };
+  chargenSaveMirror();
+  const cur = (S.ampel||{})[code];
+  if(!cur || !cur.manuell){
+    S.ampel = S.ampel || {};
+    S.ampel[code] = {status:"gruen", grund:"neue Charge angelegt", ts:Date.now(), wer:"System", manuell:false};
+    saveAmpel();
+  }
+  chargenSync({typ:"charge_neu", id, code, menge, von, notiz:notiz||""});
+}
+function chargeAlsAufgebraucht(id){
+  const c = (S.chargen_frisch||{})[id]; if(!c) return;
+  c.menge_rest = 0; c.status = "aufgebraucht";
+  chargenSaveMirror(); chargenAmpelSyncAll();
+  chargenSync({typ:"charge_aufgebraucht", id});
+  render();
+}
+function chargeEntsorgen(id, grund){
+  const c = (S.chargen_frisch||{})[id]; if(!c) return;
+  if(!confirm("Charge "+id+" wirklich entsorgen?")) return;
+  c.status = "entsorgen";
+  c.notiz  = (c.notiz||"") + (grund?(" · WEG: "+grund):" · entsorgt");
+  chargenSaveMirror(); chargenAmpelSyncAll();
+  chargenSync({typ:"charge_entsorgt", id, grund:grund||""});
+  render();
+}
+
+/* Renderer fuer den neuen Filter „chargen" in vBestand. */
+function vChargenListe(){
+  const items = Object.entries(S.chargen_frisch||{})
+    .filter(([,c])=>c && c.status!=="aufgebraucht")
+    .sort((a,b)=> String(a[1].ablauf_am||"").localeCompare(String(b[1].ablauf_am||"")));
+  const jetzt = Date.now();
+  const heutBis = new Date(); heutBis.setHours(23,59,59,999);
+  const abH = items.filter(([,c])=>c.ablauf_am && new Date(c.ablauf_am).getTime()<=heutBis.getTime() && c.status==="frisch").length;
+  const chip = st => ({frisch:"🟢 frisch",abgelaufen_pruefen:"🟠 Check nötig",karrenz:"🟡 Karenz",entsorgen:"🔴 entsorgen",aufgebraucht:"⚪ leer"})[st]||st;
+  let neu = `<div class="bar" style="margin:0 0 12px;flex-wrap:wrap">
+    ${Object.keys(HALTBARKEIT).map(code=>`<button class="b" data-chneu="${code}">➕ ${HALTBARKEIT[code].name}</button>`).join("")}
+  </div>`;
+  if(!items.length) return neu + `<div class="empty">Keine aktiven Chargen — mit ➕ oben eine anlegen.</div>`;
+  const header = abH ? `<div class="row" style="background:#fff3cd">⚠ ${abH} Charge${abH===1?"":"n"} läuft heute ab</div>` : "";
+  return neu + header + items.map(([id,c])=>{
+    const Hz = chHaltbar(c.zutat_code);
+    const menge = +(c.menge_ml||c.menge_g||0);
+    const rest  = +(c.menge_rest||0);
+    const pct   = menge>0 ? Math.round(rest/menge*100) : 0;
+    const abl   = c.ablauf_am ? new Date(c.ablauf_am) : null;
+    const tageBis = abl ? Math.round((abl.getTime()-jetzt)/(24*3600*1000)) : "";
+    const karenz = c.karrenz_bis ? new Date(c.karrenz_bis) : null;
+    const karAb  = karenz && karenz.getTime()<=jetzt;
+    const bg = c.status==="entsorgen"?"#ffe5e5":c.status==="karrenz"?"#fffbe6":c.status==="abgelaufen_pruefen"?"#ffedd8":"#fff";
+    const border = c.status==="entsorgen" ? "2px solid #d32f2f" : "1px solid #e5e0d8";
+    return `<div style="border:${border};border-radius:10px;padding:10px;margin:6px 0;background:${bg}">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+        <b>${esc(Hz.name)}</b><span>${chip(c.status)}</span>
+      </div>
+      <div class="mini">
+        ${abl?abl.toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})+" · ":""}
+        ${typeof tageBis==="number" ? (tageBis>=0?"in "+tageBis+" T":Math.abs(tageBis)+" T abgelaufen") : ""}
+        · ${esc(c.produziert_von||"")}
+      </div>
+      <div style="background:#eee;border-radius:5px;height:8px;overflow:hidden;margin:6px 0">
+        <div style="background:${pct>50?"#4caf50":pct>20?"#ffb74d":"#e57373"};width:${pct}%;height:100%"></div>
+      </div>
+      <div class="mini">${rest} / ${menge} ${Hz.einheit} (${pct}%)</div>
+      <div class="bar" style="margin-top:6px;flex-wrap:wrap">
+        ${c.status==="abgelaufen_pruefen" ? `<button class="b" data-ch4sinne="${id}">👃 4-Sinne-Check</button>`:""}
+        ${c.status==="karrenz" && karAb ?  `<button class="b" data-chpeter="${id}">📱 Peter fragen</button>`:""}
+        ${c.status!=="entsorgen" ? `<button class="b" data-chleer="${id}">🥛 aufgebraucht</button>`:""}
+        ${c.status!=="entsorgen" ? `<button class="b r" data-chweg="${id}">🗑 entsorgen</button>`:""}
+      </div>
+      ${c.notiz?`<div class="mini" style="margin-top:6px">${esc(c.notiz)}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+/* Modal fuer Standos. */
+function chModalHtml(){
+  return `<div id="ch-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center;padding:12px">
+    <div style="background:#fff;border-radius:14px;max-width:440px;width:100%;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.35);max-height:90vh;overflow:auto">
+      <h2 id="ch-modal-title" style="margin:0 0 10px"></h2>
+      <div id="ch-modal-body"></div>
+      <div class="bar" style="margin-top:14px">
+        <button class="b" id="ch-modal-cancel" style="flex:1">Abbrechen</button>
+        <button class="b p" id="ch-modal-ok" style="flex:2">Speichern</button>
+      </div>
+    </div></div>`;
+}
+function chModalOpen(title, bodyHtml, okHandler){
+  let m = document.getElementById("ch-modal");
+  if(!m){ document.body.insertAdjacentHTML("beforeend", chModalHtml()); m = document.getElementById("ch-modal"); }
+  document.getElementById("ch-modal-title").textContent = title;
+  document.getElementById("ch-modal-body").innerHTML = bodyHtml;
+  document.getElementById("ch-modal-ok").onclick = okHandler;
+  document.getElementById("ch-modal-cancel").onclick = chModalClose;
+  m.style.display = "flex";
+}
+function chModalClose(){ const m=document.getElementById("ch-modal"); if(m)m.style.display="none"; }
+
+function chargeNeuOeffnen(code){
+  const H = chHaltbar(code);
+  const letzte = Object.values(S.chargen_frisch||{}).filter(c=>c && c.zutat_code===code)
+                       .sort((a,b)=> String(b.produziert_am||"").localeCompare(String(a.produziert_am||"")))[0];
+  const defMenge = letzte ? (letzte.menge_ml||letzte.menge_g||1000) : 1000;
+  const now = new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  const isoLocal = now.toISOString().slice(0,16);
+  const wer = ((S.cfg&&S.cfg.who)||"").toLowerCase()==="peter" ? "peter" : "lexi";
+  chModalOpen("Neue Charge " + H.name,
+    `<div class="f"><label>Menge (${H.einheit})</label><input id="ch-neu-menge" type="number" inputmode="decimal" min="1" value="${defMenge}"></div>
+     <div class="f"><label>Angesetzt am</label><input id="ch-neu-am" type="datetime-local" value="${isoLocal}"></div>
+     <div class="f"><label>Angesetzt von</label>
+       <select id="ch-neu-von">
+         <option value="lexi" ${wer==="lexi"?"selected":""}>Lexi</option>
+         <option value="peter" ${wer==="peter"?"selected":""}>Peter</option>
+         <option value="unbekannt">unbekannt</option>
+       </select></div>
+     <div class="f"><label>Notiz (optional)</label><input id="ch-neu-notiz"></div>
+     <div class="mini">Ablauf ${H.tage_frisch} Tage · Ampel geht auf 🟢</div>`,
+    ()=>{
+      const menge = +(document.getElementById("ch-neu-menge").value||0);
+      if(!menge){ alert("Menge fehlt"); return; }
+      const am    = document.getElementById("ch-neu-am").value;
+      const von   = document.getElementById("ch-neu-von").value;
+      const notiz = document.getElementById("ch-neu-notiz").value.trim();
+      chargeAnlegen(code, menge, am, von, notiz);
+      chModalClose(); render();
+    });
+}
+function ch4Sinne(id){
+  const c = (S.chargen_frisch||{})[id]; if(!c) return;
+  const sinne = [
+    ["nase","👃 Nase","neutral, nussig — NICHT: sauer, hefig, fermentiert"],
+    ["auge","👁 Auge","homogen, milchig — NICHT: Klümpchen, rosa/gelb"],
+    ["zunge","👅 Zunge","leicht süß/nussig — NICHT: Kribbeln, säuerlich"],
+    ["ohr","👂 Physik","still — NICHT: Gasbläschen, Zisch beim Öffnen"]
+  ];
+  chModalOpen("4-Sinne-Check — "+chHaltbar(c.zutat_code).name,
+    sinne.map(([k,l,d])=>`<div class="f"><label>${l}</label>
+      <div class="mini">${d}</div>
+      <div class="bar" style="margin-top:4px">
+        <button type="button" class="b" data-ss="${k}" data-v="1" style="flex:1">✅ bestanden</button>
+        <button type="button" class="b r" data-ss="${k}" data-v="0" style="flex:1">❌ durchgefallen</button>
+      </div></div>`).join("") + `<div id="ch-sinne-status" class="mini"></div>`,
+    ()=>{
+      const check = c.sinnes_check || {};
+      const alle = sinne.every(([k])=> check[k]===true);
+      const einNein = sinne.some(([k])=> check[k]===false);
+      if(!alle && !einNein){ alert("Bitte alle 4 Sinne bewerten"); return; }
+      check.ts = Date.now();
+      c.sinnes_check = check;
+      if(einNein){
+        c.status = "entsorgen";
+        chargenSync({typ:"charge_entsorgt", id, grund:"4-sinne durchgefallen"});
+      }else{
+        c.status = "karrenz";
+        c.karrenz_bis = new Date(Date.now()+24*3600*1000).toISOString();
+        chargenSync({typ:"charge_karrenz", id, stunden:24});
+      }
+      chargenSaveMirror(); chargenAmpelSyncAll();
+      chModalClose(); render();
+    });
+  setTimeout(()=>{
+    document.querySelectorAll("#ch-modal-body [data-ss]").forEach(b=>b.onclick=()=>{
+      c.sinnes_check = c.sinnes_check || {};
+      c.sinnes_check[b.dataset.ss] = (b.dataset.v==="1");
+      document.querySelectorAll(`#ch-modal-body [data-ss="${b.dataset.ss}"]`)
+        .forEach(x=>x.classList.toggle("on", x===b));
+      const st = c.sinnes_check;
+      const done = ["nase","auge","zunge","ohr"].every(k=>k in st);
+      const ok   = ["nase","auge","zunge","ohr"].every(k=>st[k]===true);
+      const s = document.getElementById("ch-sinne-status");
+      if(s) s.textContent = !done ? "" : ok ? "→ Alle 4 ✅ · Karenz +24h" : "→ Mind. 1 ❌ · sofort entsorgen";
+    });
+  },0);
+}
+function chPeterFragen(id){
+  const c = (S.chargen_frisch||{})[id]; if(!c) return;
+  const H = chHaltbar(c.zutat_code);
+  chargenSync({typ:"karrenz_frage", charge_id:id, zutat:H.name});
+  chModalOpen("Peter fragen — "+H.name,
+    `<div class="mini">Karenz von ${esc(H.name)} abgelaufen. Freigabe?</div>
+     <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+       <button type="button" class="b p" data-freigabe="24">OK +24h (weiter nutzen)</button>
+       <button type="button" class="b p" data-freigabe="48">OK +48h</button>
+       <button type="button" class="b r" data-freigabe="0">WEG (entsorgen)</button>
+     </div>
+     <div class="mini" style="margin-top:8px">Frage geht via CFG.sync raus — Peter kann von unterwegs antworten (Make-Szenario 2).</div>`,
+    ()=>chModalClose());
+  setTimeout(()=>{
+    document.querySelectorAll("#ch-modal-body [data-freigabe]").forEach(b=>b.onclick=()=>{
+      const h = +b.dataset.freigabe;
+      const eintrag = {ts:Date.now(), entscheidung: h?("ok+"+h+"h"):"weg", karrenz_stunden:h};
+      c.peter_freigaben = c.peter_freigaben || [];
+      c.peter_freigaben.push(eintrag);
+      if(h===0){ c.status = "entsorgen"; }
+      else{ c.status = "karrenz"; c.karrenz_bis = new Date(Date.now() + h*3600*1000).toISOString(); }
+      chargenSaveMirror(); chargenAmpelSyncAll();
+      chargenSync({typ:"karrenz_antwort", charge_id:id, entscheidung:eintrag.entscheidung});
+      chModalClose(); render();
+    });
+  },0);
+}
+/* --- CHARGEN: ENDE --- */
 
 /* ===== Gemeinsamer Speicher =============================================
    Peter (Android) und Lexi (iPhone) hatten je einen eigenen Browser-Speicher.
@@ -1471,9 +1810,17 @@ function vBestand(){
       <button class="b ${bFilter==="miss"?"p":""}" data-bf="miss">${h("nurFehlt")}</button>
       <button class="b ${bFilter==="have"?"p":""}" data-bf="have">${h("nurDa")}</button>
       <button class="b ${bFilter==="nopreis"?"p":""}" data-bf="nopreis" title="${h("ohnePreis")}">💰 ${h("ohnePreis")}</button>
+      <!-- CHARGEN: START -->
+      <button class="b ${bFilter==="chargen"?"p":""}" data-bf="chargen" title="Frische-Chargen">🥛 Chargen</button>
+      <!-- CHARGEN: ENDE -->
       <button class="b" id="neuzutat">➕ ${h("neueZutat")}</button></div>
     <div id="neuform"></div>
     <div class="mini" style="margin:-6px 0 10px">${h("zweiFelder")}</div>`;
+  /* --- CHARGEN: START --- */
+  if(bFilter==="chargen"){
+    return html + vChargenListe();
+  }
+  /* --- CHARGEN: ENDE --- */
   let gezeigt=0, uebrig=0;
   Object.entries(grp).forEach(([g,items])=>{
     const gefiltert=items.filter(k=>{
@@ -2275,6 +2622,13 @@ function binde(){
     stempel(i.dataset.c); save(); syncSpaeter();
   });
   document.querySelectorAll("[data-bf]").forEach(b=>b.onclick=()=>{bFilter=b.dataset.bf;bLimit=30;render()});
+  /* --- CHARGEN: START --- */
+  document.querySelectorAll("[data-chneu]").forEach(b=>b.onclick=()=>chargeNeuOeffnen(b.dataset.chneu));
+  document.querySelectorAll("[data-ch4sinne]").forEach(b=>b.onclick=()=>ch4Sinne(b.dataset.ch4sinne));
+  document.querySelectorAll("[data-chpeter]").forEach(b=>b.onclick=()=>chPeterFragen(b.dataset.chpeter));
+  document.querySelectorAll("[data-chleer]").forEach(b=>b.onclick=()=>chargeAlsAufgebraucht(b.dataset.chleer));
+  document.querySelectorAll("[data-chweg]").forEach(b=>b.onclick=()=>chargeEntsorgen(b.dataset.chweg,"manuell"));
+  /* --- CHARGEN: ENDE --- */
   const mehr=$("mehr"); if(mehr)mehr.onclick=()=>{bLimit+=40;render()};
   /* Einkaufsliste */
   const vs=$("v_such");
@@ -2709,5 +3063,6 @@ syncStart();   /* gemeinsamer Speicher, falls eingerichtet */
 })();
 </script>
 <script src="claude-button.js" defer></script>
+<script src="firebase-sync.js" defer></script>
 </body>
 </html>

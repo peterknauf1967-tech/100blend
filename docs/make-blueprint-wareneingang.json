@@ -1,0 +1,197 @@
+{
+  "name": "100blend – Wareneingang (Foto → Claude → Firebase → WhatsApp)",
+  "_hinweis": "Importierbare Blueprint-Skizze fuer Szenario 1 aus docs/make-scenarios.md. Nach Import in Make.com die Connections neu binden (Google Drive, Firebase RTDB, WhatsApp Business) und ANTHROPIC_API_KEY als Team-Env-Variable hinterlegen. Nummern in {{n.body...}} verweisen auf die Modul-IDs (1..7) in flow[].",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "_hinweis": "Trigger: POST vom wareneingang-button.js. Erwartetes Body-Schema: {typ:'wareneingang', ts, foto_base64, preis_thb, quelle, notiz, wer}. Datenstruktur beim ersten Empfang von Make automatisch erzeugen lassen ('Determine data structure') oder manuell nachtragen.",
+      "parameters": {
+        "hook": "__REPLACE_WITH_HOOK_ID__"
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "hook": {
+              "label": "100blend-wareneingang (Custom Webhook)"
+            }
+          }
+        },
+        "expect": [
+          { "name": "typ", "type": "text" },
+          { "name": "ts", "type": "text" },
+          { "name": "foto_base64", "type": "text" },
+          { "name": "preis_thb", "type": "number" },
+          { "name": "quelle", "type": "text" },
+          { "name": "notiz", "type": "text" },
+          { "name": "wer", "type": "text" }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "_hinweis": "Claude Vision-Call. Body-Base64 kommt bereits als DataURL (data:image/jpeg;base64,XXX...) — mit substring() ab Position der 'base64,' den Prefix entfernen. Prompt wortwoertlich aus docs/make-scenarios.md Szenario 1 uebernommen.",
+      "parameters": {
+        "handleErrors": true,
+        "useNewZLibDeCompress": true
+      },
+      "mapper": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "headers": [
+          { "name": "x-api-key", "value": "{{env.ANTHROPIC_API_KEY}}" },
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "content-type", "value": "application/json" }
+        ],
+        "qs": [],
+        "bodyType": "raw",
+        "contentType": "application/json",
+        "parseResponse": true,
+        "data": "{\n  \"model\": \"claude-sonnet-4-5\",\n  \"max_tokens\": 800,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"image\",\n          \"source\": {\n            \"type\": \"base64\",\n            \"media_type\": \"image/jpeg\",\n            \"data\": \"{{substring(1.body.foto_base64; add(indexOf(1.body.foto_base64; `base64,`); 7))}}\"\n          }\n        },\n        {\n          \"type\": \"text\",\n          \"text\": \"Extrahiere aus dem Produkt-Etikett: Hersteller, Produkt (deutsch + englisch), Variante (roh/geroestet/gesalzen etc.), Verpackungsgroesse in g/ml, Preis in THB falls sichtbar, MFG-Datum, MHD/Best-Before, Zertifikate (HACCP/GMP/Organic/etc.). Der Nutzer hat als Referenz preis_thb={{1.body.preis_thb}} und quelle='{{1.body.quelle}}' angegeben — Handeingabe siegt bei Konflikt. Antworte AUSSCHLIESSLICH als JSON in der Form {\\\"hersteller\\\":\\\"\\\",\\\"produkt\\\":{\\\"de\\\":\\\"\\\",\\\"en\\\":\\\"\\\"},\\\"variante\\\":\\\"\\\",\\\"menge_g\\\":0,\\\"preis_thb\\\":0,\\\"mfg\\\":\\\"YYYY-MM-DD\\\",\\\"mhd\\\":\\\"YYYY-MM-DD\\\",\\\"zertifikate\\\":[],\\\"slug\\\":\\\"\\\"}. Kein Fliesstext, kein Markdown, keine Code-Fence.\"\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "metadata": { "designer": { "x": 300, "y": 0 } }
+    },
+    {
+      "id": 3,
+      "module": "json:ParseJSON",
+      "version": 1,
+      "_hinweis": "Zweistufig: erst die Claude-Antwortstruktur parsen (2.data), dann in einem Set-Variable-Modul den ersten Content-Block als Text extrahieren und noch mal parsen. Aus Platzgruenden hier zusammengefasst: Datenstruktur muss die Felder hersteller, produkt.de, produkt.en, variante, menge_g, preis_thb, mfg, mhd, zertifikate[], slug enthalten. Falls Parse fehlschlaegt → Route B (siehe make-scenarios.md Fehlerbehandlung).",
+      "parameters": {
+        "type": "__REPLACE_WITH_DATA_STRUCTURE_ID__"
+      },
+      "mapper": {
+        "json": "{{2.data.content[1].text}}"
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": {
+          "parameters": {
+            "type": { "label": "wareneingang_extract" }
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "google-drive:uploadAFile",
+      "version": 4,
+      "_hinweis": "Speichert das Rohfoto direkt in 100blend/wareneingang-gebucht/ mit sprechendem Namen. Ordner-ID per Dropdown im Make-Editor bind_en. Dateiname: <ts>_<slug>_<preis>.jpg fuer schnelle Suche.",
+      "parameters": {
+        "__IMTCONN__": "__REPLACE_WITH_DRIVE_CONNECTION__"
+      },
+      "mapper": {
+        "folder": "__REPLACE_WITH_FOLDER_ID_wareneingang-gebucht__",
+        "filename": "{{formatDate(now; \"YYYYMMDD-HHmmss\")}}_{{3.slug}}_{{ifempty(1.body.preis_thb; \"NA\")}}THB.jpg",
+        "data": "{{substring(1.body.foto_base64; add(indexOf(1.body.foto_base64; `base64,`); 7))}}",
+        "isBase64": true,
+        "mimeType": "image/jpeg"
+      },
+      "metadata": { "designer": { "x": 900, "y": 0 } }
+    },
+    {
+      "id": 5,
+      "module": "firebase:CustomHTTPS",
+      "version": 1,
+      "_hinweis": "Firebase RTDB hat keinen offiziellen Make-Konnektor — daher HTTP-PUT direkt auf die Realtime-DB-REST-URL. Ersetze DATABASE_URL mit deinem Firebase-URL (z.B. https://blend100-firebase-default-rtdb.asia-southeast1.firebasedatabase.app). Auth via Firebase-Access-Token oder Legacy-Auth-Token in ENV.",
+      "parameters": {},
+      "mapper": {
+        "url": "{{env.FIREBASE_DB_URL}}/wareneingang/{{formatDate(now; \"YYYYMMDDTHHmmss\")}}_{{3.slug}}.json?auth={{env.FIREBASE_AUTH_TOKEN}}",
+        "method": "PUT",
+        "headers": [ { "name": "content-type", "value": "application/json" } ],
+        "bodyType": "raw",
+        "contentType": "application/json",
+        "data": "{\n  \"typ\": \"wareneingang\",\n  \"ts\": \"{{1.body.ts}}\",\n  \"wer\": \"{{1.body.wer}}\",\n  \"quelle\": \"{{1.body.quelle}}\",\n  \"notiz\": \"{{1.body.notiz}}\",\n  \"preis_thb_eingabe\": {{ifempty(1.body.preis_thb; \"null\")}},\n  \"foto_drive_id\": \"{{4.id}}\",\n  \"foto_drive_link\": \"{{4.webViewLink}}\",\n  \"extract\": {\n    \"hersteller\": \"{{3.hersteller}}\",\n    \"produkt_de\": \"{{3.produkt.de}}\",\n    \"produkt_en\": \"{{3.produkt.en}}\",\n    \"variante\": \"{{3.variante}}\",\n    \"menge_g\": {{ifempty(3.menge_g; 0)}},\n    \"preis_thb\": {{ifempty(3.preis_thb; 0)}},\n    \"mfg\": \"{{3.mfg}}\",\n    \"mhd\": \"{{3.mhd}}\",\n    \"zertifikate\": {{toString(3.zertifikate)}},\n    \"slug\": \"{{3.slug}}\"\n  },\n  \"gebucht_von\": \"make:wareneingang\",\n  \"gebucht_am\": \"{{now}}\"\n}"
+      },
+      "metadata": { "designer": { "x": 1200, "y": 0 } }
+    },
+    {
+      "id": 6,
+      "module": "firebase:CustomHTTPS",
+      "version": 1,
+      "_hinweis": "Legt gleich die Charge unter chargen/{extracted_id} an. ID = <slug>_<yyyy-mm-dd>_<hhmm>. Status 'gruen' — die App leitet die Zutat-Ampel aus den Chargen ab (siehe frische-konzept.md).",
+      "parameters": {},
+      "mapper": {
+        "url": "{{env.FIREBASE_DB_URL}}/chargen/{{3.slug}}_{{formatDate(now; \"YYYY-MM-DD_HHmm\")}}.json?auth={{env.FIREBASE_AUTH_TOKEN}}",
+        "method": "PUT",
+        "headers": [ { "name": "content-type", "value": "application/json" } ],
+        "bodyType": "raw",
+        "contentType": "application/json",
+        "data": "{\n  \"zutat_key\": \"{{3.slug}}\",\n  \"zutat_name\": \"{{3.produkt.de}}\",\n  \"hersteller\": \"{{3.hersteller}}\",\n  \"variante\": \"{{3.variante}}\",\n  \"menge_g\": {{ifempty(3.menge_g; 0)}},\n  \"menge_rest\": {{ifempty(3.menge_g; 0)}},\n  \"preis_thb\": {{ifempty(3.preis_thb; ifempty(1.body.preis_thb; 0))}},\n  \"mfg\": \"{{3.mfg}}\",\n  \"mhd\": \"{{3.mhd}}\",\n  \"zertifikate\": {{toString(3.zertifikate)}},\n  \"beleg_foto_url\": \"{{4.webViewLink}}\",\n  \"status\": \"frisch\",\n  \"produziert_am\": \"{{now}}\",\n  \"produziert_von\": \"wareneingang:{{1.body.wer}}\",\n  \"quelle\": \"{{1.body.quelle}}\",\n  \"updated_at\": \"{{now}}\"\n}"
+      },
+      "metadata": { "designer": { "x": 1500, "y": 0 } }
+    },
+    {
+      "id": 7,
+      "module": "firebase:CustomHTTPS",
+      "version": 1,
+      "_hinweis": "Falls die Zutat noch nicht im Katalog steht: PATCH auf zutaten/{slug} mit status=gruen. RTDB-PATCH mergt, existierende Felder bleiben erhalten. Wenn du strikt trennen willst: davor einen Router mit GET-Existenzcheck einbauen.",
+      "parameters": {},
+      "mapper": {
+        "url": "{{env.FIREBASE_DB_URL}}/zutaten/{{3.slug}}.json?auth={{env.FIREBASE_AUTH_TOKEN}}",
+        "method": "PATCH",
+        "headers": [ { "name": "content-type", "value": "application/json" } ],
+        "bodyType": "raw",
+        "contentType": "application/json",
+        "data": "{\n  \"slug\": \"{{3.slug}}\",\n  \"name_de\": \"{{3.produkt.de}}\",\n  \"name_en\": \"{{3.produkt.en}}\",\n  \"status\": \"gruen\",\n  \"ts\": \"{{now}}\",\n  \"by\": \"make:wareneingang\",\n  \"letzte_charge_am\": \"{{now}}\"\n}"
+      },
+      "metadata": { "designer": { "x": 1800, "y": 0 } }
+    },
+    {
+      "id": 8,
+      "module": "whatsapp-business:sendMessage",
+      "version": 1,
+      "_hinweis": "Bestaetigung an Peter mit interaktiven Buttons. Nummer aus Data-Store contacts/peter. Falls kein offizieller Make-Konnektor vorhanden: durch HTTP-POST an https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages ersetzen (Header: Bearer {{env.WHATSAPP_TOKEN}}). Template-Approval bei Meta noetig fuer utility-Kategorie.",
+      "parameters": {
+        "__IMTCONN__": "__REPLACE_WITH_WHATSAPP_CONNECTION__"
+      },
+      "mapper": {
+        "to": "{{env.PETER_WHATSAPP_E164}}",
+        "type": "interactive",
+        "interactive": {
+          "type": "button",
+          "body": {
+            "text": "✅ NEU: {{3.produkt.de}} {{3.menge_g}}g für {{ifempty(3.preis_thb; 1.body.preis_thb)}} THB gebucht — MHD {{3.mhd}} — passt?\nQuelle: {{1.body.quelle}} · Wer: {{1.body.wer}}"
+          },
+          "action": {
+            "buttons": [
+              { "type": "reply", "reply": { "id": "chg_ok_{{3.slug}}_{{formatDate(now; \"YYYYMMDDHHmm\")}}", "title": "OK" } },
+              { "type": "reply", "reply": { "id": "chg_korr_{{3.slug}}_{{formatDate(now; \"YYYYMMDDHHmm\")}}", "title": "korrigieren" } },
+              { "type": "reply", "reply": { "id": "chg_del_{{3.slug}}_{{formatDate(now; \"YYYYMMDDHHmm\")}}", "title": "loeschen" } }
+            ]
+          }
+        }
+      },
+      "metadata": { "designer": { "x": 2100, "y": 0 } }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": true,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false,
+      "_hinweis_scenario": "Sequentiell an! Sonst kann derselbe Wareneingang parallel doppelt gebucht werden."
+    },
+    "designer": { "orphans": [] },
+    "zone": "eu2.make.com",
+    "notes": [
+      "1) Import in Make: Szenario > Import Blueprint > diese Datei waehlen.",
+      "2) Nach dem Import: Trigger (Modul 1) einmal ausfuehren um Hook-URL zu bekommen, dann diese URL in Peters localStorage.claude_webhook_url (oder localStorage.wareneingang_webhook_url) eintragen.",
+      "3) Alle Module mit __REPLACE__ im Editor per Dropdown mit den echten Connections/IDs verbinden.",
+      "4) ENV-Variablen im Team-Setting anlegen: ANTHROPIC_API_KEY, FIREBASE_DB_URL, FIREBASE_AUTH_TOKEN, PETER_WHATSAPP_E164, WHATSAPP_TOKEN.",
+      "5) Erst mit einem echten Etikettfoto testen, dann live schalten."
+    ]
+  }
+}

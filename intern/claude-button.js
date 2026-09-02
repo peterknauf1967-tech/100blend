@@ -39,6 +39,8 @@
       settings: '⚙',
       webhook_label: 'Webhook-URL (Make.com):',
       who_label: 'Benutzername:',
+      we_webhook_label: 'Wareneingang-Webhook (separat, optional):',
+      fb_cfg_label: 'Firebase Config (JSON, optional):',
       save: 'Speichern',
       close: 'Schließen',
       ok_sent: '✅ Gesendet — Claude bearbeitet gleich.',
@@ -63,6 +65,8 @@
       settings: '⚙',
       webhook_label: 'Webhook URL (Make.com):',
       who_label: 'ชื่อผู้ใช้:',
+      we_webhook_label: 'Webhook รับสินค้า (แยก, ไม่บังคับ):',
+      fb_cfg_label: 'Firebase Config (JSON, ไม่บังคับ):',
       save: 'บันทึก',
       close: 'ปิด',
       ok_sent: '✅ ส่งแล้ว — Claude กำลังดำเนินการ',
@@ -115,8 +119,9 @@
   '.cbtn-set{border-top:1px solid #eee;margin-top:12px;padding-top:12px;display:none;}' +
   '.cbtn-set.open{display:block;}' +
   '.cbtn-set label{display:block;font-size:13px;margin:6px 0 3px;color:#444;}' +
-  '.cbtn-set input{width:100%;box-sizing:border-box;padding:8px;font-size:14px;' +
-    'border:1px solid #ccc;border-radius:6px;font-family:inherit;}' +
+  '.cbtn-set input,.cbtn-set textarea{width:100%;box-sizing:border-box;padding:8px;font-size:14px;' +
+    'border:1px solid #ccc;border-radius:6px;font-family:inherit;background:#fff;color:#222;}' +
+  '.cbtn-set textarea{min-height:70px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;resize:vertical;}' +
   '.cbtn-gear{background:transparent;border:0;font-size:18px;cursor:pointer;color:#888;' +
     'padding:4px 8px;float:right;}' +
   '.cbtn-gear:hover{color:#0aa367;}' +
@@ -174,7 +179,7 @@
 
   // ---------- Widget aufbauen ----------
   var fab, badge, overlay, modal, ta, cameraIn, prev, prevImg, sendBtn, micBtn;
-  var setPanel, whUrlIn, whoIn, gearBtn, ctxLine;
+  var setPanel, whUrlIn, whoIn, weWhIn, fbCfgIn, gearBtn, ctxLine;
   var currentPhoto = null;      // Data-URL des aktuellen Fotos
   var recognizer = null;        // aktives SpeechRecognition-Objekt
   var recActive = false;
@@ -215,6 +220,8 @@
       '<div class="cbtn-set">' +
         '<label></label><input type="url" data-fld="wh" placeholder="https://hook.eu2.make.com/…">' +
         '<label></label><input type="text" data-fld="who" placeholder="peter">' +
+        '<label></label><input type="url" data-fld="wewh" placeholder="https://hook.eu2.make.com/… (leer = wie oben)">' +
+        '<label></label><textarea data-fld="fbcfg" placeholder=\'{"apiKey":"…","authDomain":"…","databaseURL":"…","projectId":"…"}\'></textarea>' +
         '<div class="cbtn-row" style="margin-top:10px">' +
           '<button type="button" class="cbtn-b" data-act="setclose"></button>' +
           '<button type="button" class="cbtn-b primary" data-act="setsave"></button>' +
@@ -237,6 +244,8 @@
     setPanel  = modal.querySelector('.cbtn-set');
     whUrlIn   = modal.querySelector('input[data-fld="wh"]');
     whoIn     = modal.querySelector('input[data-fld="who"]');
+    weWhIn    = modal.querySelector('input[data-fld="wewh"]');
+    fbCfgIn   = modal.querySelector('textarea[data-fld="fbcfg"]');
     sendBtn   = modal.querySelector('[data-act="send"]');
     micBtn    = modal.querySelector('[data-act="mic"]');
 
@@ -263,6 +272,8 @@
     var labels = setPanel.querySelectorAll('label');
     labels[0].textContent = t.webhook_label;
     labels[1].textContent = t.who_label;
+    labels[2].textContent = t.we_webhook_label;
+    labels[3].textContent = t.fb_cfg_label;
     modal.querySelector('[data-act="setclose"]').textContent = t.close;
     modal.querySelector('[data-act="setsave"]').textContent = t.save;
     // Mikro verstecken, wenn nicht unterstuetzt
@@ -280,6 +291,24 @@
       case 'setsave':
         qs('claude_webhook_url', (whUrlIn.value||'').trim());
         var w = (whoIn.value||'').trim(); if (w) qs('who', w);
+        // Wareneingang-Webhook (separat; leer = kein separater)
+        var weUrl = (weWhIn.value||'').trim();
+        if (weUrl) qs('wareneingang_webhook_url', weUrl);
+        else       { try { localStorage.removeItem('wareneingang_webhook_url'); } catch(_){} }
+        // Firebase-Config: validieren, sonst warnen und nicht speichern
+        var fbRaw = (fbCfgIn.value||'').trim();
+        if (fbRaw === '') {
+          try { localStorage.removeItem('firebase_config'); } catch(_){}
+        } else {
+          try {
+            var parsed = JSON.parse(fbRaw);
+            if (!parsed || !parsed.databaseURL) throw new Error('databaseURL fehlt');
+            qs('firebase_config', JSON.stringify(parsed));
+          } catch (e) {
+            toast('Firebase-Config ungültig: ' + e.message, 'warn');
+            return;   // Panel offen lassen, nichts weiter speichern
+          }
+        }
         setPanel.classList.remove('open');
         toast(tr().save + ' ✓', 'ok');
         break;
@@ -287,6 +316,8 @@
     if (e.target === gearBtn) {
       whUrlIn.value = q('claude_webhook_url') || '';
       whoIn.value   = q('who') || '';
+      weWhIn.value  = q('wareneingang_webhook_url') || '';
+      fbCfgIn.value = q('firebase_config') || '';
       setPanel.classList.toggle('open');
     }
   }
