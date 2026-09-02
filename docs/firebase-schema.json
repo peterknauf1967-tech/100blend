@@ -46,18 +46,18 @@
     },
 
     "sonnenblumenkerne": {
-      "name_de": "Sonnenblumenkerne (roh)",
+      "name_de": "Sonnenblumenkerne (roh, geschaelt)",
       "name_th": "เมล็ดทานตะวัน",
-      "name_en": "Sunflower seeds (raw)",
+      "name_en": "Sunflower seeds (raw, peeled)",
       "kategorie": "kern",
       "status": "gruen",
       "status_grund": null,
       "updated_at": "2026-09-01T11:20:07Z",
       "updated_by": "auto_wareneingang",
-      "zertifikate": ["human_grade", "non_gmo"],
+      "zertifikate": ["haccp", "gmp"],
       "haltbarkeit_tage_frisch": 180,
       "haltbarkeit_tage_angebrochen": 30,
-      "_zertifikate_hinweis": "Werden von der Kundenseite fuer Auto-Claims genutzt (z.B. 'Non-GMO' Badge am Becher)."
+      "_zertifikate_hinweis": "Werden von der Kundenseite fuer Auto-Claims genutzt (z.B. 'HACCP-zertifiziert' Badge am Becher)."
     },
 
     "ceylon_zimt_pulver": {
@@ -135,50 +135,56 @@
     "sonnenblumenkerne_2026-09-01_1120": {
       "zutat_key": "sonnenblumenkerne",
       "produziert_am": "2026-09-01T11:20:00+07:00",
+      "_produziert_am_hinweis": "Bei gekaufter Trockenware = Wareneingangszeit, nicht Herstellerdatum. Herstellerdatum steht im wareneingang-Datensatz unter claude_extraktion.mfg.",
       "produziert_von": "auto_wareneingang",
-      "menge_g": 5000,
-      "menge_rest_g": 5000,
-      "ablauf_am": "2027-03-01T11:20:00+07:00",
+      "menge_g": 2000,
+      "menge_rest_g": 2000,
+      "_menge_hinweis": "Gekaufte 2-kg-Packung, noch nicht angebrochen; menge_rest wird erst mit dem ersten Verkauf runtergerechnet.",
+      "ablauf_am": "2026-02-15T00:00:00+07:00",
+      "_ablauf_hinweis": "Aus MHD des Etiketts (Feb 2026) uebernommen. Weil MHD heute schon ueberschritten -> status = abgelaufen_pruefen. Nuesse verderben nicht abrupt; 4-Sinne-Check (v.a. Nase auf Ranzigkeit) vor Anbruch pflicht.",
       "karrenz_bis": null,
-      "status": "frisch",
+      "status": "abgelaufen_pruefen",
       "sinnes_check": null,
       "peter_freigaben": [],
-      "beleg_foto_url": "https://storage.googleapis.com/hundredblend-prod.appspot.com/wareneingang/we_2026-09-01_lazada_007.jpg",
-      "wareneingang_ref": "we_2026-09-01_lazada_007"
+      "beleg_foto_url": "https://storage.googleapis.com/hundredblend-prod.appspot.com/wareneingang/we_2026-09-01_liz-bco_007.jpg",
+      "wareneingang_ref": "we_2026-09-01_liz-bco_007"
     }
   },
 
   "wareneingang": {
     "_comment": "Baustein 3 -- Wareneingang per Foto. Lexi fotografiert Produktetikett -> Google Drive -> Make.com ruft Claude API (Vision + structured extraction) -> POST an Firebase (nur mit Server-Service-Account, siehe Security-Rules). Bei Erfolg entsteht automatisch eine Charge in chargen/ und die Zutat wird auf gruen gesetzt. Key-Schema: we_<yyyy-mm-dd>_<quelle>_<lfd_nr_3stellig>.",
 
-    "we_2026-09-01_lazada_007": {
+    "we_2026-09-01_liz-bco_007": {
       "erfasst_am": "2026-09-01T11:18:44+07:00",
       "erfasst_von": "make_claude_pipeline",
-      "_erfasst_von_werte": "make_claude_pipeline | lexi_manuell | peter_manuell",
-      "quelle": "lazada",
+      "_erfasst_von_werte": "make_claude_pipeline | lexi_manuell | peter_manuell | claude_button_korrektur",
+      "quelle": "grosshandel",
       "_quelle_werte": "lazada | shopee | markt_naklua | markt_thepprasit | makro | tops | villa | grosshandel | sonstige",
       "foto_urls": [
-        "https://drive.google.com/uc?id=1AbCdEfGhIjKlMnOpQrStUvWxYz_etikett_vorne",
-        "https://drive.google.com/uc?id=2AbCdEfGhIjKlMnOpQrStUvWxYz_etikett_hinten"
+        "https://drive.google.com/uc?id=1LizBCO_etikett_vorne",
+        "https://drive.google.com/uc?id=2LizBCO_etikett_hinten"
       ],
       "claude_extraktion": {
-        "hersteller": "Sunny Seeds Co., Ltd.",
-        "produkt_name_raw": "Raw Sunflower Kernels 500g Human Grade",
+        "hersteller": "Liz BCO",
+        "produkt_name_raw": "Sunflower Kernels Raw Peeled 2kg",
         "zutat_key_matched": "sonnenblumenkerne",
         "_matching_hinweis": "Fuzzy-Match gegen zutaten/-Keys; unter 0.8 confidence -> peter_review_pending=true.",
         "matching_confidence": 0.97,
-        "menge_g": 5000,
-        "einheiten_anzahl": 10,
-        "einheit_g": 500,
-        "preis_satang_gesamt": 89000,
-        "preis_satang_pro_kg": 17800,
+        "menge_g": 2000,
+        "_menge_hinweis": "EINE Packung 2 kg -- fertig verarbeitet, keine Portionierung. menge_g == einheit_g, einheiten_anzahl = 1.",
+        "einheiten_anzahl": 1,
+        "einheit_g": 2000,
+        "preis_satang_gesamt": 16900,
+        "_preis_hinweis": "169 THB fuer die GESAMTE 2-kg-Packung, NICHT pro Kilo. preis_satang_pro_kg wird aus preis_satang_gesamt / (menge_g / 1000) berechnet.",
+        "preis_satang_pro_kg": 8450,
         "waehrung": "THB",
-        "mfg": "2026-07-15",
-        "mhd": "2027-03-15",
-        "zertifikate_erkannt": ["human_grade", "non_gmo"],
-        "_zertifikate_werte": "human_grade | non_gmo | organic | organic_th | haccp | halal | iso_22000 | fair_trade | rainforest_alliance",
-        "batch_nr_hersteller": "SSC-2026-W29-B04",
-        "rohtext_ocr": "Sunny Seeds Co Ltd | Raw Sunflower Kernels | Net 500g | Human Grade Non-GMO | MFG 15/07/2026 | BBE 15/03/2027 | Batch SSC-2026-W29-B04",
+        "mfg": "2025-08",
+        "mhd": "2026-02",
+        "_mhd_hinweis": "MHD lag zum Erfassungszeitpunkt bereits in der Vergangenheit -> Charge startet als abgelaufen_pruefen (siehe chargen/sonnenblumenkerne_2026-09-01_1120). Bei Trockenware/Nuessen ist ueberschrittenes MHD kein Grund fuer Sofort-Entsorgung; Aroma und Ranzigkeit muessen sensorisch geprueft werden.",
+        "zertifikate_erkannt": ["haccp", "gmp"],
+        "_zertifikate_werte": "human_grade | non_gmo | organic | organic_th | haccp | gmp | halal | iso_22000 | fair_trade | rainforest_alliance",
+        "batch_nr_hersteller": null,
+        "rohtext_ocr": "Liz BCO | Sunflower Kernels Raw Peeled | Net 2000g | HACCP | GMP | MFG 08/2025 | BB 02/2026",
         "modell": "claude-opus-4-7",
         "extrahiert_am": "2026-09-01T11:19:02+07:00"
       },
@@ -187,7 +193,7 @@
       "charge_ref": "sonnenblumenkerne_2026-09-01_1120",
       "_charge_ref_hinweis": "Wird von Cloud Function nach Buchung eingetragen; Verknuepfung bidirektional zu chargen/<key>/wareneingang_ref.",
       "kosten_gebucht": true,
-      "notiz": null
+      "notiz": "MHD ueberschritten -- als Rabattpartie beim Grosshaendler gekauft. Vor Anbruch 4-Sinne-Check pflicht."
     },
 
     "we_2026-09-01_markt_pattaya_003": {
