@@ -118,8 +118,6 @@
       inbox_all: 'Alle',
       inbox_unread: 'Ungelesen',
       inbox_error: 'Fehler',
-      inbox_back: '× zurück',
-      inbox_detail_back: '← Liste',
       status_queue: 'in Warteschlange',
       status_sent: 'gesendet',
       status_answered: 'Antwort da',
@@ -169,8 +167,6 @@
       inbox_all: 'ทั้งหมด',
       inbox_unread: 'ยังไม่อ่าน',
       inbox_error: 'ข้อผิดพลาด',
-      inbox_back: '× กลับ',
-      inbox_detail_back: '← รายการ',
       status_queue: 'ในคิว',
       status_sent: 'ส่งแล้ว',
       status_answered: 'มีคำตอบ',
@@ -490,7 +486,6 @@
       '<div class="cbtn-inbox-view">' +
         '<div class="cbtn-inbox-header">' +
           '<h3></h3>' +
-          '<button type="button" data-act="inbox-close"></button>' +
         '</div>' +
         '<div class="cbtn-chips">' +
           '<button type="button" class="cbtn-chip active" data-flt="all"></button>' +
@@ -585,7 +580,6 @@
     if (!getSpeechCtor()) micBtn.style.display = 'none';
     /* --- POSTKORB: START --- */
     inboxView.querySelector('.cbtn-inbox-header h3').textContent = t.inbox_title;
-    inboxView.querySelector('[data-act="inbox-close"]').textContent = t.inbox_back;
     inboxView.querySelector('[data-flt="all"]').textContent    = t.inbox_all;
     inboxView.querySelector('[data-flt="unread"]').textContent = t.inbox_unread;
     inboxView.querySelector('[data-flt="error"]').textContent  = t.inbox_error;
@@ -619,11 +613,10 @@
       case 'mic':      toggleMic(); break;
       case 'cancel':   closeModal(); break;
       case 'send':     doSend(); break;
-      case 'setclose': setPanel.classList.remove('open'); break;
+      case 'setclose': navBack(); break;
       /* --- POSTKORB: START --- */
       case 'inbox-open':   openInbox(); break;
-      case 'inbox-close':  closeInbox(); break;
-      case 'inbox-detail-back': renderInbox(); break;
+      case 'inbox-close':  navBack(); break;
       /* --- POSTKORB: ENDE --- */
       case 'setsave':
         // Sprache zuerst, damit der Erfolgs-Toast schon in der neuen
@@ -653,13 +646,52 @@
             return;   // Panel offen lassen, nichts weiter speichern
           }
         }
-        setPanel.classList.remove('open');
+        navBack();
         applyLabels();          // Sprachwechsel sofort sichtbar (setzt auch
                                 // den FAB-Text badge-sicher via firstChild)
         toast(tr().save + ' ✓', 'ok');
         break;
     }
   }
+
+  /* --- ZURUECK-TASTE: START ---
+   * Fruehere Loesung: eigene "zurueck"-Knoepfe im Fenster. Am Handy ist das
+   * unnatuerlich -- man drueckt dort die echte Zurueck-Taste, und die hat
+   * die ganze Seite verlassen. Jetzt legt jede geoeffnete Ebene (Fenster,
+   * Einstellungen, Postkorb, Detail) einen Eintrag in die Browser-Historie.
+   * Die Zurueck-Taste nimmt genau eine Ebene weg; erst wenn keine mehr offen
+   * ist, verlaesst sie die Seite. */
+  var navStack = [];
+  var navSchliesst = false;   // verhindert, dass popstate und Code sich gegenseitig ausloesen
+
+  function navPush(name, closeFn){
+    navStack.push({ name: name, close: closeFn });
+    try { history.pushState({ cbtn: name, tiefe: navStack.length }, ''); } catch(_){}
+  }
+  // Der Nutzer hat zurueck gedrueckt: oberste Ebene schliessen.
+  function navPopped(){
+    var lvl = navStack.pop();
+    if (!lvl) return;
+    navSchliesst = true;
+    try { lvl.close(); } finally { navSchliesst = false; }
+  }
+  // Der Code will eine Ebene schliessen (Knopf, nach dem Senden ...).
+  // Laeuft ueber die Historie, damit Stapel und Historie synchron bleiben.
+  function navBack(){
+    if (navSchliesst) return;
+    if (!navStack.length) return;
+    try { history.back(); } catch(_){ navPopped(); }
+  }
+  // Alles zumachen (Fenster ganz schliessen).
+  function navReset(){
+    var n = navStack.length;
+    navStack.length = 0;              // erst leeren, dann zurueckspulen:
+    if (n > 0) { try { history.go(-n); } catch(_){} }  // die popstate laufen ins Leere
+  }
+  window.addEventListener('popstate', function(){
+    if (navStack.length) navPopped();
+  });
+  /* --- ZURUECK-TASTE: ENDE --- */
 
   // Einstellungen oeffnen/schliessen. Wird aus dem data-act-Switch gerufen.
   function openSettings(){
@@ -668,7 +700,9 @@
     weWhIn.value  = q('wareneingang_webhook_url') || '';
     fbCfgIn.value = q('firebase_config') || '';
     if (langSel) langSel.value = q('claude_lang') || 'auto';
-    setPanel.classList.toggle('open');
+    if (setPanel.classList.contains('open')) { navBack(); return; }
+    setPanel.classList.add('open');
+    navPush('set', function(){ setPanel.classList.remove('open'); });
   }
 
   function openModal(){
@@ -686,9 +720,13 @@
     mergeAnswers();
     updateBadge();
     /* --- POSTKORB: ENDE --- */
+    navPush('modal', closeModalDirekt);
     setTimeout(function(){ try{ ta.focus(); }catch(_){} }, 60);
   }
-  function closeModal(){
+  // Schliesst nur die Oberflaeche. Wird von der Zurueck-Taste gerufen; wer
+  // aus dem Code heraus schliesst, nimmt closeModal() (raeumt auch die
+  // Historie auf).
+  function closeModalDirekt(){
     stopMic();
     overlay.classList.remove('open');
     ta.value = '';
@@ -700,6 +738,11 @@
     scheduleInboxPoll(false);
     /* --- POSTKORB: ENDE --- */
     updateSendState();
+  }
+  // Fenster ganz zu (inkl. aller offenen Unterebenen) -- aus dem Code gerufen.
+  function closeModal(){
+    navReset();
+    closeModalDirekt();
   }
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g,function(c){
@@ -1071,12 +1114,14 @@
     inboxView.classList.add('open');
     renderInbox();
     scheduleInboxPoll(true);
+    navPush('inbox', closeInboxDirekt);
   }
-  function closeInbox(){
+  function closeInboxDirekt(){
     inboxView.classList.remove('open');
     if (formView) formView.style.display = '';
     scheduleInboxPoll(false);
   }
+  function closeInbox(){ navBack(); }
   function renderInbox(){
     var t = tr();
     var box = getInbox().slice().reverse();  // neueste zuerst
@@ -1123,8 +1168,9 @@
     var statusLabel = t['status_' + e.status] || e.status;
     var html = '';
     html += '<div class="cbtn-inbox-detail">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">';
-    html += '<button type="button" class="cbtn-b" style="flex:0" data-act="inbox-detail-back">' + escapeHtml(t.inbox_detail_back) + '</button>';
+    // Kein eigener Zurueck-Knopf mehr -- die Zurueck-Taste des Geraets
+    // bringt einen zurueck zur Liste (siehe navPush unten).
+    html += '<div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:6px">';
     html += '<span class="cbtn-inbox-status ' + escapeHtml(e.status) + '">' + escapeHtml(statusLabel) + '</span>';
     html += '</div>';
     html += '<div class="lab">' + escapeHtml(t.time) + '</div>';
@@ -1144,6 +1190,9 @@
     }
     html += '</div>';
     inboxListEl.innerHTML = html;
+    // Detail ist eine eigene Ebene: die Zurueck-Taste fuehrt zurueck in die
+    // Liste, nicht aus dem Postkorb heraus.
+    navPush('detail', renderInbox);
   }
 
   // ---------- Postkorb: Polling ----------
@@ -1179,8 +1228,53 @@
     toastTmo = setTimeout(function(){ toastEl.classList.remove('show'); }, dur);
   }
 
+  /* --- EINRICHTUNG PER LINK: START ---
+   * Lexi soll nichts einstellen muessen, und Peter kann ihr auf Thai nicht
+   * ueber die Schulter helfen. Deshalb duerfen Webhook, Sprache und Benutzer
+   * in der Adresse stehen:
+   *
+   *   ...intern/standos.html?wh=<Webhook-URL>&lang=th&user=lexi
+   *
+   * Beim ersten Aufruf wandert das in den Geraetespeicher und wird aus der
+   * Adresse entfernt -- danach steht nichts Unnoetiges mehr in der URL, und
+   * "Zum Home-Bildschirm" merkt sich die saubere Adresse. */
+  function setupAusLink(){
+    var such = window.location.search;
+    if (!such || such.length < 2) return;
+    var par;
+    try { par = new URLSearchParams(such); } catch(_) { return; }
+
+    var etwasGesetzt = false;
+
+    var wh = (par.get('wh') || '').trim();
+    if (wh.indexOf('http') === 0) { qs('claude_webhook_url', wh); etwasGesetzt = true; }
+
+    var lang = (par.get('lang') || '').trim().toLowerCase();
+    if (lang === 'de' || lang === 'th') { qs('claude_lang', lang); etwasGesetzt = true; }
+
+    var user = (par.get('user') || par.get('who') || '').trim().toLowerCase();
+    if (user) {
+      qs('who', user);
+      // standos.html steuert seine Sprache ueber blend_user
+      try { localStorage.setItem('blend_user', user); } catch(_){}
+      etwasGesetzt = true;
+    }
+
+    if (!etwasGesetzt) return;
+    // Adresse aufraeumen, damit der Home-Bildschirm-Knopf eine saubere URL
+    // speichert und die Werte nicht bei jedem Aufruf neu geschrieben werden.
+    par.delete('wh'); par.delete('lang'); par.delete('user'); par.delete('who');
+    var rest = par.toString();
+    try {
+      history.replaceState(null, '',
+        window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+    } catch(_){}
+  }
+  /* --- EINRICHTUNG PER LINK: ENDE --- */
+
   // ---------- Lifecycle ----------
   function boot(){
+    setupAusLink();
     build();
     // Bei Sichtwechsel und Online-Event Queue leeren
     window.addEventListener('online', flushQueue);
