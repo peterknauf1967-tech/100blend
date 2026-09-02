@@ -6463,8 +6463,18 @@ window.addEventListener("online",()=>sendeWarteschlange());
 setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },120000);
 </script>
 
-<div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 23:41</div>
+<!-- Build-Stempel. Frueher stand hier ein handgeschriebenes Datum, das bei
+     keinem Deploy mitwanderte. Es zeigte monatelang 30.08. an, waehrend die
+     App laengst neuer war -- und hat eine halbtaegige Cache-Suche ausgeloest.
+     Jetzt traegt ihn das Skript unten aus BUILD ein, das bei jedem Deploy
+     mitgesetzt wird. -->
+<div id="buildstempel" style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888"></div>
+<script>
+  window.__BUILD = "2026-09-02 16:42";
+  (function(){ var el = document.getElementById("buildstempel");
+    if (el) el.textContent = "v" + window.__BUILD; })();
+</script>
 
 <script>
 (function(){
