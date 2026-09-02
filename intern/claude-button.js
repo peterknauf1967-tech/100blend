@@ -17,21 +17,23 @@
   window.__claudeButtonLoaded = true;
 
   // ---------- Sprache ermitteln ----------
-  // Vorrang: explizite CFG.lang aus kb_cfg (die Kasse-Einstellung des Users),
-  // dann Alt-Flag kb_lang_th="1", dann <html lang>. Ohne diesen Vorrang wurde
-  // Peter (CFG.lang='de') faelschlich Thai gezeigt, weil kb_lang_th einmal in
-  // einer frueheren Session gesetzt wurde und geblieben ist.
+  // Kontext: das Widget kennt genau zwei Sprachen -- DE und TH. Peter ist am
+  // Stand der einzige DE-Sprecher; jeder andere (Lexi, Aushilfen, Kunden im
+  // Notfall) ist mit TH besser bedient als mit DE. Deshalb Regel:
+  //   Deutsch NUR wenn explizit deutsch konfiguriert. Sonst immer Thai.
+  //   (Vorher: TH nur wenn explizit th -- das liess Lexi mit CFG.lang='en'
+  //    auf Deutsch landen, was sie fuer 'Englisch' hielt.)
   function isThai() {
     try {
       var raw = localStorage.getItem('kb_cfg');
       if (raw) {
         var cfg = JSON.parse(raw);
-        if (cfg && typeof cfg.lang === 'string') return cfg.lang.toLowerCase().indexOf('th') === 0;
+        if (cfg && typeof cfg.lang === 'string') return cfg.lang.toLowerCase().indexOf('de') !== 0;
       }
     } catch (_) {}
     try { if (localStorage.getItem('kb_lang_th') === '1') return true; } catch (_) {}
     var l = (document.documentElement.lang || '').toLowerCase();
-    return l.indexOf('th') === 0;
+    return l.indexOf('de') !== 0;
   }
 
   var T = {
