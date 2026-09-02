@@ -140,6 +140,20 @@
   padding:2px 34px;z-index:2;pointer-events:none}
 .bchip.etop{border-color:#2C5A3B}
 .bchip.eklein{border-color:#c9a227}
+/* --- AMPEL: START --- */
+/* Zutaten-Ampel — die Kasse liest die Ampel nur, sie setzt sie nicht.
+   'rot': Kachel bleibt sichtbar, aber ausgegraut mit Klartext-Overlay,
+          damit Lexi den Grund sofort sieht und nicht in Standos suchen muss.
+   'gelb': kleiner Warnpunkt oben rechts, Kachel bleibt normal bedienbar. */
+.item.a-rot{opacity:.35;cursor:not-allowed;filter:grayscale(.85)}
+.item.a-rot .a-overlay{position:absolute;left:0;right:0;bottom:0;background:rgba(122,26,26,.94);
+  color:#fff;font:800 10.5px/1.35 inherit;padding:5px 6px;text-align:center;
+  letter-spacing:.3px;z-index:3;pointer-events:none}
+.item .a-warn{position:absolute;top:6px;right:6px;z-index:2;
+  background:#eab308;color:#3a2400;border-radius:50%;width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;font:900 13px/1 inherit;
+  box-shadow:0 0 0 2px rgba(234,179,8,.35);pointer-events:none}
+/* --- AMPEL: ENDE --- */
 </style>
 <meta name="robots" content="noindex,nofollow">
 <title>MIXO Kasse</title>
@@ -5265,6 +5279,34 @@ if(!CFG.sync)CFG.sync=SYNC_STANDARD;
    und wandert beim naechsten Versuch raus. So kann kein Bon verloren gehen.
    Der Server erkennt doppelt gesendete Bons an der Bon-Nummer. */
 let WARTE=LS("kb_warte")||[];
+
+/* --- AMPEL: START --- */
+/* Zutaten-Ampel — gleicher Schluessel wie standos.html im gemeinsamen Origin.
+   Rot in einer Zutat sperrt jeden Becher, der sie braucht; Gelb warnt nur. */
+const AMPELKEY = "blend_ampel_v1";
+let AMPEL = LS(AMPELKEY) || {};
+/* Live-Update im selben Browser: sobald Standos die Ampel schreibt,
+   feuert das storage-Event in allen anderen Tabs. */
+window.addEventListener("storage", ev=>{
+  if(ev && ev.key===AMPELKEY){
+    AMPEL = LS(AMPELKEY) || {};
+    if(typeof renderMenu==="function") renderMenu();
+  }
+});
+/* Fallback fuer Faelle, in denen das storage-Event nicht kommt
+   (z. B. dasselbe Tab per Zurueck-Taste, iOS-Home-Screen). */
+setInterval(()=>{
+  try{
+    const roh = localStorage.getItem(AMPELKEY);
+    if(roh==null) return;
+    const neu = JSON.parse(roh);
+    if(JSON.stringify(neu)!==JSON.stringify(AMPEL)){
+      AMPEL = neu||{};
+      if(typeof renderMenu==="function") renderMenu();
+    }
+  }catch(e){}
+}, 15000);
+/* --- AMPEL: ENDE --- */
 /* KEIN SCHREIBEN AUS EINER TESTUMGEBUNG.
    Am 30.08.2026 haben zwei Tests auf localhost den Kakao im ECHTEN
    gemeinsamen Speicher auf 0 gesetzt — der Server nimmt jeden POST an, und
@@ -5426,6 +5468,23 @@ function machbar(m, g){
   return {ok: fehlt.length===0, fehlt: fehlt};
 }
 
+/* --- AMPEL: START --- */
+/* Berechnet den Ampel-Zustand fuer einen Becher aus seinen Zutaten-Codes.
+   Verpackung zaehlt bewusst NICHT mit — ein roter Sticker sperrt keinen Smoothie.
+   Reihenfolge: rot > gelb > gruen (eine einzige rote Zutat sperrt den Becher). */
+function ampelStateOfBecher(zutaten){
+  const rot=[], gelb=[];
+  (zutaten||[]).forEach(c=>{
+    if(!c || VERPACKUNG_CODES.indexOf(c)>=0) return;
+    const st = ((AMPEL||{})[c]||{}).status;
+    if(st==="rot")       rot .push({code:c, de:(ZUTATNAME[c]||c)});
+    else if(st==="gelb") gelb.push({code:c, de:(ZUTATNAME[c]||c)});
+  });
+  const status = rot.length ? "rot" : (gelb.length ? "gelb" : "gruen");
+  return {status, roteListe:rot, gelbeListe:gelb};
+}
+/* --- AMPEL: ENDE --- */
+
 function renderMenu(){
   const leiste=$("#groessenleiste");
   if(leiste)leiste.innerHTML=
@@ -5443,11 +5502,27 @@ function renderMenu(){
        gesperrt, nicht versteckt: Lexi soll SEHEN, dass es den Becher gibt
        und warum er gerade nicht geht — sonst sucht sie ihn und fragt Peter. */
     const mb=machbar(m);
+    /* --- AMPEL: START --- */
+    const _zutList = Object.keys((d && d.abzug)||{});
+    const _A       = ampelStateOfBecher(_zutList);
+    const _rot     = _A.status==="rot";
+    const _gelb    = _A.status==="gelb";
+    const _klick   = mb.ok && !_rot;
+    const _clsExtra= (!mb.ok?" aus":"") + (_rot?" a-rot":"") + (_gelb?" a-gelb":"");
+    const _titel   = _rot
+      ? ((LANG==="th"?"ไม่พร้อม: ":LANG==="en"?"Not available: ":"Nicht verfügbar: ")
+         + _A.roteListe.map(x=>x.de).join(", "))
+      : (!mb.ok
+          ? mb.fehlt.map(f=>(ZUTATNAME[f.code]||f.code)+" −"+f.fehlt+" "+(EINHEIT[f.code]||"g")).join(" · ")
+          : "");
+    /* --- AMPEL: ENDE --- */
     return `
-    <button class="item${mb.ok?"":" aus"}" ${mb.ok?`onclick="add('${m.nr}')"`:`disabled title="${
-      mb.fehlt.map(f=>(ZUTATNAME[f.code]||f.code)+" −"+f.fehlt+" "+(EINHEIT[f.code]||"g")).join(" · ").replace(/"/g,"'")}"`}>
+    <button class="item${_clsExtra}" ${_klick?`onclick="add('${m.nr}')"`:`disabled title="${_titel.replace(/"/g,"'")}"`}>
       ${mb.ok?"":`<div class="ausband">${
         LANG==="th"?"หมด":LANG==="en"?"SOLD OUT":"AUSVERKAUFT"}</div>`}
+      ${/* --- AMPEL: START --- */ _gelb?`<span class="a-warn" title="${
+        (LANG==="th"?"ระวัง: ":LANG==="en"?"Caution: ":"Achtung: ")+_A.gelbeListe.map(x=>x.de).join(", ")
+        }">!</span>`:"" /* --- AMPEL: ENDE --- */}
       <div class="bar" style="background:${FARBE(m.nr)}"></div>
       <div class="nr">${t('no')} ${m.nr}${m.bestaetigt?' <span class="stern">★</span>':''}</div>
       <div class="nm">${mName(m)}</div>
@@ -5469,6 +5544,9 @@ function renderMenu(){
           GROESSE==="22" ? ` · XXL +${xxlAufpreis(preisVon(m,"16"))} ฿` : ""}</div>
         <div class="db ${db<=0?"warn":""}">DB ${Math.round(db)} ฿${unsicher?` <span class="prov" title="${unsicher} Zutaten ohne Preis">~</span>`:""}</div>
       </div></div>
+      ${/* --- AMPEL: START --- */ _rot?`<div class="a-overlay">⚠ ${
+        LANG==="th"?"ไม่พร้อม":LANG==="en"?"not available":"nicht verfügbar"}: ${
+        _A.roteListe.map(x=>x.de).join(", ")}</div>`:"" /* --- AMPEL: ENDE --- */}
     </button>`;}).join("");
 }
 /* Farben blieben frueher im Menue stehen; jetzt aus der Nummer abgeleitet,
@@ -5993,5 +6071,6 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
     navigator.serviceWorker.register("./sw-os.js").then(function(r){r.update()}).catch(function(){});
 })();
 </script>
+<script src="claude-button.js" defer></script>
 </body>
 </html>
