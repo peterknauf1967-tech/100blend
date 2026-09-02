@@ -9,14 +9,20 @@ Danach nur noch der Knopf auf den Startbildschirm.
 **Für Lexi** (Oberfläche auf Thai, Benutzer `lexi`):
 
 ```
-https://peterknauf1967-tech.github.io/100blend/intern/standos.html?wh=https%3A%2F%2Fhook.eu1.make.com%2Fv26u2e3zndv7u1jh7fgucyn14tuvbyo6&lang=th&user=lexi
+https://100blend.com/intern/standos.html?wh=https%3A%2F%2Fhook.eu1.make.com%2Fv26u2e3zndv7u1jh7fgucyn14tuvbyo6&lang=th&user=lexi
 ```
 
 **Für Peter** (Oberfläche auf Deutsch, Benutzer `peter`):
 
 ```
-https://peterknauf1967-tech.github.io/100blend/intern/standos.html?wh=https%3A%2F%2Fhook.eu1.make.com%2Fv26u2e3zndv7u1jh7fgucyn14tuvbyo6&lang=de&user=peter
+https://100blend.com/intern/standos.html?wh=https%3A%2F%2Fhook.eu1.make.com%2Fv26u2e3zndv7u1jh7fgucyn14tuvbyo6&lang=de&user=peter
 ```
+
+Die Adresse kommt aus dem `CNAME` im Repo (`100blend.com`). Falls die eigene
+Domain einmal klemmt, tut es auch
+`https://peterknauf1967-tech.github.io/100blend/intern/standos.html?…` —
+aber dann liegen die Einstellungen unter einer anderen Adresse und müssen
+dort erneut gesetzt werden. Deshalb möglichst bei einer Adresse bleiben.
 
 Beim ersten Öffnen übernimmt die App Webhook, Sprache und Benutzer in den
 Gerätespeicher und räumt die Adresse wieder auf. Danach steht in der
@@ -24,6 +30,17 @@ Adresszeile nur noch die saubere URL — wichtig, damit der Startbildschirm-Knop
 sich nichts Überflüssiges merkt.
 
 Schick Lexi den Link per WhatsApp. Sie muss **kein einziges Feld** anfassen.
+
+**Einmal reicht für alle Seiten.** Der Gerätespeicher gilt pro Adresse, nicht
+pro Seite — wer den Link einmal geöffnet hat, ist auch in Kasse, Rezepten und
+Einkauf eingerichtet:
+
+| Seite | Adresse |
+|---|---|
+| Stand-Betriebssystem | `https://100blend.com/intern/standos.html` |
+| Kasse | `https://100blend.com/intern/kasse.html` |
+| Rezepte | `https://100blend.com/intern/rezepte.html` |
+| Einkauf | `https://100blend.com/intern/einkauf.html` |
 
 ## Knopf auf den Startbildschirm
 
