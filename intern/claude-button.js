@@ -390,13 +390,23 @@
       recognizer.lang = isThai() ? 'th-TH' : 'de-DE';
       recognizer.interimResults = true;
       recognizer.continuous = true;
+      // Baseline = was der Nutzer VOR dem Mikro-Start getippt hat. Wird nicht
+      // veraendert, waehrend das Mikro laeuft -- sonst wachsen finale Ergebnisse
+      // bei jedem Event, weil Chrome-Android teils ev.resultIndex=0 emittiert
+      // und dann alle isFinal-Ergebnisse erneut in `out` landen. Das war die
+      // Ursache fuer die 2-3-fache Wiederholung des Diktats.
       var baseline = ta.value ? (ta.value + ' ') : '';
       recognizer.onresult = function(ev){
-        var out = '';
-        for (var i = ev.resultIndex; i < ev.results.length; i++)
-          out += ev.results[i][0].transcript;
-        ta.value = baseline + out;
-        if (ev.results[ev.results.length-1].isFinal) baseline = ta.value + ' ';
+        var finalText = '';
+        var interimText = '';
+        // ALLE Ergebnisse durchgehen und final vs. interim trennen.
+        // Nicht auf ev.resultIndex verlassen -- unzuverlaessig auf Mobile.
+        for (var i = 0; i < ev.results.length; i++) {
+          var r = ev.results[i];
+          var t = r[0] && r[0].transcript ? r[0].transcript : '';
+          if (r.isFinal) finalText += t; else interimText += t;
+        }
+        ta.value = baseline + finalText + interimText;
         updateSendState();
       };
       recognizer.onerror = function(){ stopMic(); };
