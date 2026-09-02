@@ -177,6 +177,24 @@ details.tipp summary{padding:10px 12px;cursor:pointer;font:700 13.5px inherit;li
 details.tipp summary::-webkit-details-marker{display:none}
 details.tipp .inhalt{padding:0 12px 11px;font-size:13.5px;line-height:1.55}
 details.tipp .inhalt .en{display:block;margin-top:4px}
+/* --- AMPEL: START --- */
+/* Zutaten-Ampel: die drei runden Knoepfe stehen direkt neben dem Code.
+   18-20 px reicht auf dem Handy, ohne die Zeile aufzublaehen. */
+.ampel{display:inline-flex;gap:5px;align-items:center;margin-left:6px;flex:0 0 auto;vertical-align:middle}
+.ampel button{width:20px;height:20px;border-radius:50%;border:1px solid #cfc9bd;background:#f8f5f0;
+  cursor:pointer;padding:0;font:11px/1 inherit;display:inline-flex;align-items:center;justify-content:center;
+  color:#888;-webkit-tap-highlight-color:transparent}
+.ampel button:active{transform:scale(.9)}
+.ampel button.on.a-g{background:#2f8f5b;border-color:#207348;color:#fff;box-shadow:0 0 0 2px rgba(47,143,91,.25)}
+.ampel button.on.a-y{background:#eab308;border-color:#a67a08;color:#fff;box-shadow:0 0 0 2px rgba(234,179,8,.3)}
+.ampel button.on.a-r{background:#d33;border-color:#a02020;color:#fff;box-shadow:0 0 0 2px rgba(211,51,51,.3)}
+/* Der duenne farbige Balken links markiert den Ampel-Status der Zeile —
+   auch im "has"/"miss"-Zustand noch deutlich sichtbar. */
+.row.a-rot{box-shadow:inset 3px 0 0 #d33}
+.row.a-gelb{box-shadow:inset 3px 0 0 #eab308}
+.row.a-gruen{box-shadow:inset 3px 0 0 #2f8f5b}
+.a-grund{display:block;font:600 11.5px/1.35 inherit;color:#a02020;margin-top:2px}
+/* --- AMPEL: ENDE --- */
 </style>
 <meta name="robots" content="noindex,nofollow">
 <title>MIXO · 100blend</title>
@@ -348,6 +366,94 @@ if(!Object.keys(S.bestand||{}).length && !Object.keys(S.tk||{}).length){
 }
 S.ts=S.ts||{};
 const save=()=>localStorage.setItem(SKEY,JSON.stringify(S));
+
+/* --- AMPEL: START --- */
+/* Zutaten-Ampel: gruen = frei, gelb = Vorsicht, rot = nicht verkaufen.
+   Datenlage:
+   - Wird ZUSAETZLICH zum State-Blob in einem eigenen Schluessel gehalten,
+     damit auch die Kasse in demselben Browser (gleicher Origin) live liest,
+     ohne den ganzen Bestands-Blob laden zu muessen.
+   - S.ampel bleibt die Wahrheit fuer diese App und wird bei jedem set
+     zurueck in den gemeinsamen Schluessel gespiegelt.                     */
+const AMPELKEY="blend_ampel_v1";
+function _ampelLesen(){ try{ return JSON.parse(localStorage.getItem(AMPELKEY)||"{}")||{}; }catch(e){ return {}; } }
+S.ampel = Object.assign({}, _ampelLesen(), S.ampel||{});
+function saveAmpel(){
+  try{ localStorage.setItem(AMPELKEY, JSON.stringify(S.ampel||{})); }catch(e){}
+  save();
+}
+function setAmpel(code,status,grund){
+  if(!code)return;
+  S.ampel = S.ampel || {};
+  const wer = (S.cfg && S.cfg.who) || (typeof istLexi==="function" && istLexi() ? "Lexi" : "Peter");
+  S.ampel[code] = {status:String(status), grund: (grund==null?"":String(grund)),
+                   ts: Date.now(), wer};
+  saveAmpel();
+  syncAmpel(code,status,grund||"");
+}
+/* Cross-Device via existierenden Webhook: fire-and-forget, Offline-tolerant.
+   Der Server kennt "typ:ampel" heute noch nicht; die Nachricht wird ignoriert
+   und schadet nichts, sobald der Server sie kennt, wird sie uebernommen.   */
+function syncAmpel(code,status,grund){
+  const url = (typeof syncUrl==="function") ? syncUrl() : "";
+  if(!url) return;
+  try{
+    fetch(url,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({typ:"ampel",code,status,grund:grund||"",ts:Date.now(),
+        wer:(S.cfg && S.cfg.who)||""})
+    }).catch(()=>{});
+  }catch(e){}
+}
+/* Wenn ein anderes Tab (typisch die Kasse) die Ampel aendert, live nachladen. */
+window.addEventListener("storage", ev=>{
+  if(ev && ev.key===AMPELKEY){
+    S.ampel = _ampelLesen();
+    if(typeof render==="function") render();
+  }
+});
+/* Kleine Helfer fuers Rendern. */
+const ampelStatus = c => (S.ampel && S.ampel[c] && S.ampel[c].status) || "";
+const ampelGrund  = c => (S.ampel && S.ampel[c] && S.ampel[c].grund)  || "";
+function ampelRowKlasse(c){
+  const s = ampelStatus(c);
+  return s==="rot" ? "a-rot" : s==="gelb" ? "a-gelb" : s==="gruen" ? "a-gruen" : "";
+}
+function ampelKnopfe(c){
+  const s = ampelStatus(c);
+  return `<span class="ampel" data-ampel-code="${c}">
+    <button type="button" data-ampel-set="gruen" data-code="${c}" class="${s==="gruen"?"on a-g":""}" title="frei">🟢</button>
+    <button type="button" data-ampel-set="gelb"  data-code="${c}" class="${s==="gelb" ?"on a-y":""}" title="Vorsicht">🟡</button>
+    <button type="button" data-ampel-set="rot"   data-code="${c}" class="${s==="rot"  ?"on a-r":""}" title="nicht verkaufen">🔴</button>
+  </span>`;
+}
+/* Teil E — Verkopplung mit ENTSORGT.
+   Ist eine Zutat in ENTSORGT gelistet UND weder Rohware noch TK vorhanden,
+   dann automatisch auf 'rot' setzen. Bereits manuell auf 'rot' gesetzte
+   Zutaten werden nicht ueberschrieben (der Grund koennte wertvoller sein). */
+function ampelAutoAusEntsorgt(){
+  try{
+    if(typeof ENTSORGT==="undefined" || !Array.isArray(ENTSORGT)) return;
+    const gesehen={};
+    ENTSORGT.forEach(x=>{
+      const c = x && x[0]; if(!c || gesehen[c]) return;
+      gesehen[c]=1;
+      const roh=+(S.bestand[c]||0), tk=+(S.tk[c]||0);
+      if(roh===0 && tk===0){
+        const cur = (S.ampel[c]||{}).status;
+        if(cur!=="rot"){
+          S.ampel[c] = {status:"rot",
+            grund:"automatisch: entsorgt und kein Bestand mehr",
+            ts:Date.now(), wer:"System"};
+        }
+      }
+    });
+    try{ localStorage.setItem(AMPELKEY, JSON.stringify(S.ampel||{})); }catch(e){}
+    save();
+  }catch(e){}
+}
+/* --- AMPEL: ENDE --- */
 
 /* ===== Gemeinsamer Speicher =============================================
    Peter (Android) und Lexi (iPhone) hatten je einen eigenen Browser-Speicher.
@@ -1384,11 +1490,13 @@ function vBestand(){
       if(gezeigt>=bLimit){uebrig++;return ""}
       gezeigt++;
       const v=S.bestand[k.code]||"", da=+v>0, f=fehlt(k), own=S.eigen.includes(k);
-      return `<div class="row ${da?"has":(f?"miss":"")} ${own?"own":""}">
+      return `<div class="row ${da?"has":(f?"miss":"")} ${own?"own":""} ${ampelRowKlasse(k.code)/*--AMPEL--*/}">
         <span class="code">${k.code}</span>
+        ${/* --- AMPEL: START --- */ ampelKnopfe(k.code) /* --- AMPEL: ENDE --- */}
         <span class="nm">${zname(k)}
           ${istFrisch(k.code)?`<span class="frisch">🕒 ${vorZeit((S.ts||{})[k.code])}${(S.wer||{})[k.code]?" · "+esc(S.wer[k.code]):""}</span>`:""}
           ${brauchtRezepte(k).length?`<span class="rz">${brauchtRezepte(k).map(r=>`<span>${r==="*"?"alle":r}</span>`).join("")}</span>`:""}
+          ${/* --- AMPEL: START --- */ (ampelStatus(k.code)==="rot" && ampelGrund(k.code)) ? `<span class="a-grund">⚠ ${esc(ampelGrund(k.code))}</span>` : "" /* --- AMPEL: ENDE --- */}
           <span class="pr">${preisText(k)}</span></span>
         ${hoerBtn(k)}
         ${own?`<button class="del" data-del="${k.code}">✕</button>`:""}
@@ -1888,6 +1996,9 @@ function vRezepte(){
 
 /* ---- Rendern + Ereignisse ---------------------------------------------- */
 function render(){
+  /* --- AMPEL: START --- */
+  try{ ampelAutoAusEntsorgt(); }catch(e){}
+  /* --- AMPEL: ENDE --- */
   $("userbtn").textContent = USER ? `👤 ${istLexi()?"Lexi · TH·EN":"Peter · DE·EN"}${S.cfg.markt?" · "+S.cfg.markt:""} ▾` : "👤 ▾";
   /* Version sichtbar im Kopf: sonst laesst sich nie sagen, ob das Handy die
      neue Fassung hat oder eine gespeicherte alte. */
@@ -1990,6 +2101,29 @@ function qrKarte(){
 }
 
 function binde(){
+  /* --- AMPEL: START --- */
+  /* Klick auf einen Ampel-Kreis: neuen Status setzen, ggf. Grund erfragen,
+     ggf. Warnung zeigen (viele Rezepte betroffen). */
+  document.querySelectorAll("[data-ampel-set]").forEach(b=>b.onclick=(ev)=>{
+    ev.stopPropagation();
+    const code = b.dataset.code;
+    const neu  = b.dataset.ampelSet;
+    const k    = (typeof findeCode==="function") ? findeCode(code) : null;
+    if(neu==="rot"){
+      let anz = 0;
+      try{ anz = (typeof brauchtRezepte==="function" && k) ? brauchtRezepte(k).length : 0; }catch(e){}
+      if(anz>=5){
+        const nm = (k && (k.de||k.th||code)) || code;
+        if(!confirm(`⚠ ${nm} auf ROT setzen? Betrifft ${anz} Becher.`)) return;
+      }
+      const grund = prompt("Kurzer Grund (optional):","") || "";
+      setAmpel(code,"rot",grund);
+    } else {
+      setAmpel(code, neu, "");
+    }
+    render();
+  });
+  /* --- AMPEL: ENDE --- */
   const qo=$("qr_ok"), qa=$("qr_ab");
   if(qo)qo.onclick=()=>{ const a=qrAngebot(); if(a)qrUebernehmen(a); };
   if(qa)qa.onclick=()=>{ history.replaceState(null,"",location.pathname); render(); };
@@ -2574,5 +2708,6 @@ syncStart();   /* gemeinsamer Speicher, falls eingerichtet */
     navigator.serviceWorker.register("./sw-os.js").then(function(r){r.update()}).catch(function(){});
 })();
 </script>
+<script src="claude-button.js" defer></script>
 </body>
 </html>
