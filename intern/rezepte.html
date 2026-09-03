@@ -1648,8 +1648,20 @@ const GEGEN={th:"de", de:"th", en:"th"};
 const haupt=(a,off)=>a[off+IDX[L]];
 const zweit=(a,off)=>a[off+IDX[GEGEN[L]]];
 
+/* Kacheln nach Nummer sortiert zeichnen.
+   Peter, 02.09.2026: "ich brauche erst mal das rezept nr. 13 wieder in der
+   Rezepte-liste." Es war nie weg -- es stand an Position 19, zwischen 20 und
+   21, weil spaeter angehaengte Rezepte hinten in der Reihe landen und die
+   Kacheln bisher in Array-Reihenfolge gezeichnet wurden. Wer zwischen 12 und
+   15 nachsieht, findet dort eine Luecke und haelt das Rezept fuer geloescht.
+   Dasselbe galt fuer die 24 (stand hinter der 29).
+   Sortiert wird eine Kopie -- die Array-Reihenfolge bleibt unangetastet,
+   damit REZEPTE.find() und alles Uebrige weiter greift. */
+const nachNummer = () =>
+  REZEPTE.slice().sort((a,b) => (parseInt(a.n,10)||0) - (parseInt(b.n,10)||0));
+
 function list(){
-  app.innerHTML='<div class="grid">'+REZEPTE.map(r=>`
+  app.innerHTML='<div class="grid">'+nachNummer().map(r=>`
     <button class="tile" data-n="${r.n}">
       <div class="no">${r.n}</div>
       <div class="nm">${esc(r[L]||r.de)}</div>
@@ -2062,7 +2074,7 @@ render();
 <div id="buildstempel" style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
   font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888"></div>
 <script>
-  window.__BUILD = "2026-09-02 18:26";
+  window.__BUILD = "2026-09-03 11:00";
   (function(){ var el = document.getElementById("buildstempel");
     if (el) el.textContent = "v" + window.__BUILD; })();
 </script>
