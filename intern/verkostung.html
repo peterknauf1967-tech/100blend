@@ -38,6 +38,10 @@
   .ed-actions button{font-size:13px;padding:8px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--line);background:#16202b;color:var(--txt);font-weight:600}
   .ed-total{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-weight:700}
   .ed-total small{color:#9fb0bd;font-weight:400}
+  .ed-steps{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .ed-steps h4{margin:0 0 8px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#9fb0bd}
+  .ed-steps ol{margin:0;padding-left:22px}
+  .ed-steps li{margin:0 0 6px;line-height:1.45}
   .delta{font-size:13px;font-weight:700}
   .slider-row{display:grid;grid-template-columns:1fr 64px;gap:10px;align-items:center;margin:2px 0 8px}
   input[type=range]{width:100%;accent-color:var(--gold)}
@@ -554,16 +558,25 @@ const R=[
   "bestaetigt": 0,
   "basis": 0,
   "z": [
-   "Wasser (kalt/abgekocht) 80 ml",
-   "Joghurt natur 🥛 (2 L) 100 g",
    "Limette 15 g",
-   "Gurke 40 g",
-   "Ingwer 5 g",
-   "Brokkoli TK 60 g",
-   "Pfirsich TK 60 g",
-   "Beeren-Mix TK fertig 70 g",
-   "Schwarzer Pfeffer 0,3 g",
-   "Kurkuma 1 g"
+   "Joghurt natur 🥛 (2 L) 200 g",
+   "Gurke mit Schale 50 g",
+   "Ingwer frisch 4 g",
+   "Mango frisch 100 g",
+   "Passionsfrucht grün 20 g",
+   "Schwarzer Pfeffer 0,1 g",
+   "Kurkuma 0,4 g",
+   "Brokkoli TK 60 g"
+  ],
+  "s": [
+   "MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm)",
+   "Mixbehälter auf die Waage, Tara drücken",
+   "① Flüssigkeit zuerst: Limettensaft (kein Wasser — der Joghurt ist die Flüssigkeit)",
+   "② Frisches & Weiches: Joghurt, Gurke mit Schale, Ingwer, Mango, Passionsfrucht",
+   "③ Trockenes darüber: Schwarzer Pfeffer, Kurkuma NUR eine Messerspitze",
+   "④ Gefrorenes ganz oben: Brokkoli",
+   "60\"-Taste (1 Minute, höchste Stufe)",
+   "In den Trinkbecher gießen · Deckel · Halm · Sticker"
   ]
  }
 ];
@@ -627,7 +640,18 @@ function renderEditor(){
     `<div class="ed-head"><h3>${r.n}</h3><span style="color:#9fb0bd;font-size:12px">Linie ${r.l} · Kartenpreis ฿${r.p}</span></div>`+
     rows+
     `<div class="ed-actions"><button id="addIng">+ Zutat</button><button id="resetIng">↺ Original</button><button id="scaleIng">⚖ auf Ziel skalieren</button></div>`+
-    `<div class="ed-total" id="edTotal"></div>`;
+    `<div class="ed-total" id="edTotal"></div>`+
+    /* ARBEITSSCHRITTE.
+       Peter, 03.09.2026: "ich brauche das rezept dringend, auch zur
+       verkostung inkl arbeitsschritte." Bisher standen hier nur Zutaten --
+       wer verkostet, muss den Becher aber erst einmal bauen, und die
+       Reihenfolge (Fluessiges, Weiches, Trockenes, Gefrorenes) entscheidet
+       ueber das Ergebnis. Rezepte ohne hinterlegte Schritte zeigen den
+       Block einfach nicht. */
+    (r.s && r.s.length
+      ? `<div class="ed-steps"><h4>Arbeitsschritte</h4><ol>`+
+        r.s.map(x=>`<li>${esc(x)}</li>`).join('')+`</ol></div>`
+      : '');
   updateTotalLine();
   editor.querySelectorAll('.ingamt').forEach(inp=>inp.addEventListener('input',e=>{curIng[+e.target.dataset.i].amt=parseFloat(e.target.value)||0;updateTotalLine();}));
   editor.querySelectorAll('.ingname').forEach(inp=>inp.addEventListener('input',e=>{curIng[+e.target.dataset.i].name=e.target.value;}));

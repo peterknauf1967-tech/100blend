@@ -123,6 +123,10 @@
       status_answered: 'Antwort da',
       status_error: 'Fehler',
       answer_from: 'Antwort',
+      reply_ph: 'Antworten…',
+      reply_send: 'Antwort senden',
+      reply_hint: 'Claude kennt den bisherigen Verlauf dieses Themas.',
+      thread_you: 'Du',
       ago_now: 'gerade eben',
       ago_sec: 'vor %s Sek.',
       ago_min: 'vor %s Min.',
@@ -172,6 +176,10 @@
       status_answered: 'มีคำตอบ',
       status_error: 'ข้อผิดพลาด',
       answer_from: 'คำตอบ',
+      reply_ph: 'ตอบกลับ…',
+      reply_send: 'ส่งคำตอบ',
+      reply_hint: 'Claude เห็นบทสนทนาก่อนหน้าของหัวข้อนี้',
+      thread_you: 'คุณ',
       ago_now: 'เมื่อสักครู่',
       ago_sec: '%s วินาทีที่แล้ว',
       ago_min: '%s นาทีที่แล้ว',
@@ -276,6 +284,15 @@
   '.cbtn-inbox-answer.warn{background:#fff8e1;border-left-color:#e6a23c;color:#7a5300;}' +
   '.cbtn-inbox-answer.error{background:#fdecec;border-left-color:#e63946;color:#8a1a22;}' +
   '.cbtn-inbox-empty{padding:32px 12px;text-align:center;color:#999;font-size:14px;}' +
+  /* Antwortfeld unter dem Verlauf. Klebt am unteren Rand, damit man bei
+     langen Faeden nicht erst ans Ende scrollen muss, um zu antworten. */
+  '.cbtn-reply{position:sticky;bottom:0;margin-top:14px;padding-top:10px;' +
+    'border-top:1px solid #e5e5e5;background:#fff;}' +
+  '.cbtn-reply-ta{width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px;' +
+    'padding:8px 10px;font:14px/1.4 system-ui,-apple-system,sans-serif;resize:vertical;}' +
+  '.cbtn-reply-ta:focus{outline:none;border-color:#0aa367;}' +
+  '.cbtn-reply-row{display:flex;align-items:center;gap:10px;margin-top:6px;}' +
+  '.cbtn-reply-hint{flex:1;font-size:11px;color:#888;line-height:1.3;}' +
   '.cbtn-inbox-detail{padding:6px 0;}' +
   '.cbtn-inbox-detail .lab{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:10px;}' +
   '.cbtn-inbox-detail .val{font-size:14px;color:#222;line-height:1.45;white-space:pre-wrap;word-break:break-word;}' +
@@ -307,14 +324,33 @@
     var p = (location.pathname.split('/').pop()||'').replace(/\?.*$/,'');
     return p || 'index';
   }
+  /* Was Claude von der Seite mitbekommt.
+   *
+   * Peter, 03.09.2026: "Warum hat Claude auf dem Handy Rezept 13 nicht
+   * gefunden?" -- weil ihm niemand gesagt hat, welche Rezepte es gibt.
+   * `window.__CLAUDE_CTX` war vorgesehen, aber KEINE Seite hat es je gesetzt
+   * (`grep __CLAUDE_CTX intern/*.html` fand nichts). Claude bekam also nur den
+   * Dateinamen der Seite und den Satz -- und hat aus dem Nichts geantwortet.
+   *
+   * Jetzt darf eine Seite zusaetzlich `window.__CLAUDE_CTX_FN` setzen: eine
+   * Funktion, die bei JEDEM Senden frisch aufgerufen wird. Nur so ist der
+   * Kontext aktuell (offenes Rezept, aktuelle Ampel), statt einmal beim Laden
+   * eingefroren. */
   function ctxText(){
     var out = [];
-    if (window.__CLAUDE_CTX && typeof window.__CLAUDE_CTX === 'object') {
-      for (var k in window.__CLAUDE_CTX) if (window.__CLAUDE_CTX[k] != null)
-        out.push(k+':'+window.__CLAUDE_CTX[k]);
+    var quellen = [];
+    if (window.__CLAUDE_CTX && typeof window.__CLAUDE_CTX === 'object')
+      quellen.push(window.__CLAUDE_CTX);
+    if (typeof window.__CLAUDE_CTX_FN === 'function') {
+      try { var d = window.__CLAUDE_CTX_FN(); if (d && typeof d === 'object') quellen.push(d); }
+      catch (_) {}   // eine kaputte Seite darf das Senden nicht verhindern
     }
-    if (location.hash) out.push('hash:'+decodeURIComponent(location.hash.slice(1)));
-    return out.join(' | ');
+    for (var qi = 0; qi < quellen.length; qi++) {
+      var o = quellen[qi];
+      for (var k in o) if (o[k] != null && o[k] !== '') out.push(k + ': ' + o[k]);
+    }
+    if (location.hash) out.push('hash: ' + decodeURIComponent(location.hash.slice(1)));
+    return out.join('\n');
   }
   function readFileAsDataURL(f){
     return new Promise(function(res, rej){
@@ -617,6 +653,7 @@
       /* --- POSTKORB: START --- */
       case 'inbox-open':   openInbox(); break;
       case 'inbox-close':  navBack(); break;
+      case 'reply-send':   sendReply(); break;
       /* --- POSTKORB: ENDE --- */
       case 'setsave':
         // Sprache zuerst, damit der Erfolgs-Toast schon in der neuen
@@ -850,14 +887,61 @@
     return teile;
   }
 
-  function buildPayload(){
+  /* --- FADEN: START ---
+   * Peter, 03.09.2026: "Baue bitte unbedingt ein, dass ich auf eine Frage von
+   * Claude antworten kann. Sonst kann ich kein Thema wirklich abschliessen."
+   *
+   * Bis hierher war jede Meldung ein Einzelschuss: Claude bekam nur den einen
+   * Satz und hatte kein Gedaechtnis. Auf eine Rueckfrage konnte man nicht
+   * antworten -- man fing wieder bei null an.
+   *
+   * Jetzt gehoert jeder Eintrag zu einem Faden (thread_id = msg_id der ersten
+   * Meldung). Beim Antworten geht der ganze bisherige Verlauf als
+   * messages-Array mit, so wie die Anthropic-API es erwartet:
+   * user -> assistant -> user -> ...
+   *
+   * Fuer den Verlauf wird nur Text mitgeschickt, keine alten Fotos: die
+   * liegen als grosse base64-Brocken im Geraetespeicher und wuerden ihn
+   * sprengen. Das neue Foto der aktuellen Meldung geht natuerlich mit. */
+  function getThread(threadId){
+    if (!threadId) return [];
+    return getInbox().filter(function(e){
+      return (e.thread_id || e.id) === threadId;
+    });
+  }
+
+  function buildMessages(threadId, neuerInhalt){
+    var msgs = [];
+    var verlauf = getThread(threadId);
+    for (var i = 0; i < verlauf.length; i++) {
+      var e = verlauf[i];
+      // Nur beantwortete Runden aufnehmen. Die Anthropic-API verlangt
+      // abwechselnd user/assistant -- eine unbeantwortete Meldung wuerde zwei
+      // user-Turns hintereinander erzeugen und die Anfrage ungueltig machen.
+      if (!e.answer || !e.answer.text) continue;
+      var frage = (e.text || '').trim();
+      if (e.photo_thumb) frage += (frage ? '\n' : '') + '[mit Foto]';
+      if (!frage) frage = '[nur Foto]';
+      msgs.push({ role: 'user',      content: [{ type: 'text', text: frage }] });
+      msgs.push({ role: 'assistant', content: [{ type: 'text', text: e.answer.text }] });
+    }
+    msgs.push({ role: 'user', content: neuerInhalt });
+    return msgs;
+  }
+  /* --- FADEN: ENDE --- */
+
+  function buildPayload(threadId){
     var text = (ta.value||'').trim();
     var kontext = ctxText();
     var seite = pageName();
+    var id = makeMsgId();
+    var inhalt = buildContent(text, currentPhoto, kontext, seite);
     return {
       /* --- POSTKORB: START --- */
-      msg_id: makeMsgId(),
+      msg_id: id,
       /* --- POSTKORB: ENDE --- */
+      // Erste Meldung eines Themas ist ihr eigener Faden.
+      thread_id: threadId || id,
       ts: new Date().toISOString(),
       page: seite,
       context: kontext,
@@ -865,15 +949,24 @@
       photo_base64: currentPhoto || null,
       // Fertiger Anthropic-content-Block als JSON-Text. Make setzt ihn 1:1
       // in den Rumpf ein, ohne selbst etwas zusammenbauen zu muessen.
-      content_json: JSON.stringify(buildContent(text, currentPhoto, kontext, seite)),
+      content_json: JSON.stringify(inhalt),
+      // Der ganze Faden als messages-Array. Damit kann Claude auf eine
+      // Rueckfrage antworten, statt bei null anzufangen.
+      messages_json: JSON.stringify(buildMessages(threadId, inhalt)),
       user: getUser(),
       lang: isThai() ? 'th' : 'de',
       ua: navigator.userAgent
     };
   }
-  function doSend(){
-    var p = buildPayload();
+  function doSend(threadId, imFaden){
+    var p = buildPayload(threadId);
     stopMic();
+    // Nach einer Antwort im Faden soll das Fenster NICHT zugehen -- man will
+    // sehen, dass die Antwort im Verlauf steht, und ggf. gleich nachlegen.
+    var fertig = function(){
+      if (imFaden) { ta.value = ''; clearPhoto(); openInboxDetail(p.msg_id); }
+      else closeModal();
+    };
     /* --- POSTKORB: START --- */
     // SYNCHRON zuerst den Eintrag anlegen -- vorher lief das async, und mit
     // dem CORS-Fix (no-cors) resolvt postToWebhook schneller als
@@ -883,6 +976,7 @@
     var textOrig  = p.message;
     var entry = {
       id: p.msg_id,
+      thread_id: p.thread_id,
       ts: isoLocal(),
       page: p.page,
       text: textOrig,
@@ -906,7 +1000,7 @@
       }
     });
     /* --- POSTKORB: ENDE --- */
-    if (!navigator.onLine) { enqueue(p); toast(tr().err_queued,'warn'); closeModal(); return; }
+    if (!navigator.onLine) { enqueue(p); toast(tr().err_queued,'warn'); fertig(); return; }
     postToWebhook(p).then(function(){
       /* --- POSTKORB: START --- */
       updateInboxStatus(p.msg_id, 'sent', { sent_at: isoLocal() });
@@ -917,7 +1011,7 @@
       var url = q('claude_webhook_url') || '';
       var tail = url ? url.slice(-8) : '';
       toast(tr().ok_sent + (tail ? ' → …' + tail : ''), 'ok');
-      closeModal();
+      fertig();
       flushQueue();          // gleich mal alte Eintraege mitversuchen
     }).catch(function(err){
       var msg = (err && err.message) ? err.message : String(err || 'unbekannt');
@@ -937,7 +1031,7 @@
           postToWebhook(p).then(function(){
             updateInboxStatus(p.msg_id, 'sent', { sent_at: isoLocal() });
             toast(tr().ok_sent, 'ok');
-            closeModal();
+            fertig();
             flushQueue();
           }).catch(function(e2){
             var m2 = (e2 && e2.message) ? e2.message : String(e2 || 'unbekannt');
@@ -945,7 +1039,7 @@
               text:'Sendefehler: ' + m2, kind:'error', by:'widget' } });
             enqueue(p);
             toast('⚠ Sendefehler: ' + m2, 'warn');
-            closeModal();
+            fertig();
           });
           return;   // closeModal() passiert in den Zweigen oben
         }
@@ -964,7 +1058,7 @@
         enqueue(p);
         toast('⚠ Sendefehler: ' + msg, 'warn');
       }
-      closeModal();
+      fertig();
     });
   }
   /* --- POSTKORB: START --- */
@@ -1144,10 +1238,26 @@
   function closeInbox(){ navBack(); }
   function renderInbox(){
     var t = tr();
-    var box = getInbox().slice().reverse();  // neueste zuerst
+    // Ein Eintrag pro THEMA, nicht pro Meldung: gezeigt wird die juengste
+    // Runde des Fadens. Sonst stuende nach drei Rueckfragen dasselbe Thema
+    // viermal in der Liste.
+    var alle = getInbox();
+    var proFaden = {};
+    for (var k = 0; k < alle.length; k++) {
+      var fid = alle[k].thread_id || alle[k].id;
+      var bisher = proFaden[fid];
+      // ungelesen und Fehler faerben den ganzen Faden ein
+      alle[k].__runden = (bisher && bisher.__runden || 0) + 1;
+      alle[k].__unread = !!alle[k].unread || !!(bisher && bisher.__unread);
+      alle[k].__error  = alle[k].status === 'error' || !!(bisher && bisher.__error);
+      proFaden[fid] = alle[k];
+    }
+    var box = [];
+    for (var f in proFaden) box.push(proFaden[f]);
+    box.sort(function(a,b){ return String(b.ts).localeCompare(String(a.ts)); });
     var items = box.filter(function(e){
-      if (inboxFilter === 'unread') return !!e.unread;
-      if (inboxFilter === 'error')  return e.status === 'error';
+      if (inboxFilter === 'unread') return !!e.__unread;
+      if (inboxFilter === 'error')  return !!e.__error;
       return true;
     });
     if (!items.length) {
@@ -1159,7 +1269,7 @@
       var e = items[i];
       var statusLabel = t['status_' + e.status] || e.status;
       var txt = (e.text || '').trim() || '—';
-      html += '<div class="cbtn-inbox-item' + (e.unread ? ' unread' : '') + '" data-inbox-id="' + escapeHtml(e.id) + '">';
+      html += '<div class="cbtn-inbox-item' + (e.__unread ? ' unread' : '') + '" data-inbox-id="' + escapeHtml(e.id) + '">';
       html += '<div class="cbtn-inbox-item-row">';
       if (e.photo_thumb) {
         html += '<img class="cbtn-inbox-item-thumb" src="' + escapeHtml(e.photo_thumb) + '" alt="">';
@@ -1178,41 +1288,100 @@
     }
     inboxListEl.innerHTML = html;
   }
+  // Zeigt den GANZEN Faden zu einer Meldung, aelteste Runde oben, und unten
+  // ein Antwortfeld. Damit laesst sich ein Thema zu Ende bringen, statt bei
+  // jeder Rueckfrage von vorn anzufangen.
   function openInboxDetail(id){
     var box = getInbox();
     var e = null;
     for (var i = 0; i < box.length; i++) if (box[i].id === id) { e = box[i]; break; }
     if (!e) return;
-    if (e.unread) { e.unread = false; setInbox(box); updateBadge(); }
+    var fadenId = e.thread_id || e.id;
+    var runden = getThread(fadenId);
+    if (!runden.length) runden = [e];
+
+    // Alles im Faden als gelesen markieren
+    var geaendert = false;
+    for (var u = 0; u < box.length; u++) {
+      if ((box[u].thread_id || box[u].id) === fadenId && box[u].unread) {
+        box[u].unread = false; geaendert = true;
+      }
+    }
+    if (geaendert) { setInbox(box); updateBadge(); }
+
     var t = tr();
-    var statusLabel = t['status_' + e.status] || e.status;
+    var letzte = runden[runden.length - 1];
+    var statusLabel = t['status_' + letzte.status] || letzte.status;
+
     var html = '';
-    html += '<div class="cbtn-inbox-detail">';
-    // Kein eigener Zurueck-Knopf mehr -- die Zurueck-Taste des Geraets
-    // bringt einen zurueck zur Liste (siehe navPush unten).
-    html += '<div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:6px">';
-    html += '<span class="cbtn-inbox-status ' + escapeHtml(e.status) + '">' + escapeHtml(statusLabel) + '</span>';
+    html += '<div class="cbtn-inbox-detail" data-thread="' + escapeHtml(fadenId) + '">';
+    // Kein eigener Zurueck-Knopf -- die Zurueck-Taste des Geraets fuehrt
+    // zurueck in die Liste (siehe navPush unten).
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">';
+    html += '<span style="font:600 11px/1.3 system-ui,sans-serif;opacity:.6">'
+          + escapeHtml(letzte.page || '') + ' · ' + escapeHtml(relTime(runden[0].ts)) + '</span>';
+    html += '<span class="cbtn-inbox-status ' + escapeHtml(letzte.status) + '">' + escapeHtml(statusLabel) + '</span>';
     html += '</div>';
-    html += '<div class="lab">' + escapeHtml(t.time) + '</div>';
-    html += '<div class="val">' + escapeHtml(new Date(e.ts).toLocaleString() + '  · ' + relTime(e.ts)) + '</div>';
-    html += '<div class="lab">' + escapeHtml(t.page) + '</div>';
-    html += '<div class="val">' + escapeHtml(e.page || '—') + '</div>';
-    html += '<div class="lab">' + escapeHtml(t.sent_label) + '</div>';
-    html += '<div class="val">' + escapeHtml(e.text || '—') + '</div>';
-    if (e.photo_thumb) {
-      html += '<div class="lab">' + escapeHtml(t.photo_label) + '</div>';
-      html += '<img src="' + escapeHtml(e.photo_thumb) + '" alt="">';
+
+    for (var r = 0; r < runden.length; r++) {
+      var run = runden[r];
+      html += '<div class="lab">' + escapeHtml(t.thread_you) + ' · '
+            + escapeHtml(relTime(run.ts)) + '</div>';
+      html += '<div class="val">' + escapeHtml((run.text || '').trim() || '—') + '</div>';
+      if (run.photo_thumb) {
+        html += '<img src="' + escapeHtml(run.photo_thumb) + '" alt="">';
+      }
+      if (run.answer && run.answer.text) {
+        var kind = (run.answer.kind === 'warn' || run.answer.kind === 'error') ? run.answer.kind : '';
+        html += '<div class="lab">' + escapeHtml(t.answer_from) + ' · '
+              + escapeHtml(relTime(run.answer.ts)) + '</div>';
+        html += '<div class="cbtn-inbox-answer ' + kind + '">' + escapeHtml(run.answer.text) + '</div>';
+      }
     }
-    if (e.answer && e.answer.text) {
-      var kind = (e.answer.kind === 'warn' || e.answer.kind === 'error') ? e.answer.kind : '';
-      html += '<div class="lab">' + escapeHtml(t.answer_from) + ' · ' + escapeHtml(relTime(e.answer.ts)) + '</div>';
-      html += '<div class="cbtn-inbox-answer ' + kind + '">' + escapeHtml(e.answer.text) + '</div>';
-    }
+
+    // Antwortfeld
+    html += '<div class="cbtn-reply">';
+    html += '<textarea class="cbtn-reply-ta" rows="2" placeholder="' + escapeHtml(t.reply_ph) + '"></textarea>';
+    html += '<div class="cbtn-reply-row">';
+    html += '<span class="cbtn-reply-hint">' + escapeHtml(t.reply_hint) + '</span>';
+    html += '<button type="button" class="cbtn-b primary" data-act="reply-send" disabled>'
+          + escapeHtml(t.reply_send) + '</button>';
+    html += '</div></div>';
+
     html += '</div>';
     inboxListEl.innerHTML = html;
+
+    // Senden-Knopf erst freigeben, wenn wirklich etwas dasteht
+    var rta = inboxListEl.querySelector('.cbtn-reply-ta');
+    var rbtn = inboxListEl.querySelector('[data-act="reply-send"]');
+    if (rta && rbtn) {
+      rta.addEventListener('input', function(){
+        rbtn.disabled = !rta.value.trim();
+      });
+    }
+
     // Detail ist eine eigene Ebene: die Zurueck-Taste fuehrt zurueck in die
     // Liste, nicht aus dem Postkorb heraus.
     navPush('detail', renderInbox);
+  }
+
+  // Antwort im Faden abschicken. Laeuft ueber denselben Weg wie eine neue
+  // Meldung -- nur mit thread_id, damit der Verlauf mitgeht.
+  function sendReply(){
+    var wrap = inboxListEl.querySelector('.cbtn-inbox-detail');
+    var rta  = inboxListEl.querySelector('.cbtn-reply-ta');
+    if (!wrap || !rta) return;
+    var txt = (rta.value || '').trim();
+    if (!txt) return;
+    var fadenId = wrap.dataset.thread;
+
+    // doSend() liest Text und Foto aus dem Sendeformular. Wir schieben die
+    // Antwort dort hinein, schicken sie und raeumen wieder auf -- so gibt es
+    // nur EINEN Sendeweg (Warteschlange, Fehlerbehandlung, Postkorb-Eintrag
+    // inklusive), statt einer zweiten, halb gepflegten Kopie davon.
+    ta.value = txt;
+    currentPhoto = null;
+    doSend(fadenId);
   }
 
   // ---------- Postkorb: Polling ----------

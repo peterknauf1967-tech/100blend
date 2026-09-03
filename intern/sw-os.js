@@ -5,7 +5,7 @@
    weil alter JS-Handler noch aus Cache kam). Nur wenn kein Netz da ist, kommt
    die gespeicherte Fassung. Bilder und Manifest bleiben Cache-zuerst — die
    ändern sich praktisch nie. */
-const CACHE = "blend-os-v22";   /* v16: Webhook-Abfrage per prompt beim Senden; Zahnrad-Bug behoben (data-act) + Sprachumschalter; Gear-Click auf Mobile fixen (closest statt ===); Fehlerdiagnose (Postkorb zeigt Grund, Toast 7s); Postkorb-Race + flushQueue-Statusupdate; CORS-Fix (no-cors+text-plain fuer Make-Webhook); FAB ueber Nav + Screenshot-Upload + Frisch/Gefroren-Chip; Claude-Button Postkorb (msg_id, Antworten-Anzeige, 2-Segment-Badge) + firebase-sync claude_answers/*, 02.09.2026 */
+const CACHE = "blend-os-v24";   /* v16: Webhook-Abfrage per prompt beim Senden; Zahnrad-Bug behoben (data-act) + Sprachumschalter; Gear-Click auf Mobile fixen (closest statt ===); Fehlerdiagnose (Postkorb zeigt Grund, Toast 7s); Postkorb-Race + flushQueue-Statusupdate; CORS-Fix (no-cors+text-plain fuer Make-Webhook); FAB ueber Nav + Screenshot-Upload + Frisch/Gefroren-Chip; Claude-Button Postkorb (msg_id, Antworten-Anzeige, 2-Segment-Badge) + firebase-sync claude_answers/*, 02.09.2026 */
 const FILES = [
   "./standos.html", "./kasse.html", "./rezepte.html",
   "./standos.webmanifest",
