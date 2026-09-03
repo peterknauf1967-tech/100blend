@@ -1501,10 +1501,79 @@
   }
   /* --- EINRICHTUNG PER LINK: ENDE --- */
 
+  /* --- FRISCHEPRUEFUNG: START ---
+   * Peter, 03.09.2026: "in mixo ist das immer noch das alte rezept 13 im
+   * smartphone" -- obwohl die Domain nachweislich den neuen Stand auslieferte
+   * (gemessen: Build 13:10, "Passionsfrucht gruen" im Text).
+   *
+   * Der Service Worker holt HTML und JS zwar netz-zuerst, faellt bei jedem
+   * fehlgeschlagenen Abruf aber still auf den Cache zurueck -- am Marktstand
+   * mit wackligem Netz genau richtig, nur merkt es dann niemand. Ergebnis:
+   * das Geraet zeigt wochenalte Daten und sieht dabei voellig normal aus.
+   *
+   * Deshalb prueft die Seite jetzt selbst: version.json (winzig, nie
+   * gecacht) gegen den eingebauten Build-Stempel. Weicht er ab, werden die
+   * Caches geleert, der Service Worker aufgefrischt und EINMAL neu geladen.
+   * Hilft auch das nicht, erscheint ein sichtbarer Streifen -- lieber eine
+   * Warnung als stille falsche Grammzahlen im Becher. */
+  function zeigeVeraltet(neu){
+    if (document.getElementById('build-warnung')) return;
+    var d = document.createElement('div');
+    d.id = 'build-warnung';
+    d.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:2147483647;' +
+      'background:#b3261e;color:#fff;font:600 12px/1.35 system-ui,-apple-system,sans-serif;' +
+      'padding:8px 12px;text-align:center;cursor:pointer';
+    d.textContent = '⚠ Veraltete Fassung (' + window.__BUILD + ') — neu ist ' + neu +
+                    '. Zum Neuladen tippen.';
+    d.addEventListener('click', function(){
+      try { sessionStorage.removeItem('build_reload'); } catch(_){}
+      location.reload();
+    });
+    document.body.appendChild(d);
+  }
+
+  function pruefeVersion(){
+    if (!window.__BUILD) return;
+    fetch('version.json?ts=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(v){
+        if (!v || !v.build || v.build === window.__BUILD) return;
+        // Nur EINMAL je neuem Stand automatisch neu laden -- sonst dreht sich
+        // das Ganze im Kreis, wenn wirklich etwas Aelteres ausgeliefert wird.
+        var schon = null;
+        try { schon = sessionStorage.getItem('build_reload'); } catch(_){}
+        if (schon === v.build) { zeigeVeraltet(v.build); return; }
+        try { sessionStorage.setItem('build_reload', v.build); } catch(_){}
+
+        var aufgaben = [];
+        if (window.caches && caches.keys) {
+          aufgaben.push(caches.keys().then(function(ks){
+            return Promise.all(ks.map(function(k){ return caches.delete(k); }));
+          }));
+        }
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+          aufgaben.push(navigator.serviceWorker.getRegistrations().then(function(rs){
+            return Promise.all(rs.map(function(r){ return r.update(); }));
+          }));
+        }
+        Promise.all(aufgaben).catch(function(){}).then(function(){
+          location.reload();
+        });
+      })
+      .catch(function(){});   // kein Netz: dann eben die gespeicherte Fassung
+  }
+  /* --- FRISCHEPRUEFUNG: ENDE --- */
+
   // ---------- Lifecycle ----------
   function boot(){
     setupAusLink();
     build();
+    pruefeVersion();
+    // Auch beim Zurueckholen aus dem Hintergrund pruefen -- eine PWA auf dem
+    // Startbildschirm wird oft tagelang nicht neu geladen.
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden) pruefeVersion();
+    });
     // Bei Sichtwechsel und Online-Event Queue leeren
     window.addEventListener('online', flushQueue);
     document.addEventListener('visibilitychange', function(){

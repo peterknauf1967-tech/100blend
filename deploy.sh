@@ -40,6 +40,16 @@ bump() {  # $1 = Datei, $2 = Praefix (z.B. blend-os-v)
 bump intern/sw-os.js "blend-os-v"
 bump intern/sw.js    "blend-einkauf-v"
 
+# 3b) version.json — daran erkennt ein Gerät, dass es veraltet ist.
+#     Die Seiten holen die Datei bei jedem Start und beim Zurückholen aus dem
+#     Hintergrund frisch (der Service Worker fasst sie bewusst nicht an),
+#     vergleichen sie mit ihrem eigenen Stempel und laden sich bei Abweichung
+#     einmal selbst neu. Ohne das zeigt ein Handy mit wackligem Netz
+#     wochenalte Daten, ohne dass es jemand merkt — Peter, 03.09.2026:
+#     altes Rezept 13 im Smartphone, während die Domain längst neu auslieferte.
+printf '{"build":"%s"}\n' "$NOW" > intern/version.json
+echo "  intern/version.json: $NOW"
+
 # 4) Kontrolle: stimmen alle Stempel überein?
 echo
 echo "Gesetzte Stempel:"
