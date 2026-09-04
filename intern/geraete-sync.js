@@ -27,12 +27,12 @@
  *   - Jede Aenderung bekommt Zeitstempel und Geraetekennung. Beim Start wird
  *     zusammengefuehrt: wer zuletzt geschrieben hat, gewinnt je Schluessel.
  *
- * BEWUSSTE GRENZE: Es wird je SCHLUESSEL zusammengefuehrt, nicht je Zutat.
- * Bucht Peter am PC Mango ein waehrend Lexi am Handy Ananas einbucht, und
- * beide speichern in derselben Minute, gewinnt die spaetere Speicherung
- * komplett. Fuer den Alltag (einer arbeitet, der andere schaut) reicht das;
- * fuer echten Parallelbetrieb braeuchte es eine Zusammenfuehrung je Feld —
- * siehe UMBAU-BERICHT, Punkt "was ich nicht allein kann".
+ * ZUSAMMENFUEHRUNG: der grosse Zustand wird FELDWEISE gemischt (siehe
+ * zusammenfuehren.js) — je Zutatencode, je Ampel-Eintrag, Listen als
+ * Vereinigung. Erdbeeren vom Handy und Mango vom PC stehen hinterher beide
+ * da. Nur wenn BEIDE Geraete denselben Code aendern, gewinnt die spaetere
+ * Buchung. Alle uebrigen Schluessel bleiben beim einfachen "der juengere
+ * gewinnt" — dort gibt es nichts feldweise zu retten.
  */
 (function () {
   "use strict";
@@ -87,6 +87,13 @@
   }
 
   function jetzt() { return Date.now(); }
+
+  /* Nur der grosse Zustand wird feldweise gemischt - und nur, wenn das
+     Mischmodul geladen ist. Fehlt es, faellt alles auf das alte Verhalten
+     zurueck statt zu scheitern. */
+  function mischbar(k) {
+    return !!(window.blendZusammenfuehren && window.blendZusammenfuehren.gilt(k));
+  }
 
   /* ---------------------------------------------------------------
      Schreiben — ueber die REST-Schnittstelle der Realtime Database.
@@ -147,6 +154,19 @@
       letzteFernwerte[k] = dort.v;
 
       var tHier = lokalStempel(k);
+      if (hier != null && dort.v != null && hier !== dort.v && mischbar(k)) {
+        /* Der grosse Zustand wird FELDWEISE gemischt, nicht ueberschrieben.
+           Sonst haette der PC Peters 10 kg Erdbeeren vom Handy still
+           geloescht (05.09.2026). */
+        var gemischt = window.blendZusammenfuehren.zustand(hier, dort.v, tHier, dort.t || 0);
+        if (gemischt !== hier) {
+          try { echtesSetItem.call(localStorage, k, gemischt); } catch (e) {}
+          geaendert.push(k);
+        }
+        lokalStempelSetzen(k, jetzt());
+        hochladen(k, gemischt);
+        return;
+      }
       if (hier == null || (dort.t || 0) > tHier) {
         if (hier !== dort.v) {
           try { echtesSetItem.call(localStorage, k, dort.v); } catch (e) {}
@@ -195,6 +215,14 @@
         var hier = null;
         try { hier = localStorage.getItem(k); } catch (e) {}
         if (hier === dort.v) { lokalStempelSetzen(k, dort.t); return; }
+        if (hier != null && mischbar(k)) {
+          var m = window.blendZusammenfuehren.zustand(hier, dort.v, lokalStempel(k), dort.t || 0);
+          try { echtesSetItem.call(localStorage, k, m); } catch (e) {}
+          lokalStempelSetzen(k, jetzt());
+          if (m !== dort.v) hochladen(k, m);   /* unseren Anteil zurueckgeben */
+          neu.push(k);
+          return;
+        }
         try { echtesSetItem.call(localStorage, k, dort.v); } catch (e) {}
         lokalStempelSetzen(k, dort.t);
         neu.push(k);
