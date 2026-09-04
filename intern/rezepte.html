@@ -219,23 +219,23 @@ const REZEPTE = [
    ["KW", 150,"Kokoswasser (Nam Hom)","น้ำมะพร้าว","Coconut water"],
    ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
    ["TO", 120,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
-   ["LI",  30,"Litschi (frisch)","ลิ้นจี่ (สด)","Lychee (fresh)"],
+   ["TM",  30,"Thai-Melone (frisch) — ersetzt die Mangostan","แตงไทย (สด) — ใช้แทนมังคุด","Thai melon (fresh) — replaces the mangosteen"],
    ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
    ["KE",  40,"Kürbiskerne (roh, eingeweicht)","เมล็ดฟักทอง (ดิบ แช่น้ำ)","Pumpkin seeds (raw, soaked)"],
-   ["LI",  30,"Litschi SELBST gefroren (frisch gekauft, entkernt) — die gekaufte TK-Litschi ist durchgefallen","ลิ้นจี่แช่แข็งเอง (ซื้อสด แกะเมล็ด) — ลิ้นจี่แช่แข็งสำเร็จรูปไม่ผ่าน","Lychee frozen IN-HOUSE (bought fresh, pitted) — the bought frozen lychee failed our test"],
+   ["TM",  30,"Thai-Melone SELBST gefroren (Würfel, Tablett)","แตงไทยแช่แข็งเอง (หั่นเต๋า ถาด)","Thai melon frozen IN-HOUSE (cubes, on a tray)"],
    ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
    ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
    ["① Flüssigkeit zuerst: Kokoswasser","① ใส่ของเหลวก่อน: น้ำมะพร้าว","① Liquids first: Coconut water"],
-   ["② Frisches & Weiches: Minze, gezählt, Seidentofu, Litschi, Banane","② ของสดและของนิ่ม: ใบสะระแหน่ เด็ดใบ · เต้าหู้นิ่ม · ลิ้นจี่ · กล้วย","② Fresh & soft: Mint, counted, Silken tofu, Lychee, Banana"],
+   ["② Frisches & Weiches: Minze, gezählt, Seidentofu, Thai-Melone, Banane","② ของสดและของนิ่ม: ใบสะระแหน่ เด็ดใบ · เต้าหู้นิ่ม · แตงไทย · กล้วย","② Fresh & soft: Mint, counted, Silken tofu, Thai melon, Banana"],
    ["③ Trockenes darüber: Kürbiskerne","③ ใส่ของแห้งทับ: เมล็ดฟักทอง","③ Dry on top: Pumpkin seeds"],
-   ["④ Gefrorenes ganz oben: Litschi, Banane","④ ของแช่แข็งไว้บนสุด: ลิ้นจี่ · กล้วย","④ Frozen last, on top: Lychee, Banana"],
+   ["④ Gefrorenes ganz oben: Thai-Melone, Banane","④ ของแช่แข็งไว้บนสุด: แตงไทย · กล้วย","④ Frozen last, on top: Thai melon, Banana"],
    ["60\"-Taste (1 Minute)  (60 s, höchste Stufe)","กดปุ่ม 60 วินาที (1 นาที)  (60 วินาที ความเร็วสูงสุด)","The 60\" button  (60 s, high speed)"],
    ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
  ],
- tip:["Upsell „Power+\": 20 g Proteinpulver (PR) am Ende kurz einmixen.",
+ tip:["KORREKTUR 05.09.2026: Hier stand kurzzeitig Litschi als Ersatz für die Mangostan — ein Fehler, denn Litschi steht auf der Sperrliste der durchgefallenen Waren (TK A-Choice: 'riecht alt, no fruit, nothing'). Jetzt Thai-Melone: mild, blumig-süß, kein Kern-Theater, 26 ฿/kg und im Haus. Die frische Hälfte kommt zu ②, die gefrorene zu ④ — selbst einfrieren, gewürfelt auf dem Tablett. · Upsell „Power+\": 20 g Proteinpulver (PR) am Ende kurz einmixen.",
       "ออปชัน \"Power+\": ใส่เวย์โปรตีน 20 กรัม ตอนท้าย ปั่นสั้น ๆ",
       "Upsell \"Power+\": blend in 20 g protein powder (PR) at the end."]},
 
@@ -2071,7 +2071,7 @@ render();
 <div id="buildstempel" style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
   font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888"></div>
 <script>
-  window.__BUILD = "2026-09-04 21:49";
+  window.__BUILD = "2026-09-04 22:01";
   (function(){ var el = document.getElementById("buildstempel");
     if (el) el.textContent = "v" + window.__BUILD; })();
 </script>
