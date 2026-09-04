@@ -140,6 +140,20 @@
   padding:2px 34px;z-index:2;pointer-events:none}
 .bchip.etop{border-color:#2C5A3B}
 .bchip.eklein{border-color:#c9a227}
+/* --- AMPEL: START --- */
+/* Zutaten-Ampel — die Kasse liest die Ampel nur, sie setzt sie nicht.
+   'rot': Kachel bleibt sichtbar, aber ausgegraut mit Klartext-Overlay,
+          damit Lexi den Grund sofort sieht und nicht in Standos suchen muss.
+   'gelb': kleiner Warnpunkt oben rechts, Kachel bleibt normal bedienbar. */
+.item.a-rot{opacity:.35;cursor:not-allowed;filter:grayscale(.85)}
+.item.a-rot .a-overlay{position:absolute;left:0;right:0;bottom:0;background:rgba(122,26,26,.94);
+  color:#fff;font:800 10.5px/1.35 inherit;padding:5px 6px;text-align:center;
+  letter-spacing:.3px;z-index:3;pointer-events:none}
+.item .a-warn{position:absolute;top:6px;right:6px;z-index:2;
+  background:#eab308;color:#3a2400;border-radius:50%;width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;font:900 13px/1 inherit;
+  box-shadow:0 0 0 2px rgba(234,179,8,.35);pointer-events:none}
+/* --- AMPEL: ENDE --- */
 </style>
 <meta name="robots" content="noindex,nofollow">
 <title>MIXO Kasse</title>
@@ -165,6 +179,9 @@
     <button class="tab on" data-t="kasse" onclick="tab('kasse')">🛒 <span data-i18n="tab_sell"></span></button>
     <button class="tab" data-t="kunde" onclick="tab('kunde')">🎟️ <span data-i18n="tab_members"></span></button>
     <button class="tab" data-t="tag" onclick="tab('tag')">📊 <span data-i18n="tab_day"></span></button>
+    <!-- CHARGEN: START -->
+    <button class="tab" data-t="chargen" onclick="tab('chargen')" title="Frische-Chargen">🥛</button>
+    <!-- CHARGEN: ENDE -->
     <button class="tab" data-t="setup" onclick="tab('setup')">⚙️</button>
   </div>
 </header>
@@ -241,6 +258,30 @@
       <div class="note" data-i18n="db_note"></div>
     </div>
   </section>
+
+  <!-- CHARGEN: START -->
+  <section id="v-chargen" class="hidden">
+    <div class="panel" style="max-width:720px">
+      <h2>🥛 Frische-Chargen</h2>
+      <div class="note" style="margin:-4px 0 10px">
+        Neue Charge = Ein Klick. Menge, Datum, Wer — fertig. Ampel geht auf 🟢, Ablaufdatum wird automatisch gesetzt.
+      </div>
+      <div id="ch-neue"></div>
+      <h2 style="margin-top:16px">Aktive Chargen</h2>
+      <div class="list" id="ch-liste"></div>
+    </div>
+    <div id="ch-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center;padding:12px">
+      <div style="background:#fff;border-radius:14px;max-width:420px;width:100%;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.35)">
+        <h2 id="ch-modal-title" style="margin:0 0 10px">Neue Charge</h2>
+        <div id="ch-modal-body"></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn" style="flex:1" onclick="chModalClose()">Abbrechen</button>
+          <button class="btn green" style="flex:2" id="ch-modal-ok">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- CHARGEN: ENDE -->
 
   <!-- SETUP -->
   <section id="v-setup" class="hidden">
@@ -5269,6 +5310,410 @@ if(!CFG.sync)CFG.sync=SYNC_STANDARD;
    und wandert beim naechsten Versuch raus. So kann kein Bon verloren gehen.
    Der Server erkennt doppelt gesendete Bons an der Bon-Nummer. */
 let WARTE=LS("kb_warte")||[];
+
+/* --- AMPEL: START --- */
+/* Zutaten-Ampel — gleicher Schluessel wie standos.html im gemeinsamen Origin.
+   Rot in einer Zutat sperrt jeden Becher, der sie braucht; Gelb warnt nur. */
+const AMPELKEY = "blend_ampel_v1";
+let AMPEL = LS(AMPELKEY) || {};
+/* Live-Update im selben Browser: sobald Standos die Ampel schreibt,
+   feuert das storage-Event in allen anderen Tabs. */
+window.addEventListener("storage", ev=>{
+  if(ev && ev.key===AMPELKEY){
+    AMPEL = LS(AMPELKEY) || {};
+    if(typeof renderMenu==="function") renderMenu();
+  }
+});
+/* Fallback fuer Faelle, in denen das storage-Event nicht kommt
+   (z. B. dasselbe Tab per Zurueck-Taste, iOS-Home-Screen). */
+setInterval(()=>{
+  try{
+    const roh = localStorage.getItem(AMPELKEY);
+    if(roh==null) return;
+    const neu = JSON.parse(roh);
+    if(JSON.stringify(neu)!==JSON.stringify(AMPEL)){
+      AMPEL = neu||{};
+      if(typeof renderMenu==="function") renderMenu();
+    }
+  }catch(e){}
+}, 15000);
+/* --- AMPEL: ENDE --- */
+
+/* --- CHARGEN: START --- */
+/* Baustein 2 aus docs/frische-konzept.md — pro angesetzter Menge einer verderblichen
+   Zutat ein Datensatz mit Ablauf, Karenz, 4-Sinne-Check, Ampel-Ableitung.
+   Persistiert unter eigenem Key, damit Kasse (die ausser AMPEL keinen SKEY-Zugriff hat)
+   und Standos (SKEY=blend_os_v1, spiegelt in S.chargen_frisch) dieselben Daten sehen.
+   Cross-Tab-Live: storage-event + Polling-Fallback wie bei AMPEL. */
+const CHFRKEY = "blend_chargen_frisch_v1";
+let CHARGEN = LS(CHFRKEY) || {};
+
+/* Zutaten-Metadaten fuer Chargen (Kuehlschrank-Haltbarkeit).
+   Basiswerte aus docs/frische-konzept.md — im Zweifel entsorgen (Peter: "60 THB Milch
+   < 1 kranker Kunde"). Fehlende Zutat = Default 3 Tage. */
+const HALTBARKEIT = {
+  HF:  {name:"Hafermilch",           einheit:"ml", tage_frisch:3,   tage_angebrochen:5,  kategorie:"fluessigkeit_selbst"},
+  MM:  {name:"Mandelmilch",          einheit:"ml", tage_frisch:3,   tage_angebrochen:5,  kategorie:"fluessigkeit_tetra"},
+  KO:  {name:"Kokosmilch (Tetra)",   einheit:"ml", tage_frisch:5,   tage_angebrochen:5,  kategorie:"fluessigkeit_tetra"},
+  KW:  {name:"Kokoswasser frisch",   einheit:"ml", tage_frisch:1,   tage_angebrochen:2,  kategorie:"fluessigkeit_frisch"},
+  LS:  {name:"Limettensaft frisch",  einheit:"ml", tage_frisch:1,   tage_angebrochen:1,  kategorie:"fluessigkeit_frisch"},
+  IG:  {name:"Ingwerwasser",         einheit:"ml", tage_frisch:3,   tage_angebrochen:3,  kategorie:"fluessigkeit_selbst"},
+  KU:  {name:"Kurkuma-Aufguss",      einheit:"ml", tage_frisch:2,   tage_angebrochen:2,  kategorie:"fluessigkeit_selbst"},
+  PD:  {name:"Pandan-Wasser",        einheit:"ml", tage_frisch:1,   tage_angebrochen:2,  kategorie:"fluessigkeit_selbst"},
+  TE:  {name:"Grüner Tee kalt",      einheit:"ml", tage_frisch:1,   tage_angebrochen:1,  kategorie:"fluessigkeit_selbst"},
+  OS:  {name:"Orangensaft frisch",   einheit:"ml", tage_frisch:1,   tage_angebrochen:1,  kategorie:"fluessigkeit_frisch"},
+  SK:  {name:"Sonnenblumenkerne",    einheit:"g",  tage_frisch:180, tage_angebrochen:28, kategorie:"trockenware_nuss"},
+  KE:  {name:"Kürbiskerne",          einheit:"g",  tage_frisch:180, tage_angebrochen:35, kategorie:"trockenware_nuss"},
+  MA:  {name:"Mandeln",              einheit:"g",  tage_frisch:180, tage_angebrochen:60, kategorie:"trockenware_nuss"},
+  HS:  {name:"Hanfsamen",            einheit:"g",  tage_frisch:180, tage_angebrochen:56, kategorie:"trockenware_nuss"}
+};
+const CHARGE_DEFAULT_TAGE = 3;
+function chHaltbar(code){
+  return HALTBARKEIT[code] || {name:(typeof ZUTATNAME!=="undefined" && ZUTATNAME[code])||code,
+    einheit:(typeof EINHEIT!=="undefined" && EINHEIT[code])||"g",
+    tage_frisch:CHARGE_DEFAULT_TAGE, tage_angebrochen:CHARGE_DEFAULT_TAGE, kategorie:"unbekannt"};
+}
+function chargenSave(silent){
+  try{ localStorage.setItem(CHFRKEY, JSON.stringify(CHARGEN)); }catch(e){}
+  if(!silent && typeof renderChargen==="function" && !$("#v-chargen").classList.contains("hidden")) renderChargen();
+  if(typeof renderMenu==="function") renderMenu();
+}
+function chargenSync(payload){
+  /* Fire-and-forget wie ampel: unbekannter typ wird vom Server ignoriert,
+     bricht nichts. Nur bei bestehendem CFG.sync. */
+  if(!CFG || !CFG.sync) return;
+  try{
+    fetch(CFG.sync,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(Object.assign({ts:Date.now(),wer:(CFG.who||CFG.name||"kasse")},payload||{}))}).catch(()=>{});
+  }catch(e){}
+}
+window.addEventListener("storage", ev=>{
+  if(ev && ev.key===CHFRKEY){
+    CHARGEN = LS(CHFRKEY) || {};
+    if(typeof renderChargen==="function" && !$("#v-chargen").classList.contains("hidden")) renderChargen();
+    if(typeof renderMenu==="function") renderMenu();
+  }
+});
+setInterval(()=>{
+  try{
+    const roh = localStorage.getItem(CHFRKEY);
+    if(roh==null) return;
+    const neu = JSON.parse(roh);
+    if(JSON.stringify(neu)!==JSON.stringify(CHARGEN)){
+      CHARGEN = neu||{};
+      if(typeof renderChargen==="function" && !$("#v-chargen").classList.contains("hidden")) renderChargen();
+      if(typeof renderMenu==="function") renderMenu();
+    }
+  }catch(e){}
+}, 20000);
+
+/* ID-Bildung: <CODE>_YYYY-MM-DD_HHMM_<xxx>, chronologisch sortierbar. */
+function chargeId(code){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,"0");
+  const rnd=Math.random().toString(36).slice(2,5);
+  return code+"_"+d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())
+        +"_"+pad(d.getHours())+pad(d.getMinutes())+"_"+rnd;
+}
+
+/* Ampel-Marker: manuell/automatisch trennen. Manuell darf Auto NIE ueberschreiben. */
+function setAmpelKasse(code,status,grund,manuell){
+  try{
+    const A = LS(AMPELKEY) || {};
+    A[code] = {status:String(status), grund:(grund==null?"":String(grund)),
+               ts:Date.now(), wer:(CFG.who||CFG.name||"Kasse"), manuell:!!manuell};
+    localStorage.setItem(AMPELKEY, JSON.stringify(A));
+    AMPEL = A;
+    /* Sync-Nachricht wie im Standos-Format. */
+    chargenSync({typ:"ampel",code,status,grund:grund||"",manuell:!!manuell});
+  }catch(e){}
+}
+
+/* Ableitungsregel Chargen -> Ampel (identisch mit standos ampelAusChargen).
+   >=1 frisch-Charge mit rest > 20% -> gruen.
+   Nur karrenz oder alle rest < 20% -> gelb.
+   Keine in [frisch, karrenz] -> rot. */
+function ampelAusChargenKasse(code){
+  const alle = Object.values(CHARGEN).filter(c=>c && c.zutat_code===code);
+  const aktiv = alle.filter(c=>c.status==="frisch"||c.status==="karrenz");
+  if(!aktiv.length) return "rot";
+  const frischOK = aktiv.some(c=>{
+    if(c.status!=="frisch") return false;
+    const menge = +(c.menge_ml||c.menge_g||0);
+    const rest  = +(c.menge_rest||0);
+    return menge>0 && (rest/menge) > 0.20;
+  });
+  if(frischOK) return "gruen";
+  return "gelb";
+}
+function chargenAmpelSyncAll(){
+  Object.keys(HALTBARKEIT).forEach(code=>{
+    /* Wenn ueberhaupt keine Chargen fuer diese Zutat existieren, nichts tun —
+       sonst wuerden vor Erstanlage alle sofort auf rot geschaltet und blockieren
+       den ganzen Betrieb. */
+    const hatChargen = Object.values(CHARGEN).some(c=>c && c.zutat_code===code);
+    if(!hatChargen) return;
+    const cur = (AMPEL||{})[code];
+    if(cur && cur.manuell) return;                   /* manuell hat Vorrang */
+    const soll = ampelAusChargenKasse(code);
+    if(!cur || cur.status !== soll){
+      setAmpelKasse(code, soll, "auto: aus Chargen abgeleitet", false);
+    }
+  });
+}
+
+/* Timer: alle Status vorwaerts schalten, wenn Ablauf/Karenz erreicht,
+   danach Ampel neu ableiten. Laeuft beim Laden und alle 5 Minuten. */
+function chargenAutoStatus(){
+  const jetzt=Date.now();
+  let ver=false;
+  Object.values(CHARGEN).forEach(c=>{
+    if(!c) return;
+    if((+c.menge_rest||0)<=0 && c.status!=="entsorgen" && c.status!=="aufgebraucht"){
+      c.status="aufgebraucht"; ver=true;
+    }
+    if(c.status==="frisch" && c.ablauf_am && new Date(c.ablauf_am).getTime()<=jetzt){
+      c.status="abgelaufen_pruefen"; ver=true;
+    }
+    if(c.status==="karrenz" && c.karrenz_bis && new Date(c.karrenz_bis).getTime()<=jetzt){
+      const letzte=(c.peter_freigaben||[]).slice(-1)[0];
+      const jung = letzte && (jetzt - new Date(letzte.ts).getTime()) < 2*3600*1000;
+      if(!jung){ c.status="entsorgen"; ver=true; }
+    }
+  });
+  if(ver){ chargenSave(true); }
+  chargenAmpelSyncAll();
+  if(ver && !$("#v-chargen").classList.contains("hidden") && typeof renderChargen==="function") renderChargen();
+  if(typeof renderMenu==="function") renderMenu();
+}
+setInterval(chargenAutoStatus, 5*60*1000);
+setTimeout(chargenAutoStatus, 500);   /* nach Init einmal */
+
+/* Modal-Steuerung fuer Kasse. */
+function chModalOpen(title, bodyHtml, okHandler){
+  const m=$("#ch-modal"); if(!m) return;
+  $("#ch-modal-title").textContent = title;
+  $("#ch-modal-body").innerHTML = bodyHtml;
+  $("#ch-modal-ok").onclick = okHandler;
+  m.style.display = "flex";
+}
+function chModalClose(){ const m=$("#ch-modal"); if(m)m.style.display="none"; }
+
+/* Neue Charge anlegen — Modal-Formular. */
+function chargeNeuOeffnen(code){
+  const H = chHaltbar(code);
+  const letzte = Object.values(CHARGEN).filter(c=>c && c.zutat_code===code)
+                       .sort((a,b)=> String(b.produziert_am||"").localeCompare(String(a.produziert_am||"")))[0];
+  const defMenge = letzte ? (letzte.menge_ml||letzte.menge_g||1000) : 1000;
+  const now = new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  const isoLocal = now.toISOString().slice(0,16);
+  const wer = (CFG.who||"").toLowerCase()==="peter" ? "peter" : "lexi";
+  chModalOpen("Neue Charge " + H.name,
+    `<div class="field"><label>Menge (${H.einheit})</label>
+       <input id="ch-neu-menge" type="number" inputmode="decimal" min="1" value="${defMenge}"></div>
+     <div class="field"><label>Angesetzt am</label>
+       <input id="ch-neu-am" type="datetime-local" value="${isoLocal}"></div>
+     <div class="field"><label>Angesetzt von</label>
+       <select id="ch-neu-von">
+         <option value="lexi" ${wer==="lexi"?"selected":""}>Lexi</option>
+         <option value="peter" ${wer==="peter"?"selected":""}>Peter</option>
+         <option value="unbekannt">unbekannt</option>
+       </select></div>
+     <div class="field"><label>Notiz (optional)</label>
+       <input id="ch-neu-notiz" placeholder="z.B. aus Charge #123"></div>
+     <div class="note">Ablauf ${H.tage_frisch} Tage · Ampel geht auf 🟢</div>`,
+    ()=>{
+      const menge = +($("#ch-neu-menge").value||0);
+      if(!menge){ alert("Menge fehlt"); return; }
+      const am    = $("#ch-neu-am").value;
+      const von   = $("#ch-neu-von").value;
+      const notiz = $("#ch-neu-notiz").value.trim();
+      chargeAnlegen(code, menge, am, von, notiz);
+      chModalClose();
+    });
+}
+
+function chargeAnlegen(code, menge, produziertLocal, von, notiz){
+  const H = chHaltbar(code);
+  const prod = produziertLocal ? new Date(produziertLocal) : new Date();
+  const ablauf = new Date(prod.getTime() + H.tage_frisch*24*3600*1000);
+  const id = chargeId(code);
+  const ist_ml = (H.einheit==="ml");
+  CHARGEN[id] = {
+    zutat_code: code,
+    zutat_key: (H.name||code).toLowerCase().replace(/[^a-z0-9]+/g,"_"),
+    produziert_am: prod.toISOString(),
+    produziert_von: von||"unbekannt",
+    [ist_ml?"menge_ml":"menge_g"]: menge,
+    menge_rest: menge,
+    ablauf_am: ablauf.toISOString(),
+    haltbarkeit_tage: H.tage_frisch,
+    karrenz_bis: null,
+    status: "frisch",
+    sinnes_check: null,
+    peter_freigaben: [],
+    beleg_foto_url: null,
+    notiz: notiz||""
+  };
+  chargenSave();
+  /* Ampel auf gruen — aber via Ableitung (nicht manuell), damit spaeter der
+     Auto-Timer sie weiterschalten darf. */
+  setAmpelKasse(code, "gruen", "neue Charge angelegt", false);
+  chargenSync({typ:"charge_neu", id, code, menge, von, notiz:notiz||""});
+}
+
+function chargeAlsAufgebraucht(id){
+  const c = CHARGEN[id]; if(!c) return;
+  c.menge_rest = 0; c.status = "aufgebraucht";
+  chargenSave(); chargenAmpelSyncAll();
+  chargenSync({typ:"charge_aufgebraucht", id});
+}
+function chargeEntsorgen(id, grund){
+  const c = CHARGEN[id]; if(!c) return;
+  if(!confirm("Charge "+id+" wirklich entsorgen?")) return;
+  c.status = "entsorgen"; c.notiz = (c.notiz||"") + (grund?(" · WEG: "+grund):" · entsorgt");
+  chargenSave(); chargenAmpelSyncAll();
+  chargenSync({typ:"charge_entsorgt", id, grund:grund||""});
+}
+
+function renderChargen(){
+  const H = HALTBARKEIT;
+  const neu = $("#ch-neue"); if(!neu) return;
+  neu.innerHTML = Object.keys(H).map(code=>{
+    const nm = H[code].name;
+    return `<button class="btn" style="margin:3px 4px 3px 0" onclick="chargeNeuOeffnen('${code}')">➕ ${nm}</button>`;
+  }).join("");
+  const list = $("#ch-liste"); if(!list) return;
+  const items = Object.entries(CHARGEN)
+    .filter(([,c])=>c && c.status!=="aufgebraucht")
+    .sort((a,b)=> String(a[1].ablauf_am||"").localeCompare(String(b[1].ablauf_am||"")));
+  if(!items.length){ list.innerHTML = `<div class="note">Keine aktiven Chargen — mit „➕" oben eine anlegen.</div>`; return; }
+  const jetzt=Date.now();
+  const heutBis = new Date(); heutBis.setHours(23,59,59,999);
+  const abH = items.filter(([,c])=>c.ablauf_am && new Date(c.ablauf_am).getTime()<=heutBis.getTime() && c.status==="frisch").length;
+  const chip = st => ({frisch:"🟢 frisch",abgelaufen_pruefen:"🟠 Check nötig",karrenz:"🟡 Karenz",entsorgen:"🔴 entsorgen",aufgebraucht:"⚪ leer"})[st]||st;
+  list.innerHTML = (abH?`<div class="note" style="background:#fff3cd;padding:8px;border-radius:8px;margin-bottom:8px">⚠ ${abH} Charge${abH===1?"":"n"} läuft heute ab</div>`:"")
+   + items.map(([id,c])=>{
+    const Hz = chHaltbar(c.zutat_code);
+    const menge = +(c.menge_ml||c.menge_g||0);
+    const rest  = +(c.menge_rest||0);
+    const pct   = menge>0 ? Math.round(rest/menge*100) : 0;
+    const abl   = c.ablauf_am ? new Date(c.ablauf_am) : null;
+    const tageBis = abl ? Math.round((abl.getTime()-jetzt)/(24*3600*1000)) : "";
+    const karenz = c.karrenz_bis ? new Date(c.karrenz_bis) : null;
+    const karAb  = karenz && karenz.getTime()<=jetzt;
+    return `<div style="border:1px solid #e5e0d8;border-radius:10px;padding:10px;margin:6px 0;background:${
+        c.status==="entsorgen"?"#ffe5e5":c.status==="karrenz"?"#fffbe6":c.status==="abgelaufen_pruefen"?"#ffedd8":"#fff"}">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+        <b>${Hz.name}</b>
+        <span>${chip(c.status)}</span>
+      </div>
+      <div class="note" style="margin:4px 0">
+        ${abl?abl.toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})+" · ":""}
+        ${typeof tageBis==="number" ? (tageBis>=0?"in "+tageBis+" T":Math.abs(tageBis)+" T abgelaufen") : ""}
+        · ${c.produziert_von||""}
+      </div>
+      <div style="background:#eee;border-radius:5px;height:8px;overflow:hidden;margin:6px 0">
+        <div style="background:${pct>50?"#4caf50":pct>20?"#ffb74d":"#e57373"};width:${pct}%;height:100%"></div>
+      </div>
+      <div class="note">${rest} / ${menge} ${Hz.einheit} (${pct}%)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+        ${c.status==="abgelaufen_pruefen" ? `<button class="btn" onclick="ch4Sinne('${id}')">👃 4-Sinne-Check</button>`:""}
+        ${c.status==="karrenz" && karAb ? `<button class="btn" onclick="chPeterFragen('${id}')">📱 Peter fragen</button>`:""}
+        ${c.status!=="entsorgen" ? `<button class="btn" onclick="chargeAlsAufgebraucht('${id}')">🥛 als aufgebraucht</button>`:""}
+        ${c.status!=="entsorgen" ? `<button class="btn red" onclick="chargeEntsorgen('${id}','manuell')">🗑 entsorgen</button>`:""}
+      </div>
+      ${c.notiz?`<div class="note" style="margin-top:6px">${c.notiz.replace(/</g,"&lt;")}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+/* 4-Sinne-Check Modal. */
+function ch4Sinne(id){
+  const c = CHARGEN[id]; if(!c) return;
+  const sinne = [
+    ["nase","👃 Nase","neutral, nussig — NICHT: sauer, hefig, fermentiert"],
+    ["auge","👁 Auge","homogen, milchig — NICHT: Klümpchen, rosa/gelb"],
+    ["zunge","👅 Zunge","leicht süß/nussig — NICHT: Kribbeln, säuerlich"],
+    ["ohr","👂 Physik","still — NICHT: Gasbläschen, Zisch beim Öffnen"]
+  ];
+  chModalOpen("4-Sinne-Check — "+chHaltbar(c.zutat_code).name,
+    sinne.map(([k,l,d])=>`
+      <div class="field">
+        <label>${l}</label>
+        <div class="note" style="margin:-2px 0 4px">${d}</div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="btn" data-ss="${k}" data-v="1" style="flex:1">✅ bestanden</button>
+          <button type="button" class="btn red" data-ss="${k}" data-v="0" style="flex:1">❌ durchgefallen</button>
+        </div>
+      </div>`).join("") + `<div id="ch-sinne-status" class="note"></div>`,
+    ()=>{
+      const check = c.sinnes_check || {};
+      const alle = sinne.every(([k])=> check[k]===true);
+      const einNein = sinne.some(([k])=> check[k]===false);
+      if(!alle && !einNein){ alert("Bitte alle 4 Sinne bewerten"); return; }
+      check.ts = Date.now();
+      c.sinnes_check = check;
+      if(einNein){
+        c.status = "entsorgen";
+        chargenSync({typ:"charge_entsorgt", id, grund:"4-sinne durchgefallen"});
+      }else{
+        c.status = "karrenz";
+        c.karrenz_bis = new Date(Date.now()+24*3600*1000).toISOString();
+        chargenSync({typ:"charge_karrenz", id, stunden:24});
+      }
+      chargenSave(); chargenAmpelSyncAll();
+      chModalClose();
+    });
+  /* Buttons an den lokalen Zustand des Modals binden. */
+  setTimeout(()=>{
+    document.querySelectorAll("#ch-modal-body [data-ss]").forEach(b=>b.onclick=()=>{
+      c.sinnes_check = c.sinnes_check || {};
+      c.sinnes_check[b.dataset.ss] = (b.dataset.v==="1");
+      document.querySelectorAll(`#ch-modal-body [data-ss="${b.dataset.ss}"]`)
+        .forEach(x=>x.classList.toggle("on", x===b));
+      const st = c.sinnes_check;
+      const done = ["nase","auge","zunge","ohr"].every(k=>k in st);
+      const ok   = ["nase","auge","zunge","ohr"].every(k=>st[k]===true);
+      const s = $("#ch-sinne-status");
+      if(s) s.textContent = !done ? "" : ok ? "→ Alle 4 ✅ · Karenz +24h" : "→ Mind. 1 ❌ · sofort entsorgen";
+    });
+  },0);
+}
+
+/* Karenz-Verlaengerung („zweite Nase") — Peter-Freigabe. */
+function chPeterFragen(id){
+  const c = CHARGEN[id]; if(!c) return;
+  const H = chHaltbar(c.zutat_code);
+  chargenSync({typ:"karrenz_frage", charge_id:id, zutat:H.name});
+  chModalOpen("Peter fragen — "+H.name,
+    `<div class="note">Karenz von ${H.name} abgelaufen. Freigabe?</div>
+     <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+       <button type="button" class="btn green" data-freigabe="24">OK +24h (weiter nutzen)</button>
+       <button type="button" class="btn green" data-freigabe="48">OK +48h</button>
+       <button type="button" class="btn red"   data-freigabe="0">WEG (entsorgen)</button>
+     </div>
+     <div class="note" style="margin-top:8px">Frage geht via CFG.sync raus — Peter kann von unterwegs antworten (Make-Szenario 2).</div>`,
+    ()=>chModalClose());
+  setTimeout(()=>{
+    document.querySelectorAll("#ch-modal-body [data-freigabe]").forEach(b=>b.onclick=()=>{
+      const h = +b.dataset.freigabe;
+      const eintrag = {ts:Date.now(), entscheidung: h?("ok+"+h+"h"):"weg", karrenz_stunden:h};
+      c.peter_freigaben = c.peter_freigaben || [];
+      c.peter_freigaben.push(eintrag);
+      if(h===0){
+        c.status = "entsorgen";
+      }else{
+        c.status = "karrenz";
+        c.karrenz_bis = new Date(Date.now() + h*3600*1000).toISOString();
+      }
+      chargenSave(); chargenAmpelSyncAll();
+      chargenSync({typ:"karrenz_antwort", charge_id:id, entscheidung:eintrag.entscheidung});
+      chModalClose();
+    });
+  },0);
+}
+/* --- CHARGEN: ENDE --- */
 /* KEIN SCHREIBEN AUS EINER TESTUMGEBUNG.
    Am 30.08.2026 haben zwei Tests auf localhost den Kakao im ECHTEN
    gemeinsamen Speicher auf 0 gesetzt — der Server nimmt jeden POST an, und
@@ -5358,13 +5803,17 @@ function setLang(l){
 }
 
 function tab(tb){
-  ["kasse","kunde","tag","setup"].forEach(x=>{
-    $("#v-"+x).classList.toggle("hidden",x!==tb);
-    document.querySelector('.tab[data-t="'+x+'"]').classList.toggle("on",x===tb);
+  /* CHARGEN: chargen zur Liste hinzugefuegt */
+  ["kasse","kunde","tag","chargen","setup"].forEach(x=>{
+    const sec=$("#v-"+x); if(sec)sec.classList.toggle("hidden",x!==tb);
+    const tb0=document.querySelector('.tab[data-t="'+x+'"]'); if(tb0)tb0.classList.toggle("on",x===tb);
   });
   if(tb==="kunde")renderCustomers();
   if(tb==="tag")renderDay();
   if(tb==="setup")fillSetup();
+  /* --- CHARGEN: START --- */
+  if(tb==="chargen" && typeof renderChargen==="function") renderChargen();
+  /* --- CHARGEN: ENDE --- */
 }
 
 /* =================== MENÜ / BESTELLUNG =================== */
@@ -5430,6 +5879,23 @@ function machbar(m, g){
   return {ok: fehlt.length===0, fehlt: fehlt};
 }
 
+/* --- AMPEL: START --- */
+/* Berechnet den Ampel-Zustand fuer einen Becher aus seinen Zutaten-Codes.
+   Verpackung zaehlt bewusst NICHT mit — ein roter Sticker sperrt keinen Smoothie.
+   Reihenfolge: rot > gelb > gruen (eine einzige rote Zutat sperrt den Becher). */
+function ampelStateOfBecher(zutaten){
+  const rot=[], gelb=[];
+  (zutaten||[]).forEach(c=>{
+    if(!c || VERPACKUNG_CODES.indexOf(c)>=0) return;
+    const st = ((AMPEL||{})[c]||{}).status;
+    if(st==="rot")       rot .push({code:c, de:(ZUTATNAME[c]||c)});
+    else if(st==="gelb") gelb.push({code:c, de:(ZUTATNAME[c]||c)});
+  });
+  const status = rot.length ? "rot" : (gelb.length ? "gelb" : "gruen");
+  return {status, roteListe:rot, gelbeListe:gelb};
+}
+/* --- AMPEL: ENDE --- */
+
 function renderMenu(){
   const leiste=$("#groessenleiste");
   if(leiste)leiste.innerHTML=
@@ -5447,11 +5913,27 @@ function renderMenu(){
        gesperrt, nicht versteckt: Lexi soll SEHEN, dass es den Becher gibt
        und warum er gerade nicht geht — sonst sucht sie ihn und fragt Peter. */
     const mb=machbar(m);
+    /* --- AMPEL: START --- */
+    const _zutList = Object.keys((d && d.abzug)||{});
+    const _A       = ampelStateOfBecher(_zutList);
+    const _rot     = _A.status==="rot";
+    const _gelb    = _A.status==="gelb";
+    const _klick   = mb.ok && !_rot;
+    const _clsExtra= (!mb.ok?" aus":"") + (_rot?" a-rot":"") + (_gelb?" a-gelb":"");
+    const _titel   = _rot
+      ? ((LANG==="th"?"ไม่พร้อม: ":LANG==="en"?"Not available: ":"Nicht verfügbar: ")
+         + _A.roteListe.map(x=>x.de).join(", "))
+      : (!mb.ok
+          ? mb.fehlt.map(f=>(ZUTATNAME[f.code]||f.code)+" −"+f.fehlt+" "+(EINHEIT[f.code]||"g")).join(" · ")
+          : "");
+    /* --- AMPEL: ENDE --- */
     return `
-    <button class="item${mb.ok?"":" aus"}" ${mb.ok?`onclick="add('${m.nr}')"`:`disabled title="${
-      mb.fehlt.map(f=>(ZUTATNAME[f.code]||f.code)+" −"+f.fehlt+" "+(EINHEIT[f.code]||"g")).join(" · ").replace(/"/g,"'")}"`}>
+    <button class="item${_clsExtra}" ${_klick?`onclick="add('${m.nr}')"`:`disabled title="${_titel.replace(/"/g,"'")}"`}>
       ${mb.ok?"":`<div class="ausband">${
         LANG==="th"?"หมด":LANG==="en"?"SOLD OUT":"AUSVERKAUFT"}</div>`}
+      ${/* --- AMPEL: START --- */ _gelb?`<span class="a-warn" title="${
+        (LANG==="th"?"ระวัง: ":LANG==="en"?"Caution: ":"Achtung: ")+_A.gelbeListe.map(x=>x.de).join(", ")
+        }">!</span>`:"" /* --- AMPEL: ENDE --- */}
       <div class="bar" style="background:${FARBE(m.nr)}"></div>
       <div class="nr">${t('no')} ${m.nr}${m.bestaetigt?' <span class="stern">★</span>':''}</div>
       <div class="nm">${mName(m)}</div>
@@ -5473,6 +5955,9 @@ function renderMenu(){
           GROESSE==="22" ? ` · XXL +${xxlAufpreis(preisVon(m,"16"))} ฿` : ""}</div>
         <div class="db ${db<=0?"warn":""}">DB ${Math.round(db)} ฿${unsicher?` <span class="prov" title="${unsicher} Zutaten ohne Preis">~</span>`:""}</div>
       </div></div>
+      ${/* --- AMPEL: START --- */ _rot?`<div class="a-overlay">⚠ ${
+        LANG==="th"?"ไม่พร้อม":LANG==="en"?"not available":"nicht verfügbar"}: ${
+        _A.roteListe.map(x=>x.de).join(", ")}</div>`:"" /* --- AMPEL: ENDE --- */}
     </button>`;}).join("");
 }
 /* Farben blieben frueher im Menue stehen; jetzt aus der Nummer abgeleitet,
@@ -5982,8 +6467,18 @@ window.addEventListener("online",()=>sendeWarteschlange());
 setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },120000);
 </script>
 
-<div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-09-05 01:55</div>
+<!-- Build-Stempel. Frueher stand hier ein handgeschriebenes Datum, das bei
+     keinem Deploy mitwanderte. Es zeigte monatelang 30.08. an, waehrend die
+     App laengst neuer war -- und hat eine halbtaegige Cache-Suche ausgeloest.
+     Jetzt traegt ihn das Skript unten aus BUILD ein, das bei jedem Deploy
+     mitgesetzt wird. -->
+<div id="buildstempel" style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888"></div>
+<script>
+  window.__BUILD = "2026-09-03 13:39";
+  (function(){ var el = document.getElementById("buildstempel");
+    if (el) el.textContent = "v" + window.__BUILD; })();
+</script>
 
 <script>
 (function(){
@@ -5997,5 +6492,8 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
     navigator.serviceWorker.register("./sw-os.js").then(function(r){r.update()}).catch(function(){});
 })();
 </script>
+<script src="claude-button.js" defer></script>
+<script src="wareneingang-button.js" defer></script>
+<script src="firebase-sync.js" defer></script>
 </body>
 </html>

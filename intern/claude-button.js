@@ -1,0 +1,1596 @@
+/*!
+ * 100blend – Claude-Button MVP
+ * Drop-in Widget: schwebender Button unten rechts, oeffnet Modal fuer
+ * Foto/Sprache/Text-Meldungen; sendet an Webhook (Make.com) oder puffert
+ * offline in localStorage; DE/TH bilingual. Reines Vanilla-JS, keine Deps.
+ *
+ * Einbindung:   <script src="claude-button.js" defer></script>
+ * Konfiguration im Browser:
+ *   localStorage.claude_webhook_url  = "https://hook.eu2.make.com/..."
+ *   localStorage.who                 = "peter" | "lexi"
+ * Kontext optional pro Seite:
+ *   window.__CLAUDE_CTX = { zutat: "sonnenblumenkerne", charge: "…" };
+ */
+(function () {
+  'use strict';
+  if (window.__claudeButtonLoaded) return;   // Doppel-Laden verhindern
+  window.__claudeButtonLoaded = true;
+
+  // ---------- Sprache ermitteln ----------
+  // Widget kennt DE + TH. Peter ist am Stand der einzige DE-Sprecher.
+  // Der 'Peter'-Status kann an drei Stellen stehen (unterschiedliche Apps
+  // pflegen unterschiedliche Storage-Keys):
+  //   1) kb_cfg.who  in Kasse
+  //   2) S.cfg.who   in blend_os_v1 (Standos-App)
+  //   3) localStorage.who  (vom Widget selbst gesetzt)
+  //   4) kb_cfg.lang beginnt mit 'de' (Kasse-Spracheinstellung)
+  // Wenn eins davon eindeutig 'peter'/'de' sagt -> Deutsch. Sonst Thai
+  // (Standard am Stand; Lexis 'en' fiel vorher irrtuemlich auf Deutsch).
+  function isPeter() {
+    function whoIs(v){ return typeof v === 'string' && v.toLowerCase().indexOf('peter') === 0; }
+    function langIsDE(v){ return typeof v === 'string' && v.toLowerCase().indexOf('de') === 0; }
+    try {
+      var raw = localStorage.getItem('kb_cfg');
+      if (raw) {
+        var cfg = JSON.parse(raw);
+        if (cfg) {
+          if (whoIs(cfg.who))   return true;
+          if (langIsDE(cfg.lang)) return true;
+        }
+      }
+    } catch (_) {}
+    try {
+      var os = localStorage.getItem('blend_os_v1');
+      if (os) {
+        var s = JSON.parse(os);
+        if (s && s.cfg && whoIs(s.cfg.who)) return true;
+      }
+    } catch (_) {}
+    try { if (whoIs(localStorage.getItem('who'))) return true; } catch (_) {}
+    return false;
+  }
+  function isThai() {
+    // 1) Explizite Wahl im Zahnrad gewinnt immer -- keine Heuristik, die
+    //    danebenliegen kann.
+    try {
+      var forced = localStorage.getItem('claude_lang');
+      if (forced === 'de') return false;
+      if (forced === 'th') return true;
+    } catch (_) {}
+    // 2) Sonst: automatische Erkennung (Peter -> Deutsch, alle anderen Thai).
+    if (isPeter()) return false;
+    try { if (localStorage.getItem('kb_lang_th') === '1') return true; } catch (_) {}
+    return true; // Default am Stand
+  }
+
+  // ---------- FAB ueber die fixe Bottom-Nav heben ----------
+  // standos.html, kasse.html und rezepte.html haben eine <nav>, die unten
+  // festgeklebt sitzt. Der FAB an bottom:16px verdeckte deren letzte 1-2
+  // Buttons (Rezepte/Auswertung). Diese Funktion misst die tatsaechliche
+  // Nav-Hoehe und schiebt den FAB drueber (plus 12px Luft). Wenn keine
+  // fixe Nav da ist, bleibt der FAB bei 16px.
+  function positionFabAboveNav() {
+    if (!fab) return;
+    var nav = document.querySelector('nav');
+    var below = 16;
+    if (nav) {
+      var cs = window.getComputedStyle(nav);
+      if (cs.position === 'fixed' && parseFloat(cs.bottom) < 5) {
+        below = nav.getBoundingClientRect().height + 12;
+      }
+    }
+    fab.style.bottom = below + 'px';
+  }
+
+  var T = {
+    de: {
+      btn: '🤖 Claude',
+      title: '🤖 Claude — was möchtest du korrigieren oder melden?',
+      page: 'Seite',
+      context: 'Kontext',
+      time: 'Zeit',
+      photo: '📸 Foto',
+      shot: '🖼 Screenshot',
+      mic_start: '🎤 Sprechen',
+      mic_stop: '⏹ Stopp',
+      placeholder: 'Was ist zu tun? Sprich einfach frei — z.B. „Preis der Sonnenblumenkerne war 169 für 2 kg, nicht pro kg"',
+      send: '✅ Senden',
+      cancel: 'Abbrechen',
+      settings: '⚙',
+      ask_webhook: 'Noch keine Webhook-URL auf diesem Gerät.\n\nMake.com-URL hier einfügen:',
+      lang_label: 'Sprache · ภาษา:',
+      webhook_label: 'Webhook-URL (Make.com):',
+      who_label: 'Benutzername:',
+      we_webhook_label: 'Wareneingang-Webhook (separat, optional):',
+      fb_cfg_label: 'Firebase Config (JSON, optional):',
+      save: 'Speichern',
+      close: 'Schließen',
+      ok_sent: '✅ Gesendet — Claude bearbeitet gleich.',
+      err_queued: '⚠ Nicht gesendet — bleibt in Warteschlange',
+      no_webhook: 'Kein Webhook konfiguriert. Nachricht wird als Datei angeboten.',
+      download: '⬇ Payload herunterladen',
+      queue_hint: 'in Warteschlange',
+      speech_unsupported: 'Spracheingabe wird von diesem Browser nicht unterstützt.',
+      /* --- POSTKORB: START --- */
+      inbox: '📬 Postkorb',
+      inbox_title: '📬 Postkorb',
+      inbox_empty: 'Noch nichts gesendet.',
+      inbox_all: 'Alle',
+      inbox_unread: 'Ungelesen',
+      inbox_error: 'Fehler',
+      status_queue: 'in Warteschlange',
+      status_sent: 'gesendet',
+      status_answered: 'Antwort da',
+      status_error: 'Fehler',
+      answer_from: 'Antwort',
+      reply_ph: 'Antworten…',
+      reply_send: 'Antwort senden',
+      reply_hint: 'Claude kennt den bisherigen Verlauf dieses Themas.',
+      thread_you: 'Du',
+      ago_now: 'gerade eben',
+      ago_sec: 'vor %s Sek.',
+      ago_min: 'vor %s Min.',
+      ago_hour: 'vor %s Std.',
+      ago_day: 'vor %s Tg.',
+      sent_label: 'Gesendet:',
+      photo_label: 'Foto:'
+      /* --- POSTKORB: ENDE --- */
+    },
+    th: {
+      btn: '🤖 Claude',
+      title: '🤖 Claude — คุณต้องการแก้ไขหรือแจ้งอะไร?',
+      page: 'หน้า',
+      context: 'บริบท',
+      time: 'เวลา',
+      photo: '📸 ถ่ายรูป',
+      shot: '🖼 ภาพหน้าจอ',
+      mic_start: '🎤 พูด',
+      mic_stop: '⏹ หยุด',
+      placeholder: 'ต้องการทำอะไร? พูดได้เลย เช่น „ราคาเมล็ดทานตะวัน 169 บาท ต่อ 2 กก. ไม่ใช่ต่อ กก."',
+      send: '✅ ส่ง',
+      cancel: 'ยกเลิก',
+      settings: '⚙',
+      ask_webhook: 'ยังไม่มี Webhook URL บนเครื่องนี้\n\nวาง URL ของ Make.com ที่นี่:',
+      lang_label: 'ภาษา · Sprache:',
+      webhook_label: 'Webhook URL (Make.com):',
+      who_label: 'ชื่อผู้ใช้:',
+      we_webhook_label: 'Webhook รับสินค้า (แยก, ไม่บังคับ):',
+      fb_cfg_label: 'Firebase Config (JSON, ไม่บังคับ):',
+      save: 'บันทึก',
+      close: 'ปิด',
+      ok_sent: '✅ ส่งแล้ว — Claude กำลังดำเนินการ',
+      err_queued: '⚠ ส่งไม่สำเร็จ — เก็บไว้ในคิว',
+      no_webhook: 'ยังไม่ได้ตั้งค่า webhook — จะให้ดาวน์โหลดเป็นไฟล์แทน',
+      download: '⬇ ดาวน์โหลดข้อมูล',
+      queue_hint: 'ในคิว',
+      speech_unsupported: 'เบราว์เซอร์นี้ไม่รองรับการพูด',
+      /* --- POSTKORB: START --- */
+      inbox: '📬 กล่องข้อความ',
+      inbox_title: '📬 กล่องข้อความ',
+      inbox_empty: 'ยังไม่ได้ส่งอะไร',
+      inbox_all: 'ทั้งหมด',
+      inbox_unread: 'ยังไม่อ่าน',
+      inbox_error: 'ข้อผิดพลาด',
+      status_queue: 'ในคิว',
+      status_sent: 'ส่งแล้ว',
+      status_answered: 'มีคำตอบ',
+      status_error: 'ข้อผิดพลาด',
+      answer_from: 'คำตอบ',
+      reply_ph: 'ตอบกลับ…',
+      reply_send: 'ส่งคำตอบ',
+      reply_hint: 'Claude เห็นบทสนทนาก่อนหน้าของหัวข้อนี้',
+      thread_you: 'คุณ',
+      ago_now: 'เมื่อสักครู่',
+      ago_sec: '%s วินาทีที่แล้ว',
+      ago_min: '%s นาทีที่แล้ว',
+      ago_hour: '%s ชม.ที่แล้ว',
+      ago_day: '%s วันที่แล้ว',
+      sent_label: 'ที่ส่ง:',
+      photo_label: 'รูป:'
+      /* --- POSTKORB: ENDE --- */
+    }
+  };
+  function tr() { return isThai() ? T.th : T.de; }
+
+  // ---------- CSS injizieren ----------
+  var css = '' +
+  '.cbtn-fab{position:fixed;right:16px;bottom:16px;width:56px;height:56px;border-radius:50%;' +
+    'background:#0aa367;color:#fff;border:0;font-size:22px;line-height:56px;text-align:center;' +
+    'box-shadow:0 4px 14px rgba(0,0,0,.28);cursor:pointer;z-index:9999;padding:0;' +
+    'font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;transition:background .15s;}' +
+  '.cbtn-fab:hover{background:#0dbf7a;}' +
+  '.cbtn-fab:active{transform:scale(.96);}' +
+  '.cbtn-badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;' +
+    'border-radius:10px;background:#e63946;color:#fff;font-size:12px;line-height:20px;' +
+    'font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.3);}' +
+  '.cbtn-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:none;' +
+    'align-items:flex-end;justify-content:center;}' +
+  '.cbtn-overlay.open{display:flex;}' +
+  '.cbtn-modal{background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;' +
+    'padding:16px;box-sizing:border-box;max-height:92vh;overflow-y:auto;' +
+    'font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#222;}' +
+  '@media(min-width:600px){.cbtn-overlay{align-items:center;}' +
+    '.cbtn-modal{border-radius:16px;}}' +
+  '.cbtn-h{font-size:17px;font-weight:600;margin:0 0 8px;line-height:1.3;}' +
+  '.cbtn-ctx{font-size:12px;color:#666;margin:0 0 12px;line-height:1.4;}' +
+  '.cbtn-ctx b{color:#333;}' +
+  '.cbtn-ta{width:100%;min-height:110px;box-sizing:border-box;padding:10px;font-size:15px;' +
+    'border:1px solid #ccc;border-radius:8px;resize:vertical;font-family:inherit;}' +
+  '.cbtn-ta:focus{outline:2px solid #0aa367;border-color:#0aa367;}' +
+  '.cbtn-row{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;}' +
+  '.cbtn-b{flex:1;min-width:110px;padding:10px 12px;border-radius:8px;border:1px solid #ccc;' +
+    'background:#f5f5f5;font-size:14px;cursor:pointer;font-family:inherit;color:#222;}' +
+  '.cbtn-b:hover{background:#eaeaea;}' +
+  '.cbtn-b[disabled]{opacity:.5;cursor:not-allowed;}' +
+  '.cbtn-b.primary{background:#0aa367;color:#fff;border-color:#0aa367;font-weight:600;}' +
+  '.cbtn-b.primary:hover{background:#0dbf7a;}' +
+  '.cbtn-b.rec{background:#e63946;color:#fff;border-color:#e63946;}' +
+  '.cbtn-prev{margin:8px 0;display:none;position:relative;}' +
+  '.cbtn-prev img{max-width:100%;max-height:200px;border-radius:8px;display:block;}' +
+  '.cbtn-prev button{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;' +
+    'border:0;width:28px;height:28px;border-radius:14px;font-size:16px;cursor:pointer;}' +
+  '.cbtn-set{border-top:1px solid #eee;margin-top:12px;padding-top:12px;display:none;}' +
+  '.cbtn-set.open{display:block;}' +
+  '.cbtn-set label{display:block;font-size:13px;margin:6px 0 3px;color:#444;}' +
+  '.cbtn-set select{width:100%;box-sizing:border-box;padding:8px;font-size:14px;' +
+    'border:1px solid #ccc;border-radius:6px;background:#fff;color:#222;}' +
+  '.cbtn-set input,.cbtn-set textarea{width:100%;box-sizing:border-box;padding:8px;font-size:14px;' +
+    'border:1px solid #ccc;border-radius:6px;font-family:inherit;background:#fff;color:#222;}' +
+  '.cbtn-set textarea{min-height:70px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;resize:vertical;}' +
+  '.cbtn-gear{background:transparent;border:0;font-size:18px;cursor:pointer;color:#888;' +
+    'padding:4px 8px;float:right;}' +
+  '.cbtn-gear:hover{color:#0aa367;}' +
+  '.cbtn-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);' +
+    'background:#333;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;' +
+    'box-shadow:0 4px 14px rgba(0,0,0,.3);z-index:10001;max-width:90%;text-align:center;' +
+    'font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;opacity:0;' +
+    'transition:opacity .25s;pointer-events:none;}' +
+  '.cbtn-toast.show{opacity:1;}' +
+  '.cbtn-toast.ok{background:#0aa367;}' +
+  '.cbtn-toast.warn{background:#e6a23c;}' +
+  /* --- POSTKORB: START --- */
+  '.cbtn-badge-unread{position:absolute;top:-4px;left:-4px;min-width:20px;height:20px;padding:0 5px;' +
+    'border-radius:10px;background:#0aa367;color:#fff;font-size:12px;line-height:20px;' +
+    'font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.3);}' +
+  '.cbtn-inbox-btn{background:transparent;border:0;font-size:18px;cursor:pointer;color:#888;' +
+    'padding:4px 8px;float:right;position:relative;}' +
+  '.cbtn-inbox-btn:hover{color:#0aa367;}' +
+  '.cbtn-inbox-btn .cbtn-pill{position:absolute;top:-2px;right:-2px;background:#e63946;color:#fff;' +
+    'font-size:10px;line-height:1;padding:2px 5px;border-radius:8px;font-weight:700;}' +
+  '.cbtn-inbox-view{display:none;}' +
+  '.cbtn-inbox-view.open{display:block;}' +
+  '.cbtn-inbox-header{display:flex;align-items:center;gap:8px;margin:0 0 10px;}' +
+  '.cbtn-inbox-header h3{flex:1;margin:0;font-size:17px;font-weight:600;}' +
+  '.cbtn-inbox-header button{background:transparent;border:0;color:#888;font-size:15px;cursor:pointer;padding:4px 8px;}' +
+  '.cbtn-inbox-header button:hover{color:#0aa367;}' +
+  '.cbtn-chips{display:flex;gap:6px;margin:0 0 10px;flex-wrap:wrap;}' +
+  '.cbtn-chip{background:#f0f0f0;border:1px solid #ddd;padding:5px 12px;border-radius:16px;font-size:13px;cursor:pointer;color:#444;font-family:inherit;}' +
+  '.cbtn-chip.active{background:#0aa367;color:#fff;border-color:#0aa367;}' +
+  '.cbtn-inbox-list{max-height:400px;overflow-y:auto;border-top:1px solid #eee;}' +
+  '.cbtn-inbox-item{display:block;padding:10px 6px;border-bottom:1px solid #eee;cursor:pointer;background:#fff;}' +
+  '.cbtn-inbox-item:hover{background:#f7f9f7;}' +
+  '.cbtn-inbox-item.unread{background:#eefaf3;}' +
+  '.cbtn-inbox-item-row{display:flex;gap:8px;align-items:flex-start;}' +
+  '.cbtn-inbox-item-thumb{width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#eee;}' +
+  '.cbtn-inbox-item-body{flex:1;min-width:0;}' +
+  '.cbtn-inbox-item-meta{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#888;margin-bottom:2px;}' +
+  '.cbtn-inbox-item-text{font-size:13px;color:#222;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}' +
+  '.cbtn-inbox-status{display:inline-block;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600;text-transform:none;}' +
+  '.cbtn-inbox-status.queue{background:#fff3d6;color:#8a6100;}' +
+  '.cbtn-inbox-status.sent{background:#e0e8ff;color:#3a4c8c;}' +
+  '.cbtn-inbox-status.answered{background:#d4f0dc;color:#0a6b3f;}' +
+  '.cbtn-inbox-status.error{background:#fdd;color:#a11;}' +
+  '.cbtn-inbox-answer{margin-top:6px;background:#e8f7ee;border-left:3px solid #0aa367;padding:6px 8px;border-radius:4px;font-size:13px;color:#0a4d2a;line-height:1.4;}' +
+  '.cbtn-inbox-answer.warn{background:#fff8e1;border-left-color:#e6a23c;color:#7a5300;}' +
+  '.cbtn-inbox-answer.error{background:#fdecec;border-left-color:#e63946;color:#8a1a22;}' +
+  '.cbtn-inbox-empty{padding:32px 12px;text-align:center;color:#999;font-size:14px;}' +
+  /* Antwortfeld unter dem Verlauf. Klebt am unteren Rand, damit man bei
+     langen Faeden nicht erst ans Ende scrollen muss, um zu antworten. */
+  '.cbtn-reply{position:sticky;bottom:0;margin-top:14px;padding-top:10px;' +
+    'border-top:1px solid #e5e5e5;background:#fff;}' +
+  '.cbtn-reply-ta{width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px;' +
+    'padding:8px 10px;font:14px/1.4 system-ui,-apple-system,sans-serif;resize:vertical;}' +
+  '.cbtn-reply-ta:focus{outline:none;border-color:#0aa367;}' +
+  '.cbtn-reply-row{display:flex;align-items:center;gap:10px;margin-top:6px;}' +
+  '.cbtn-reply-hint{flex:1;font-size:11px;color:#888;line-height:1.3;}' +
+  '.cbtn-inbox-detail{padding:6px 0;}' +
+  '.cbtn-inbox-detail .lab{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:10px;}' +
+  '.cbtn-inbox-detail .val{font-size:14px;color:#222;line-height:1.45;white-space:pre-wrap;word-break:break-word;}' +
+  '.cbtn-inbox-detail img{max-width:100%;max-height:260px;border-radius:8px;display:block;margin-top:6px;}';
+  /* --- POSTKORB: ENDE --- */
+  var st = document.createElement('style');
+  st.setAttribute('data-cbtn', '1');
+  st.appendChild(document.createTextNode(css));
+  document.head.appendChild(st);
+
+  // ---------- Hilfen ----------
+  function q(k){ try{return localStorage.getItem(k);}catch(_){return null;} }
+  function qs(k,v){ try{localStorage.setItem(k,v);}catch(_){ } }
+  function getUser(){
+    var w = q('who');
+    if (w) return w;
+    try {
+      var raw = q('kb_cfg');
+      if (raw) { var o = JSON.parse(raw); if (o && o.who) return String(o.who); }
+    } catch(_) {}
+    return 'unbekannt';
+  }
+  function getQueue(){
+    try { var a = JSON.parse(q('claude_queue')||'[]'); return Array.isArray(a)?a:[]; }
+    catch(_) { return []; }
+  }
+  function setQueue(a){ qs('claude_queue', JSON.stringify(a)); }
+  function pageName(){
+    var p = (location.pathname.split('/').pop()||'').replace(/\?.*$/,'');
+    return p || 'index';
+  }
+  /* Was Claude von der Seite mitbekommt.
+   *
+   * Peter, 03.09.2026: "Warum hat Claude auf dem Handy Rezept 13 nicht
+   * gefunden?" -- weil ihm niemand gesagt hat, welche Rezepte es gibt.
+   * `window.__CLAUDE_CTX` war vorgesehen, aber KEINE Seite hat es je gesetzt
+   * (`grep __CLAUDE_CTX intern/*.html` fand nichts). Claude bekam also nur den
+   * Dateinamen der Seite und den Satz -- und hat aus dem Nichts geantwortet.
+   *
+   * Jetzt darf eine Seite zusaetzlich `window.__CLAUDE_CTX_FN` setzen: eine
+   * Funktion, die bei JEDEM Senden frisch aufgerufen wird. Nur so ist der
+   * Kontext aktuell (offenes Rezept, aktuelle Ampel), statt einmal beim Laden
+   * eingefroren. */
+  function ctxText(){
+    var out = [];
+    var quellen = [];
+    if (window.__CLAUDE_CTX && typeof window.__CLAUDE_CTX === 'object')
+      quellen.push(window.__CLAUDE_CTX);
+    if (typeof window.__CLAUDE_CTX_FN === 'function') {
+      try { var d = window.__CLAUDE_CTX_FN(); if (d && typeof d === 'object') quellen.push(d); }
+      catch (_) {}   // eine kaputte Seite darf das Senden nicht verhindern
+    }
+    for (var qi = 0; qi < quellen.length; qi++) {
+      var o = quellen[qi];
+      for (var k in o) if (o[k] != null && o[k] !== '') out.push(k + ': ' + o[k]);
+    }
+    if (location.hash) out.push('hash: ' + decodeURIComponent(location.hash.slice(1)));
+    return out.join('\n');
+  }
+  function readFileAsDataURL(f){
+    return new Promise(function(res, rej){
+      var r = new FileReader();
+      r.onload = function(){ res(r.result); };
+      r.onerror = function(){ rej(r.error); };
+      r.readAsDataURL(f);
+    });
+  }
+
+  /* --- POSTKORB: START --- */
+  var INBOX_KEY    = 'claude_inbox_v1';
+  var ANSWERS_KEY  = 'claude_answers_v1';
+  var INBOX_MAX    = 30;
+
+  function getInbox(){
+    try { var a = JSON.parse(q(INBOX_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+    catch(_) { return []; }
+  }
+  function setInbox(a){
+    // FIFO: aeltester rausschieben, wenn > MAX
+    while (a.length > INBOX_MAX) a.shift();
+    qs(INBOX_KEY, JSON.stringify(a));
+  }
+  function getAnswers(){
+    try { var o = JSON.parse(q(ANSWERS_KEY) || '{}'); return (o && typeof o === 'object') ? o : {}; }
+    catch(_) { return {}; }
+  }
+  function makeMsgId(){
+    return 'msg_' + Date.now() + '_' + Math.random().toString(36).slice(2,5);
+  }
+  // ISO mit lokalem +HH:MM Offset (statt UTC 'Z')
+  function isoLocal(){
+    var d = new Date();
+    var pad = function(n){ n = Math.abs(n); return (n<10?'0':'') + n; };
+    var off = -d.getTimezoneOffset();
+    var sign = off >= 0 ? '+' : '-';
+    var hh = pad(Math.floor(Math.abs(off)/60));
+    var mm = pad(Math.abs(off)%60);
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
+           'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) +
+           sign + hh + ':' + mm;
+  }
+  // Thumbnail max 200x200, JPEG
+  function makeThumb(dataUrl){
+    return new Promise(function(res){
+      if (!dataUrl) return res(null);
+      try {
+        var img = new Image();
+        img.onload = function(){
+          var w = img.naturalWidth, h = img.naturalHeight;
+          if (!w || !h) return res(null);
+          var max = 200;
+          var scale = Math.min(1, max / Math.max(w, h));
+          var nw = Math.max(1, Math.round(w * scale));
+          var nh = Math.max(1, Math.round(h * scale));
+          var c = document.createElement('canvas');
+          c.width = nw; c.height = nh;
+          var ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, nw, nh);
+          try { res(c.toDataURL('image/jpeg', 0.7)); }
+          catch(_) { res(null); }
+        };
+        img.onerror = function(){ res(null); };
+        img.src = dataUrl;
+      } catch(_) { res(null); }
+    });
+  }
+  function relTime(iso){
+    var t = tr();
+    var then = Date.parse(iso);
+    if (!then) return '';
+    var sec = Math.max(0, Math.floor((Date.now() - then) / 1000));
+    if (sec < 10)   return t.ago_now;
+    if (sec < 60)   return t.ago_sec.replace('%s', sec);
+    var min = Math.floor(sec / 60);
+    if (min < 60)   return t.ago_min.replace('%s', min);
+    var hr = Math.floor(min / 60);
+    if (hr < 24)    return t.ago_hour.replace('%s', hr);
+    var d = Math.floor(hr / 24);
+    return t.ago_day.replace('%s', d);
+  }
+  /* --- POSTKORB: ENDE --- */
+
+  // ---------- Widget aufbauen ----------
+  var fab, badge, overlay, modal, ta, cameraIn, shotIn, prev, prevImg, sendBtn, micBtn;
+  var setPanel, whUrlIn, whoIn, weWhIn, fbCfgIn, gearBtn, ctxLine, langSel;
+  var currentPhoto = null;      // Data-URL des aktuellen Fotos
+  var recognizer = null;        // aktives SpeechRecognition-Objekt
+  var recActive = false;
+  /* --- POSTKORB: START --- */
+  var badgeUnread, inboxBtn, inboxPill, inboxView, formView, inboxListEl, inboxFilter = 'all';
+  var inboxPollTmo = null;
+  /* --- POSTKORB: ENDE --- */
+
+  function build() {
+    fab = document.createElement('button');
+    fab.className = 'cbtn-fab';
+    fab.type = 'button';
+    fab.setAttribute('aria-label','Claude');
+    fab.textContent = tr().btn;
+    badge = document.createElement('span');
+    badge.className = 'cbtn-badge';
+    badge.style.display = 'none';
+    fab.appendChild(badge);
+    /* --- POSTKORB: START --- */
+    badgeUnread = document.createElement('span');
+    badgeUnread.className = 'cbtn-badge-unread';
+    badgeUnread.style.display = 'none';
+    fab.appendChild(badgeUnread);
+    /* --- POSTKORB: ENDE --- */
+    fab.addEventListener('click', openModal);
+    document.body.appendChild(fab);
+    // Nav-Bar-Kollision vermeiden: wenn die Seite eine fixe Nav am unteren
+    // Rand hat (standos, kasse, rezepte haben eine), FAB darueber schieben,
+    // damit Rezepte-/Auswertung-Button erreichbar bleiben.
+    positionFabAboveNav();
+    window.addEventListener('resize', positionFabAboveNav);
+
+    overlay = document.createElement('div');
+    overlay.className = 'cbtn-overlay';
+    overlay.addEventListener('click', function(e){ if (e.target === overlay) closeModal(); });
+
+    modal = document.createElement('div');
+    modal.className = 'cbtn-modal';
+    modal.innerHTML =
+      '<button type="button" class="cbtn-gear" data-act="gear" title="Einstellungen">⚙</button>' +
+      /* --- POSTKORB: START --- */
+      '<button type="button" class="cbtn-inbox-btn" data-act="inbox-open" title="Postkorb">📬' +
+        '<span class="cbtn-pill" style="display:none"></span>' +
+      '</button>' +
+      /* --- POSTKORB: ENDE --- */
+      '<div class="cbtn-form-view">' +
+      '<h3 class="cbtn-h"></h3>' +
+      '<div class="cbtn-ctx"></div>' +
+      '<div class="cbtn-row">' +
+        '<button type="button" class="cbtn-b" data-act="cam"></button>' +
+        '<button type="button" class="cbtn-b" data-act="shot"></button>' +
+        '<button type="button" class="cbtn-b" data-act="mic"></button>' +
+      '</div>' +
+      '<div class="cbtn-prev"><img alt=""/><button type="button" title="entfernen">✕</button></div>' +
+      '<textarea class="cbtn-ta"></textarea>' +
+      '<div class="cbtn-row">' +
+        '<button type="button" class="cbtn-b" data-act="cancel"></button>' +
+        '<button type="button" class="cbtn-b primary" data-act="send" disabled></button>' +
+      '</div>' +
+      '<div class="cbtn-set">' +
+        // Expliziter Sprachschalter -- schlaegt die isPeter()-Heuristik.
+        // Ohne ihn war der Nutzer davon abhaengig, dass irgendein
+        // localStorage-Feld ihn korrekt als Peter erkennt; in einem frischen
+        // Profil (Inkognito, neues Geraet) ist da nichts, und das Widget
+        // fiel auf Thai zurueck, ohne dass man es umstellen konnte.
+        '<label></label><select data-fld="lang">' +
+          '<option value="auto">Automatisch · อัตโนมัติ</option>' +
+          '<option value="de">Deutsch</option>' +
+          '<option value="th">ไทย (Thai)</option>' +
+        '</select>' +
+        '<label></label><input type="url" data-fld="wh" placeholder="https://hook.eu2.make.com/…">' +
+        '<label></label><input type="text" data-fld="who" placeholder="peter">' +
+        '<label></label><input type="url" data-fld="wewh" placeholder="https://hook.eu2.make.com/… (leer = wie oben)">' +
+        '<label></label><textarea data-fld="fbcfg" placeholder=\'{"apiKey":"…","authDomain":"…","databaseURL":"…","projectId":"…"}\'></textarea>' +
+        '<div class="cbtn-row" style="margin-top:10px">' +
+          '<button type="button" class="cbtn-b" data-act="setclose"></button>' +
+          '<button type="button" class="cbtn-b primary" data-act="setsave"></button>' +
+        '</div>' +
+      '</div>' +
+      '</div>' +
+      /* --- POSTKORB: START --- */
+      '<div class="cbtn-inbox-view">' +
+        '<div class="cbtn-inbox-header">' +
+          '<h3></h3>' +
+        '</div>' +
+        '<div class="cbtn-chips">' +
+          '<button type="button" class="cbtn-chip active" data-flt="all"></button>' +
+          '<button type="button" class="cbtn-chip" data-flt="unread"></button>' +
+          '<button type="button" class="cbtn-chip" data-flt="error"></button>' +
+        '</div>' +
+        '<div class="cbtn-inbox-list"></div>' +
+      '</div>' +
+      /* --- POSTKORB: ENDE --- */
+      // verstecktes Datei-Input fuer Kamera (capture=environment erzwingt Kamera):
+      '<input type="file" accept="image/*" capture="environment" ' +
+        'style="display:none" data-fld="cam">' +
+      // Zweites Input ohne capture: Bildergalerie / Screenshot / beliebige Datei
+      '<input type="file" accept="image/*" ' +
+        'style="display:none" data-fld="shot">';
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Referenzen einsammeln
+    gearBtn   = modal.querySelector('.cbtn-gear');
+    ctxLine   = modal.querySelector('.cbtn-ctx');
+    ta        = modal.querySelector('.cbtn-ta');
+    prev      = modal.querySelector('.cbtn-prev');
+    prevImg   = prev.querySelector('img');
+    cameraIn  = modal.querySelector('input[data-fld="cam"]');
+    shotIn    = modal.querySelector('input[data-fld="shot"]');
+    setPanel  = modal.querySelector('.cbtn-set');
+    langSel   = modal.querySelector('select[data-fld="lang"]');
+    whUrlIn   = modal.querySelector('input[data-fld="wh"]');
+    whoIn     = modal.querySelector('input[data-fld="who"]');
+    weWhIn    = modal.querySelector('input[data-fld="wewh"]');
+    fbCfgIn   = modal.querySelector('textarea[data-fld="fbcfg"]');
+    sendBtn   = modal.querySelector('[data-act="send"]');
+    micBtn    = modal.querySelector('[data-act="mic"]');
+    /* --- POSTKORB: START --- */
+    formView    = modal.querySelector('.cbtn-form-view');
+    inboxView   = modal.querySelector('.cbtn-inbox-view');
+    inboxListEl = modal.querySelector('.cbtn-inbox-list');
+    inboxBtn    = modal.querySelector('.cbtn-inbox-btn');
+    inboxPill   = inboxBtn.querySelector('.cbtn-pill');
+    /* --- POSTKORB: ENDE --- */
+
+    // Events
+    modal.addEventListener('click', onModalClick);
+    ta.addEventListener('input', updateSendState);
+    cameraIn.addEventListener('change', onCameraFile);
+    shotIn.addEventListener('change', onCameraFile);
+    prev.querySelector('button').addEventListener('click', clearPhoto);
+
+    applyLabels();
+    updateBadge();
+    /* --- POSTKORB: START --- */
+    // Storage-Event + Cloud-Sync-Event: neue Antworten mergen
+    window.addEventListener('storage', function(e){
+      if (e.key === ANSWERS_KEY || e.key === INBOX_KEY) {
+        mergeAnswers();
+        if (inboxView && inboxView.classList.contains('open')) renderInbox();
+        updateBadge();
+      }
+    });
+    window.addEventListener('claude-answers-cloud-sync', function(){
+      mergeAnswers();
+      if (inboxView && inboxView.classList.contains('open')) renderInbox();
+      updateBadge();
+    });
+    /* --- POSTKORB: ENDE --- */
+  }
+
+  function applyLabels(){
+    var t = tr();
+    fab.firstChild.nodeValue = t.btn;  // Text vor dem Badge
+    modal.querySelector('.cbtn-h').textContent = t.title;
+    modal.querySelector('[data-act="cam"]').textContent = t.photo;
+    modal.querySelector('[data-act="shot"]').textContent = t.shot;
+    micBtn.textContent = recActive ? t.mic_stop : t.mic_start;
+    modal.querySelector('[data-act="cancel"]').textContent = t.cancel;
+    sendBtn.textContent = t.send;
+    ta.placeholder = t.placeholder;
+    gearBtn.title = t.settings;
+    // Reihenfolge muss zur Reihenfolge im Settings-Markup passen.
+    // Das Sprach-Feld steht ganz oben, deshalb Index 0.
+    var labels = setPanel.querySelectorAll('label');
+    labels[0].textContent = t.lang_label;
+    labels[1].textContent = t.webhook_label;
+    labels[2].textContent = t.who_label;
+    labels[3].textContent = t.we_webhook_label;
+    labels[4].textContent = t.fb_cfg_label;
+    modal.querySelector('[data-act="setclose"]').textContent = t.close;
+    modal.querySelector('[data-act="setsave"]').textContent = t.save;
+    // Mikro verstecken, wenn nicht unterstuetzt
+    if (!getSpeechCtor()) micBtn.style.display = 'none';
+    /* --- POSTKORB: START --- */
+    inboxView.querySelector('.cbtn-inbox-header h3').textContent = t.inbox_title;
+    inboxView.querySelector('[data-flt="all"]').textContent    = t.inbox_all;
+    inboxView.querySelector('[data-flt="unread"]').textContent = t.inbox_unread;
+    inboxView.querySelector('[data-flt="error"]').textContent  = t.inbox_error;
+    inboxBtn.title = t.inbox;
+    /* --- POSTKORB: ENDE --- */
+  }
+
+  function onModalClick(e){
+    /* --- POSTKORB: START --- */
+    var chip = e.target.closest('[data-flt]');
+    if (chip) {
+      inboxFilter = chip.dataset.flt;
+      var chips = inboxView.querySelectorAll('.cbtn-chip');
+      for (var i = 0; i < chips.length; i++) chips[i].classList.toggle('active', chips[i].dataset.flt === inboxFilter);
+      renderInbox();
+      return;
+    }
+    var itm = e.target.closest('[data-inbox-id]');
+    if (itm) { openInboxDetail(itm.dataset.inboxId); return; }
+    /* --- POSTKORB: ENDE --- */
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    switch (b.dataset.act) {
+      /* Der Zahnrad-Knopf hatte frueher KEIN data-act. Dadurch brach die
+         Zeile darueber (`if (!b) return;`) den Handler ab, bevor der
+         Gear-Code ganz unten in der Funktion erreicht wurde -- der Knopf
+         zeigte nur den CSS-Hover ("wird gruen"), tat aber nichts.
+         Jetzt laeuft er ueber dasselbe data-act-Schema wie alle anderen. */
+      case 'gear':     openSettings(); break;
+      case 'cam':      cameraIn.click(); break;
+      case 'shot':     shotIn.click(); break;
+      case 'mic':      toggleMic(); break;
+      case 'cancel':   closeModal(); break;
+      case 'send':     doSend(); break;
+      case 'setclose': navBack(); break;
+      /* --- POSTKORB: START --- */
+      case 'inbox-open':   openInbox(); break;
+      case 'inbox-close':  navBack(); break;
+      case 'reply-send':   sendReply(); break;
+      /* --- POSTKORB: ENDE --- */
+      case 'setsave':
+        // Sprache zuerst, damit der Erfolgs-Toast schon in der neuen
+        // Sprache erscheint.
+        if (langSel) {
+          var lv = langSel.value;
+          if (lv === 'de' || lv === 'th') qs('claude_lang', lv);
+          else { try { localStorage.removeItem('claude_lang'); } catch(_){} }
+        }
+        qs('claude_webhook_url', (whUrlIn.value||'').trim());
+        var w = (whoIn.value||'').trim(); if (w) qs('who', w);
+        // Wareneingang-Webhook (separat; leer = kein separater)
+        var weUrl = (weWhIn.value||'').trim();
+        if (weUrl) qs('wareneingang_webhook_url', weUrl);
+        else       { try { localStorage.removeItem('wareneingang_webhook_url'); } catch(_){} }
+        // Firebase-Config: validieren, sonst warnen und nicht speichern
+        var fbRaw = (fbCfgIn.value||'').trim();
+        if (fbRaw === '') {
+          try { localStorage.removeItem('firebase_config'); } catch(_){}
+        } else {
+          try {
+            var parsed = JSON.parse(fbRaw);
+            if (!parsed || !parsed.databaseURL) throw new Error('databaseURL fehlt');
+            qs('firebase_config', JSON.stringify(parsed));
+          } catch (e) {
+            toast('Firebase-Config ungültig: ' + e.message, 'warn');
+            return;   // Panel offen lassen, nichts weiter speichern
+          }
+        }
+        navBack();
+        applyLabels();          // Sprachwechsel sofort sichtbar (setzt auch
+                                // den FAB-Text badge-sicher via firstChild)
+        toast(tr().save + ' ✓', 'ok');
+        break;
+    }
+  }
+
+  /* --- ZURUECK-TASTE: START ---
+   * Fruehere Loesung: eigene "zurueck"-Knoepfe im Fenster. Am Handy ist das
+   * unnatuerlich -- man drueckt dort die echte Zurueck-Taste, und die hat
+   * die ganze Seite verlassen. Jetzt legt jede geoeffnete Ebene (Fenster,
+   * Einstellungen, Postkorb, Detail) einen Eintrag in die Browser-Historie.
+   * Die Zurueck-Taste nimmt genau eine Ebene weg; erst wenn keine mehr offen
+   * ist, verlaesst sie die Seite. */
+  var navStack = [];
+  var navSchliesst = false;   // verhindert, dass popstate und Code sich gegenseitig ausloesen
+
+  function navPush(name, closeFn){
+    navStack.push({ name: name, close: closeFn });
+    try { history.pushState({ cbtn: name, tiefe: navStack.length }, ''); } catch(_){}
+  }
+  // Der Nutzer hat zurueck gedrueckt: oberste Ebene schliessen.
+  function navPopped(){
+    var lvl = navStack.pop();
+    if (!lvl) return;
+    navSchliesst = true;
+    try { lvl.close(); } finally { navSchliesst = false; }
+  }
+  // Der Code will eine Ebene schliessen (Knopf, nach dem Senden ...).
+  // Laeuft ueber die Historie, damit Stapel und Historie synchron bleiben.
+  function navBack(){
+    if (navSchliesst) return;
+    if (!navStack.length) return;
+    try { history.back(); } catch(_){ navPopped(); }
+  }
+  // Alles zumachen (Fenster ganz schliessen).
+  function navReset(){
+    var n = navStack.length;
+    navStack.length = 0;              // erst leeren, dann zurueckspulen:
+    if (n > 0) { try { history.go(-n); } catch(_){} }  // die popstate laufen ins Leere
+  }
+  window.addEventListener('popstate', function(){
+    if (navStack.length) navPopped();
+  });
+  /* --- ZURUECK-TASTE: ENDE --- */
+
+  // Einstellungen oeffnen/schliessen. Wird aus dem data-act-Switch gerufen.
+  function openSettings(){
+    whUrlIn.value = q('claude_webhook_url') || '';
+    whoIn.value   = q('who') || '';
+    weWhIn.value  = q('wareneingang_webhook_url') || '';
+    fbCfgIn.value = q('firebase_config') || '';
+    if (langSel) langSel.value = q('claude_lang') || 'auto';
+    if (setPanel.classList.contains('open')) { navBack(); return; }
+    setPanel.classList.add('open');
+    navPush('set', function(){ setPanel.classList.remove('open'); });
+  }
+
+  function openModal(){
+    applyLabels();
+    var t = tr();
+    ctxLine.innerHTML =
+      '<b>'+t.page+':</b> '+escapeHtml(pageName()) +
+      '  &nbsp; <b>'+t.context+':</b> '+escapeHtml(ctxText()||'—') +
+      '  &nbsp; <b>'+t.time+':</b> '+new Date().toLocaleString();
+    overlay.classList.add('open');
+    /* --- POSTKORB: START --- */
+    // Frisch geoeffnet immer die Sende-Ansicht zeigen
+    if (formView) formView.style.display = '';
+    if (inboxView) inboxView.classList.remove('open');
+    mergeAnswers();
+    updateBadge();
+    /* --- POSTKORB: ENDE --- */
+    navPush('modal', closeModalDirekt);
+    setTimeout(function(){ try{ ta.focus(); }catch(_){} }, 60);
+  }
+  // Schliesst nur die Oberflaeche. Wird von der Zurueck-Taste gerufen; wer
+  // aus dem Code heraus schliesst, nimmt closeModal() (raeumt auch die
+  // Historie auf).
+  function closeModalDirekt(){
+    stopMic();
+    overlay.classList.remove('open');
+    ta.value = '';
+    clearPhoto();
+    setPanel.classList.remove('open');
+    /* --- POSTKORB: START --- */
+    if (inboxView) inboxView.classList.remove('open');
+    if (formView) formView.style.display = '';
+    scheduleInboxPoll(false);
+    /* --- POSTKORB: ENDE --- */
+    updateSendState();
+  }
+  // Fenster ganz zu (inkl. aller offenen Unterebenen) -- aus dem Code gerufen.
+  function closeModal(){
+    navReset();
+    closeModalDirekt();
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // ---------- Foto / Screenshot ----------
+  function onCameraFile(e){
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    readFileAsDataURL(f).then(function(d){
+      currentPhoto = d;
+      prevImg.src = d;
+      prev.style.display = 'block';
+      updateSendState();
+    }).catch(function(){ toast('Foto-Fehler', 'warn'); });
+    // Beide Inputs zuruecksetzen, damit dieselbe Datei erneut auswaehlbar bleibt
+    try { e.target.value = ''; } catch(_){}
+  }
+  function clearPhoto(){
+    currentPhoto = null;
+    prev.style.display = 'none';
+    prevImg.src = '';
+    cameraIn.value = '';
+    updateSendState();
+  }
+
+  // ---------- Sprache ----------
+  function getSpeechCtor(){
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  }
+  function toggleMic(){ if (recActive) stopMic(); else startMic(); }
+  function startMic(){
+    var Ctor = getSpeechCtor();
+    if (!Ctor) { toast(tr().speech_unsupported, 'warn'); return; }
+    try {
+      recognizer = new Ctor();
+      recognizer.lang = isThai() ? 'th-TH' : 'de-DE';
+      recognizer.interimResults = true;
+      recognizer.continuous = true;
+      // Baseline = was der Nutzer VOR dem Mikro-Start getippt hat. Wird nicht
+      // veraendert, waehrend das Mikro laeuft -- sonst wachsen finale Ergebnisse
+      // bei jedem Event, weil Chrome-Android teils ev.resultIndex=0 emittiert
+      // und dann alle isFinal-Ergebnisse erneut in `out` landen. Das war die
+      // Ursache fuer die 2-3-fache Wiederholung des Diktats.
+      var baseline = ta.value ? (ta.value + ' ') : '';
+      recognizer.onresult = function(ev){
+        var finalText = '';
+        var interimText = '';
+        // ALLE Ergebnisse durchgehen und final vs. interim trennen.
+        // Nicht auf ev.resultIndex verlassen -- unzuverlaessig auf Mobile.
+        for (var i = 0; i < ev.results.length; i++) {
+          var r = ev.results[i];
+          var t = r[0] && r[0].transcript ? r[0].transcript : '';
+          if (r.isFinal) finalText += t; else interimText += t;
+        }
+        ta.value = baseline + finalText + interimText;
+        updateSendState();
+      };
+      recognizer.onerror = function(){ stopMic(); };
+      recognizer.onend = function(){ if (recActive) { recActive=false; micBtn.classList.remove('rec'); micBtn.textContent = tr().mic_start; } };
+      recognizer.start();
+      recActive = true;
+      micBtn.classList.add('rec');
+      micBtn.textContent = tr().mic_stop;
+    } catch (_) { toast(tr().speech_unsupported,'warn'); }
+  }
+  function stopMic(){
+    if (recognizer) { try { recognizer.stop(); } catch(_){} recognizer = null; }
+    recActive = false;
+    if (micBtn) { micBtn.classList.remove('rec'); micBtn.textContent = tr().mic_start; }
+  }
+
+  // ---------- Senden ----------
+  function updateSendState(){
+    var has = (ta.value && ta.value.trim().length > 0) || !!currentPhoto;
+    sendBtn.disabled = !has;
+  }
+  /* Baut den content-Block, den die Anthropic-API erwartet, schon hier fertig.
+     Grund: in Make.com muesste man denselben Block sonst mit if()-Formeln und
+     doppelt escapten Anfuehrungszeichen im Rohtext zusammenbauen -- fehler-
+     anfaellig und nicht testbar. Hier ist es normales JS, das der Browser-Test
+     mitprueft. Make setzt nur noch Modell, System-Prompt und den API-Key davor. */
+  function buildContent(text, dataUrl, kontext, seite){
+    var teile = [];
+    var kopf = 'Seite: ' + seite + '\n' +
+               (kontext ? 'Kontext:\n' + kontext + '\n\n' : '') +
+               'Meldung:\n' + (text || '(kein Text, nur Bild)');
+    teile.push({ type: 'text', text: kopf });
+
+    // Data-URL zerlegen: "data:image/jpeg;base64,XXXX" -> Typ + reines base64.
+    // Anthropic will beides getrennt und das base64 OHNE Praefix.
+    if (dataUrl && dataUrl.indexOf('data:') === 0) {
+      var komma = dataUrl.indexOf(',');
+      var kopfteil = dataUrl.slice(5, komma);              // "image/jpeg;base64"
+      var typ = kopfteil.split(';')[0] || 'image/jpeg';
+      var rein = dataUrl.slice(komma + 1);
+      if (rein) {
+        teile.push({
+          type: 'image',
+          source: { type: 'base64', media_type: typ, data: rein }
+        });
+      }
+    }
+    return teile;
+  }
+
+  /* --- FADEN: START ---
+   * Peter, 03.09.2026: "Baue bitte unbedingt ein, dass ich auf eine Frage von
+   * Claude antworten kann. Sonst kann ich kein Thema wirklich abschliessen."
+   *
+   * Bis hierher war jede Meldung ein Einzelschuss: Claude bekam nur den einen
+   * Satz und hatte kein Gedaechtnis. Auf eine Rueckfrage konnte man nicht
+   * antworten -- man fing wieder bei null an.
+   *
+   * Jetzt gehoert jeder Eintrag zu einem Faden (thread_id = msg_id der ersten
+   * Meldung). Beim Antworten geht der ganze bisherige Verlauf als
+   * messages-Array mit, so wie die Anthropic-API es erwartet:
+   * user -> assistant -> user -> ...
+   *
+   * Fuer den Verlauf wird nur Text mitgeschickt, keine alten Fotos: die
+   * liegen als grosse base64-Brocken im Geraetespeicher und wuerden ihn
+   * sprengen. Das neue Foto der aktuellen Meldung geht natuerlich mit. */
+  function getThread(threadId){
+    if (!threadId) return [];
+    return getInbox().filter(function(e){
+      return (e.thread_id || e.id) === threadId;
+    });
+  }
+
+  function buildMessages(threadId, neuerInhalt){
+    var msgs = [];
+    var verlauf = getThread(threadId);
+    for (var i = 0; i < verlauf.length; i++) {
+      var e = verlauf[i];
+      // Nur beantwortete Runden aufnehmen. Die Anthropic-API verlangt
+      // abwechselnd user/assistant -- eine unbeantwortete Meldung wuerde zwei
+      // user-Turns hintereinander erzeugen und die Anfrage ungueltig machen.
+      if (!e.answer || !e.answer.text) continue;
+      var frage = (e.text || '').trim();
+      if (e.photo_thumb) frage += (frage ? '\n' : '') + '[mit Foto]';
+      if (!frage) frage = '[nur Foto]';
+      msgs.push({ role: 'user',      content: [{ type: 'text', text: frage }] });
+      msgs.push({ role: 'assistant', content: [{ type: 'text', text: e.answer.text }] });
+    }
+    msgs.push({ role: 'user', content: neuerInhalt });
+    return msgs;
+  }
+  /* --- FADEN: ENDE --- */
+
+  function buildPayload(threadId){
+    var text = (ta.value||'').trim();
+    var kontext = ctxText();
+    var seite = pageName();
+    var id = makeMsgId();
+    var inhalt = buildContent(text, currentPhoto, kontext, seite);
+    return {
+      /* --- POSTKORB: START --- */
+      msg_id: id,
+      /* --- POSTKORB: ENDE --- */
+      // Erste Meldung eines Themas ist ihr eigener Faden.
+      thread_id: threadId || id,
+      ts: new Date().toISOString(),
+      page: seite,
+      context: kontext,
+      message: text,
+      photo_base64: currentPhoto || null,
+      // Fertiger Anthropic-content-Block als JSON-Text. Make setzt ihn 1:1
+      // in den Rumpf ein, ohne selbst etwas zusammenbauen zu muessen.
+      content_json: JSON.stringify(inhalt),
+      // Der ganze Faden als messages-Array. Damit kann Claude auf eine
+      // Rueckfrage antworten, statt bei null anzufangen.
+      messages_json: JSON.stringify(buildMessages(threadId, inhalt)),
+      user: getUser(),
+      lang: isThai() ? 'th' : 'de',
+      ua: navigator.userAgent
+    };
+  }
+  function doSend(threadId, imFaden){
+    var p = buildPayload(threadId);
+    stopMic();
+    // Nach einer Antwort im Faden soll das Fenster NICHT zugehen -- man will
+    // sehen, dass die Antwort im Verlauf steht, und ggf. gleich nachlegen.
+    var fertig = function(){
+      if (imFaden) { ta.value = ''; clearPhoto(); openInboxDetail(p.msg_id); }
+      else closeModal();
+    };
+    /* --- POSTKORB: START --- */
+    // SYNCHRON zuerst den Eintrag anlegen -- vorher lief das async, und mit
+    // dem CORS-Fix (no-cors) resolvt postToWebhook schneller als
+    // makeThumb.then(). Ergebnis: updateInboxStatus fand keinen Eintrag,
+    // Status blieb 'queue' obwohl der Post durchging.
+    var photoOrig = currentPhoto;
+    var textOrig  = p.message;
+    var entry = {
+      id: p.msg_id,
+      thread_id: p.thread_id,
+      ts: isoLocal(),
+      page: p.page,
+      text: textOrig,
+      photo_thumb: null,       // wird gleich nachgetragen
+      user: (isPeter() ? 'peter' : 'lexi'),
+      status: 'queue',
+      sent_at: null,
+      answer: null,
+      unread: false
+    };
+    var box = getInbox();
+    box.push(entry);
+    setInbox(box);
+    updateBadge();
+    // Thumb asynchron nachtragen (Bildkomprimierung darf lange dauern)
+    makeThumb(photoOrig).then(function(thumb){
+      if (!thumb) return;
+      var b = getInbox();
+      for (var i = 0; i < b.length; i++) {
+        if (b[i].id === p.msg_id) { b[i].photo_thumb = thumb; setInbox(b); break; }
+      }
+    });
+    /* --- POSTKORB: ENDE --- */
+    if (!navigator.onLine) { enqueue(p); toast(tr().err_queued,'warn'); fertig(); return; }
+    postToWebhook(p).then(function(){
+      /* --- POSTKORB: START --- */
+      updateInboxStatus(p.msg_id, 'sent', { sent_at: isoLocal() });
+      /* --- POSTKORB: ENDE --- */
+      // Kurze URL-Bestaetigung im Toast: dass Peter sieht, WOHIN gerade
+      // gesendet wurde. Hilft beim Erkennen 'ich habe die falsche URL im
+      // Widget vs. der die in Make offen ist'.
+      var url = q('claude_webhook_url') || '';
+      var tail = url ? url.slice(-8) : '';
+      toast(tr().ok_sent + (tail ? ' → …' + tail : ''), 'ok');
+      fertig();
+      flushQueue();          // gleich mal alte Eintraege mitversuchen
+    }).catch(function(err){
+      var msg = (err && err.message) ? err.message : String(err || 'unbekannt');
+      if (err === 'nowebhook') {
+        // Keine URL konfiguriert. Statt den Nutzer ins Zahnrad zu schicken
+        // (das auf einem frischen Geraet vielleicht gar nicht gefunden wird),
+        // direkt hier per prompt() danach fragen und den Versand sofort
+        // wiederholen. prompt() ist nativ und funktioniert auf jedem Geraet,
+        // unabhaengig von DOM/CSS des Widgets.
+        var typed = null;
+        try {
+          typed = window.prompt(tr().ask_webhook, q('claude_webhook_url') || '');
+        } catch (_) {}
+        if (typed && typed.trim().indexOf('http') === 0) {
+          qs('claude_webhook_url', typed.trim());
+          // Zweiter Versuch mit der frisch eingetragenen URL.
+          postToWebhook(p).then(function(){
+            updateInboxStatus(p.msg_id, 'sent', { sent_at: isoLocal() });
+            toast(tr().ok_sent, 'ok');
+            fertig();
+            flushQueue();
+          }).catch(function(e2){
+            var m2 = (e2 && e2.message) ? e2.message : String(e2 || 'unbekannt');
+            updateInboxStatus(p.msg_id, 'error', { answer:{ ts:isoLocal(),
+              text:'Sendefehler: ' + m2, kind:'error', by:'widget' } });
+            enqueue(p);
+            toast('⚠ Sendefehler: ' + m2, 'warn');
+            fertig();
+          });
+          return;   // closeModal() passiert in den Zweigen oben
+        }
+        // Abgebrochen oder nichts Brauchbares eingegeben -> wie bisher.
+        updateInboxStatus(p.msg_id, 'error', { answer:{ ts:isoLocal(),
+          text:'Kein Webhook konfiguriert. ⚙ Einstellungen oeffnen.',
+          kind:'error', by:'widget' } });
+        offerDownload(p);
+      } else {
+        // Netzwerk-/Fetch-Fehler -> Status 'error' MIT Klartext, so dass
+        // Peter im Postkorb sieht, warum das Senden gescheitert ist.
+        // Zusaetzlich in die alte Queue -- naechste Retry-Runde probiert
+        // es nochmal, und beim Erfolg schaltet flushQueue auf 'sent'.
+        updateInboxStatus(p.msg_id, 'error', { answer:{ ts:isoLocal(),
+          text:'Sendefehler: ' + msg, kind:'error', by:'widget' } });
+        enqueue(p);
+        toast('⚠ Sendefehler: ' + msg, 'warn');
+      }
+      fertig();
+    });
+  }
+  /* --- POSTKORB: START --- */
+  function updateInboxStatus(id, status, extra){
+    var box = getInbox();
+    for (var i = 0; i < box.length; i++) {
+      if (box[i].id === id) {
+        box[i].status = status;
+        if (extra) for (var k in extra) box[i][k] = extra[k];
+        setInbox(box);
+        updateBadge();
+        return;
+      }
+    }
+  }
+  /* --- POSTKORB: ENDE --- */
+  function postToWebhook(payload){
+    var url = q('claude_webhook_url');
+    if (!url) return Promise.reject('nowebhook');
+    // Warum Formulardaten und nicht JSON:
+    //
+    // 'no-cors' ist noetig, weil Make.coms Custom-Webhooks die CORS-Header
+    // nicht setzen -- ein normaler JSON-POST wuerde im Browser als Fehler
+    // ankommen, obwohl die Nachricht laengst da ist. 'no-cors' erlaubt aber
+    // nur drei Content-Types: text/plain, multipart/form-data und
+    // application/x-www-form-urlencoded. 'application/json' ist dort
+    // ausgeschlossen.
+    //
+    // Frueher stand hier text/plain mit JSON im Rumpf und der Annahme, Make
+    // parse das schon. Tut es nicht: bei text/plain ist der ganze Rumpf ein
+    // einziger Textbrocken, also war {{2.msg_id}} leer. Firebase bekam damit
+    // den Pfad claude_answers/.json -- die Antwort landete in der Wurzel und
+    // ueberschrieb den ganzen Zweig, und {{2.content_json}} war ebenfalls
+    // leer, also antwortete Claude auf nichts.
+    //
+    // Formulardaten sind ebenso preflight-frei, werden von Make aber in
+    // echte, benannte Felder zerlegt.
+    var form = new URLSearchParams();
+    for (var k in payload) {
+      if (!Object.prototype.hasOwnProperty.call(payload, k)) continue;
+      var v = payload[k];
+      if (v === null || v === undefined) continue;
+      form.append(k, typeof v === 'string' ? v : JSON.stringify(v));
+    }
+    // Opaque Response: den Status koennen wir nicht lesen, aber wenn fetch
+    // aufloest, ist die Uebertragung erfolgt. Fuer Senden-und-vergessen ok.
+    return fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: form.toString()
+    }).then(function(){ return; });
+  }
+  function enqueue(p){
+    var a = getQueue(); a.push(p); setQueue(a); updateBadge();
+  }
+  function offerDownload(p){
+    toast(tr().no_webhook, 'warn');
+    try {
+      var blob = new Blob([JSON.stringify(p, null, 2)], {type:'application/json'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'claude-'+p.ts.replace(/[:.]/g,'-')+'.json';
+      a.textContent = tr().download;
+      a.style.cssText = 'position:fixed;left:50%;bottom:140px;transform:translateX(-50%);'+
+        'background:#0aa367;color:#fff;padding:10px 16px;border-radius:8px;z-index:10002;'+
+        'text-decoration:none;font-family:system-ui,sans-serif;font-size:14px;';
+      document.body.appendChild(a);
+      setTimeout(function(){ try{URL.revokeObjectURL(url);a.remove();}catch(_){} }, 15000);
+      // sicherheitshalber auch in die Queue, falls User nicht klickt
+      enqueue(p);
+    } catch(_) { enqueue(p); }
+  }
+
+  // ---------- Warteschlange ----------
+  function updateBadge(){
+    var n = getQueue().length;
+    if (!badge) return;
+    if (n > 0) { badge.textContent = n; badge.style.display = 'block'; }
+    else       { badge.style.display = 'none'; }
+    /* --- POSTKORB: START --- */
+    var u = countUnread();
+    if (badgeUnread) {
+      if (u > 0) { badgeUnread.textContent = u; badgeUnread.style.display = 'block'; }
+      else       { badgeUnread.style.display = 'none'; }
+    }
+    if (inboxPill) {
+      if (u > 0) { inboxPill.textContent = u; inboxPill.style.display = 'inline-block'; }
+      else       { inboxPill.style.display = 'none'; }
+    }
+    /* --- POSTKORB: ENDE --- */
+  }
+  /* --- POSTKORB: START --- */
+  function countUnread(){
+    var box = getInbox(), n = 0;
+    for (var i = 0; i < box.length; i++) if (box[i].unread) n++;
+    return n;
+  }
+  /* --- POSTKORB: ENDE --- */
+  var flushing = false;
+  function flushQueue(){
+    if (flushing) return;
+    if (!navigator.onLine) return;
+    var url = q('claude_webhook_url'); if (!url) return;
+    var q0 = getQueue(); if (!q0.length) { updateBadge(); return; }
+    flushing = true;
+    // Sequentiell durchgehen, damit Reihenfolge stimmt.
+    var remaining = q0.slice();
+    function next(){
+      if (!remaining.length) {
+        setQueue([]); flushing = false; updateBadge();
+        return;
+      }
+      var item = remaining[0];
+      postToWebhook(item).then(function(){
+        // Auch den Postkorb-Eintrag auf 'sent' setzen, damit die Anzeige
+        // stimmt. Ohne diese Zeile blieben die alten Queue-Nachrichten auf
+        // 'Warteschlange', obwohl sie erfolgreich nachgesendet wurden.
+        if (item && item.msg_id) updateInboxStatus(item.msg_id, 'sent', { sent_at: isoLocal() });
+        remaining.shift();
+        setQueue(remaining); updateBadge();
+        next();
+      }).catch(function(){
+        // Netz weg oder Fehler → aufhoeren, Rest bleibt in Queue.
+        setQueue(remaining); flushing = false; updateBadge();
+      });
+    }
+    next();
+  }
+
+  /* --- POSTKORB: START --- */
+  // ---------- Postkorb: Antworten mergen ----------
+  function mergeAnswers(){
+    var ans = getAnswers();
+    if (!ans || !Object.keys(ans).length) return false;
+    var box = getInbox();
+    var changed = false;
+    for (var i = 0; i < box.length; i++) {
+      var e = box[i];
+      var a = ans[e.id];
+      if (!a) continue;
+      // Nur uebernehmen, wenn noch nicht/anders gesetzt
+      var already = e.answer && e.answer.ts === a.ts && e.answer.text === a.text;
+      if (already && e.status === 'answered') continue;
+      e.answer = {
+        ts:   a.ts   || isoLocal(),
+        text: a.text || '',
+        kind: a.kind || 'info',
+        by:   a.by   || 'claude'
+      };
+      var newStatus = (e.answer.kind === 'error') ? 'error' : 'answered';
+      if (e.status !== newStatus) { e.status = newStatus; changed = true; }
+      if (!already) { e.unread = true; changed = true; }
+    }
+    if (changed) setInbox(box);
+    return changed;
+  }
+
+  // ---------- Postkorb: Ansicht ----------
+  function openInbox(){
+    mergeAnswers();
+    if (formView) formView.style.display = 'none';
+    if (setPanel) setPanel.classList.remove('open');
+    inboxView.classList.add('open');
+    renderInbox();
+    scheduleInboxPoll(true);
+    // Beim Oeffnen sofort nachsehen, statt bis zum naechsten Takt zu warten.
+    refreshAnswers();
+    navPush('inbox', closeInboxDirekt);
+  }
+  function closeInboxDirekt(){
+    inboxView.classList.remove('open');
+    if (formView) formView.style.display = '';
+    scheduleInboxPoll(false);
+  }
+  function closeInbox(){ navBack(); }
+  function renderInbox(){
+    var t = tr();
+    // Ein Eintrag pro THEMA, nicht pro Meldung: gezeigt wird die juengste
+    // Runde des Fadens. Sonst stuende nach drei Rueckfragen dasselbe Thema
+    // viermal in der Liste.
+    var alle = getInbox();
+    var proFaden = {};
+    for (var k = 0; k < alle.length; k++) {
+      var fid = alle[k].thread_id || alle[k].id;
+      var bisher = proFaden[fid];
+      // ungelesen und Fehler faerben den ganzen Faden ein
+      alle[k].__runden = (bisher && bisher.__runden || 0) + 1;
+      alle[k].__unread = !!alle[k].unread || !!(bisher && bisher.__unread);
+      alle[k].__error  = alle[k].status === 'error' || !!(bisher && bisher.__error);
+      proFaden[fid] = alle[k];
+    }
+    var box = [];
+    for (var f in proFaden) box.push(proFaden[f]);
+    box.sort(function(a,b){ return String(b.ts).localeCompare(String(a.ts)); });
+    var items = box.filter(function(e){
+      if (inboxFilter === 'unread') return !!e.__unread;
+      if (inboxFilter === 'error')  return !!e.__error;
+      return true;
+    });
+    if (!items.length) {
+      inboxListEl.innerHTML = '<div class="cbtn-inbox-empty">' + escapeHtml(t.inbox_empty) + '</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      var e = items[i];
+      var statusLabel = t['status_' + e.status] || e.status;
+      var txt = (e.text || '').trim() || '—';
+      html += '<div class="cbtn-inbox-item' + (e.__unread ? ' unread' : '') + '" data-inbox-id="' + escapeHtml(e.id) + '">';
+      html += '<div class="cbtn-inbox-item-row">';
+      if (e.photo_thumb) {
+        html += '<img class="cbtn-inbox-item-thumb" src="' + escapeHtml(e.photo_thumb) + '" alt="">';
+      } else {
+        html += '<div class="cbtn-inbox-item-thumb" aria-hidden="true"></div>';
+      }
+      html += '<div class="cbtn-inbox-item-body">';
+      html += '<div class="cbtn-inbox-item-meta"><span>' + escapeHtml(relTime(e.ts)) + '</span>';
+      html += '<span class="cbtn-inbox-status ' + escapeHtml(e.status) + '">' + escapeHtml(statusLabel) + '</span></div>';
+      html += '<div class="cbtn-inbox-item-text">' + escapeHtml(txt) + '</div>';
+      if (e.answer && e.answer.text) {
+        var kind = (e.answer.kind === 'warn' || e.answer.kind === 'error') ? e.answer.kind : '';
+        html += '<div class="cbtn-inbox-answer ' + kind + '">' + escapeHtml(e.answer.text) + '</div>';
+      }
+      html += '</div></div></div>';
+    }
+    inboxListEl.innerHTML = html;
+  }
+  // Zeigt den GANZEN Faden zu einer Meldung, aelteste Runde oben, und unten
+  // ein Antwortfeld. Damit laesst sich ein Thema zu Ende bringen, statt bei
+  // jeder Rueckfrage von vorn anzufangen.
+  function openInboxDetail(id){
+    var box = getInbox();
+    var e = null;
+    for (var i = 0; i < box.length; i++) if (box[i].id === id) { e = box[i]; break; }
+    if (!e) return;
+    var fadenId = e.thread_id || e.id;
+    var runden = getThread(fadenId);
+    if (!runden.length) runden = [e];
+
+    // Alles im Faden als gelesen markieren
+    var geaendert = false;
+    for (var u = 0; u < box.length; u++) {
+      if ((box[u].thread_id || box[u].id) === fadenId && box[u].unread) {
+        box[u].unread = false; geaendert = true;
+      }
+    }
+    if (geaendert) { setInbox(box); updateBadge(); }
+
+    var t = tr();
+    var letzte = runden[runden.length - 1];
+    var statusLabel = t['status_' + letzte.status] || letzte.status;
+
+    var html = '';
+    html += '<div class="cbtn-inbox-detail" data-thread="' + escapeHtml(fadenId) + '">';
+    // Kein eigener Zurueck-Knopf -- die Zurueck-Taste des Geraets fuehrt
+    // zurueck in die Liste (siehe navPush unten).
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px">';
+    html += '<span style="font:600 11px/1.3 system-ui,sans-serif;opacity:.6">'
+          + escapeHtml(letzte.page || '') + ' · ' + escapeHtml(relTime(runden[0].ts)) + '</span>';
+    html += '<span class="cbtn-inbox-status ' + escapeHtml(letzte.status) + '">' + escapeHtml(statusLabel) + '</span>';
+    html += '</div>';
+
+    for (var r = 0; r < runden.length; r++) {
+      var run = runden[r];
+      html += '<div class="lab">' + escapeHtml(t.thread_you) + ' · '
+            + escapeHtml(relTime(run.ts)) + '</div>';
+      html += '<div class="val">' + escapeHtml((run.text || '').trim() || '—') + '</div>';
+      if (run.photo_thumb) {
+        html += '<img src="' + escapeHtml(run.photo_thumb) + '" alt="">';
+      }
+      if (run.answer && run.answer.text) {
+        var kind = (run.answer.kind === 'warn' || run.answer.kind === 'error') ? run.answer.kind : '';
+        html += '<div class="lab">' + escapeHtml(t.answer_from) + ' · '
+              + escapeHtml(relTime(run.answer.ts)) + '</div>';
+        html += '<div class="cbtn-inbox-answer ' + kind + '">' + escapeHtml(run.answer.text) + '</div>';
+      }
+    }
+
+    // Antwortfeld
+    html += '<div class="cbtn-reply">';
+    html += '<textarea class="cbtn-reply-ta" rows="2" placeholder="' + escapeHtml(t.reply_ph) + '"></textarea>';
+    html += '<div class="cbtn-reply-row">';
+    html += '<span class="cbtn-reply-hint">' + escapeHtml(t.reply_hint) + '</span>';
+    html += '<button type="button" class="cbtn-b primary" data-act="reply-send" disabled>'
+          + escapeHtml(t.reply_send) + '</button>';
+    html += '</div></div>';
+
+    html += '</div>';
+    inboxListEl.innerHTML = html;
+
+    // Senden-Knopf erst freigeben, wenn wirklich etwas dasteht
+    var rta = inboxListEl.querySelector('.cbtn-reply-ta');
+    var rbtn = inboxListEl.querySelector('[data-act="reply-send"]');
+    if (rta && rbtn) {
+      rta.addEventListener('input', function(){
+        rbtn.disabled = !rta.value.trim();
+      });
+    }
+
+    // Detail ist eine eigene Ebene: die Zurueck-Taste fuehrt zurueck in die
+    // Liste, nicht aus dem Postkorb heraus.
+    navPush('detail', renderInbox);
+  }
+
+  // Antwort im Faden abschicken. Laeuft ueber denselben Weg wie eine neue
+  // Meldung -- nur mit thread_id, damit der Verlauf mitgeht.
+  function sendReply(){
+    var wrap = inboxListEl.querySelector('.cbtn-inbox-detail');
+    var rta  = inboxListEl.querySelector('.cbtn-reply-ta');
+    if (!wrap || !rta) return;
+    var txt = (rta.value || '').trim();
+    if (!txt) return;
+    var fadenId = wrap.dataset.thread;
+
+    // doSend() liest Text und Foto aus dem Sendeformular. Wir schieben die
+    // Antwort dort hinein, schicken sie und raeumen wieder auf -- so gibt es
+    // nur EINEN Sendeweg (Warteschlange, Fehlerbehandlung, Postkorb-Eintrag
+    // inklusive), statt einer zweiten, halb gepflegten Kopie davon.
+    ta.value = txt;
+    currentPhoto = null;
+    doSend(fadenId);
+  }
+
+  // ---------- Postkorb: Polling ----------
+  /* Antworten direkt aus der Realtime Database holen -- ohne Firebase-SDK
+     und ohne dass jemand eine Config eintragen muss.
+     firebase-sync.js kann dasselbe, braucht dafuer aber localStorage
+     'firebase_config'. Wer das nie eingetragen hat (also alle ausser dem,
+     der es gebaut hat), sah nie eine Antwort, obwohl sie in der Datenbank
+     stand. Ein GET auf den .json-Pfad reicht voellig. */
+  var DB_URL = 'https://blend-live-default-rtdb.asia-southeast1.firebasedatabase.app';
+  function dbUrl(){ return (q('firebase_db_url') || DB_URL).replace(/\/+$/, ''); }
+
+  function pullAnswersRest(){
+    // Wenn firebase-sync laeuft, macht das ohnehin schon jemand.
+    if (q('firebase_config')) return Promise.resolve(false);
+    return fetch(dbUrl() + '/claude_answers.json', { cache: 'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(v){
+        if (!v || typeof v !== 'object') return false;
+        var next = {};
+        for (var id in v) {
+          var a = v[id] || {};
+          next[id] = {
+            ts:   a.ts   || isoLocal(),
+            text: a.text || '',
+            kind: a.kind || 'info',
+            by:   a.by   || 'claude'
+          };
+        }
+        var neu = JSON.stringify(next);
+        if (neu === (q(ANSWERS_KEY) || '{}')) return false;
+        qs(ANSWERS_KEY, neu);
+        return true;
+      })
+      .catch(function(){ return false; });   // offline ist kein Fehler
+  }
+
+  // Einmal holen, einmischen, Ansicht auffrischen.
+  function refreshAnswers(){
+    return pullAnswersRest().then(function(){
+      var changed = mergeAnswers();
+      if (changed || (inboxView && inboxView.classList.contains('open'))) {
+        if (inboxView && inboxView.classList.contains('open')) renderInbox();
+        updateBadge();
+      }
+      return changed;
+    });
+  }
+
+  function scheduleInboxPoll(fast){
+    if (inboxPollTmo) { clearInterval(inboxPollTmo); inboxPollTmo = null; }
+    var ms = fast ? 30000 : 300000;   // 30 s wenn offen, sonst 5 min
+    inboxPollTmo = setInterval(refreshAnswers, ms);
+  }
+  /* --- POSTKORB: ENDE --- */
+
+  // ---------- Toast ----------
+  var toastEl, toastTmo;
+  function toast(msg, kind){
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'cbtn-toast';
+      document.body.appendChild(toastEl);
+    }
+    toastEl.className = 'cbtn-toast ' + (kind||'');
+    toastEl.textContent = msg;
+    // reflow, dann show
+    void toastEl.offsetWidth;
+    toastEl.classList.add('show');
+    clearTimeout(toastTmo);
+    // Fehler-Toasts laenger stehen lassen -- Peter muss den Text lesen koennen.
+    var dur = (kind === 'warn' || kind === 'error') ? 7000 : 3000;
+    toastTmo = setTimeout(function(){ toastEl.classList.remove('show'); }, dur);
+  }
+
+  /* --- EINRICHTUNG PER LINK: START ---
+   * Lexi soll nichts einstellen muessen, und Peter kann ihr auf Thai nicht
+   * ueber die Schulter helfen. Deshalb duerfen Webhook, Sprache und Benutzer
+   * in der Adresse stehen:
+   *
+   *   ...intern/standos.html?wh=<Webhook-URL>&lang=th&user=lexi
+   *
+   * Beim ersten Aufruf wandert das in den Geraetespeicher und wird aus der
+   * Adresse entfernt -- danach steht nichts Unnoetiges mehr in der URL, und
+   * "Zum Home-Bildschirm" merkt sich die saubere Adresse. */
+  function setupAusLink(){
+    var such = window.location.search;
+    if (!such || such.length < 2) return;
+    var par;
+    try { par = new URLSearchParams(such); } catch(_) { return; }
+
+    var etwasGesetzt = false;
+
+    var wh = (par.get('wh') || '').trim();
+    if (wh.indexOf('http') === 0) { qs('claude_webhook_url', wh); etwasGesetzt = true; }
+
+    var lang = (par.get('lang') || '').trim().toLowerCase();
+    if (lang === 'de' || lang === 'th') { qs('claude_lang', lang); etwasGesetzt = true; }
+
+    var user = (par.get('user') || par.get('who') || '').trim().toLowerCase();
+    if (user) {
+      qs('who', user);
+      // standos.html steuert seine Sprache ueber blend_user
+      try { localStorage.setItem('blend_user', user); } catch(_){}
+      etwasGesetzt = true;
+    }
+
+    if (!etwasGesetzt) return;
+    // Adresse aufraeumen, damit der Home-Bildschirm-Knopf eine saubere URL
+    // speichert und die Werte nicht bei jedem Aufruf neu geschrieben werden.
+    par.delete('wh'); par.delete('lang'); par.delete('user'); par.delete('who');
+    var rest = par.toString();
+    try {
+      history.replaceState(null, '',
+        window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+    } catch(_){}
+  }
+  /* --- EINRICHTUNG PER LINK: ENDE --- */
+
+  /* --- FRISCHEPRUEFUNG: START ---
+   * Peter, 03.09.2026: "in mixo ist das immer noch das alte rezept 13 im
+   * smartphone" -- obwohl die Domain nachweislich den neuen Stand auslieferte
+   * (gemessen: Build 13:10, "Passionsfrucht gruen" im Text).
+   *
+   * Der Service Worker holt HTML und JS zwar netz-zuerst, faellt bei jedem
+   * fehlgeschlagenen Abruf aber still auf den Cache zurueck -- am Marktstand
+   * mit wackligem Netz genau richtig, nur merkt es dann niemand. Ergebnis:
+   * das Geraet zeigt wochenalte Daten und sieht dabei voellig normal aus.
+   *
+   * Deshalb prueft die Seite jetzt selbst: version.json (winzig, nie
+   * gecacht) gegen den eingebauten Build-Stempel. Weicht er ab, werden die
+   * Caches geleert, der Service Worker aufgefrischt und EINMAL neu geladen.
+   * Hilft auch das nicht, erscheint ein sichtbarer Streifen -- lieber eine
+   * Warnung als stille falsche Grammzahlen im Becher. */
+  function zeigeVeraltet(neu){
+    if (document.getElementById('build-warnung')) return;
+    var d = document.createElement('div');
+    d.id = 'build-warnung';
+    d.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:2147483647;' +
+      'background:#b3261e;color:#fff;font:600 12px/1.35 system-ui,-apple-system,sans-serif;' +
+      'padding:8px 12px;text-align:center;cursor:pointer';
+    d.textContent = '⚠ Veraltete Fassung (' + window.__BUILD + ') — neu ist ' + neu +
+                    '. Zum Neuladen tippen.';
+    d.addEventListener('click', function(){
+      try { sessionStorage.removeItem('build_reload'); } catch(_){}
+      location.reload();
+    });
+    document.body.appendChild(d);
+  }
+
+  function pruefeVersion(){
+    if (!window.__BUILD) return;
+    fetch('version.json?ts=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(v){
+        if (!v || !v.build || v.build === window.__BUILD) return;
+        // Nur EINMAL je neuem Stand automatisch neu laden -- sonst dreht sich
+        // das Ganze im Kreis, wenn wirklich etwas Aelteres ausgeliefert wird.
+        var schon = null;
+        try { schon = sessionStorage.getItem('build_reload'); } catch(_){}
+        if (schon === v.build) { zeigeVeraltet(v.build); return; }
+        try { sessionStorage.setItem('build_reload', v.build); } catch(_){}
+
+        var aufgaben = [];
+        if (window.caches && caches.keys) {
+          aufgaben.push(caches.keys().then(function(ks){
+            return Promise.all(ks.map(function(k){ return caches.delete(k); }));
+          }));
+        }
+        if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+          aufgaben.push(navigator.serviceWorker.getRegistrations().then(function(rs){
+            return Promise.all(rs.map(function(r){ return r.update(); }));
+          }));
+        }
+        Promise.all(aufgaben).catch(function(){}).then(function(){
+          location.reload();
+        });
+      })
+      .catch(function(){});   // kein Netz: dann eben die gespeicherte Fassung
+  }
+  /* --- FRISCHEPRUEFUNG: ENDE --- */
+
+  // ---------- Lifecycle ----------
+  function boot(){
+    setupAusLink();
+    build();
+    pruefeVersion();
+    // Auch beim Zurueckholen aus dem Hintergrund pruefen -- eine PWA auf dem
+    // Startbildschirm wird oft tagelang nicht neu geladen.
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden) pruefeVersion();
+    });
+    // Bei Sichtwechsel und Online-Event Queue leeren
+    window.addEventListener('online', flushQueue);
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden) flushQueue();
+    });
+    setInterval(flushQueue, 60000);
+    // Erster Versuch nach 3 s (Netz-Init abwarten)
+    setTimeout(flushQueue, 3000);
+    /* --- POSTKORB: START --- */
+    // Initial merge + Slow-Polling (5 min) fuer Antworten
+    setTimeout(function(){ refreshAnswers(); }, 1500);
+    scheduleInboxPoll(false);
+    /* --- POSTKORB: ENDE --- */
+  }
+
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+})();

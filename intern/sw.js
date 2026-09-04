@@ -1,8 +1,12 @@
 /* 100blend Einkaufs-Protokoll — Offline-Cache.
    Auf dem Markt gibt es oft kein Netz. Die App muss trotzdem starten.
-   Strategie: beim Installieren alles cachen; danach Cache zuerst, Netz nur zum Auffrischen. */
-const CACHE = "blend-einkauf-v17";   /* hochzählen, wenn einkauf.html geändert wurde — sonst behält das Handy die alte Version */
-const FILES = ["./einkauf.html", "./einkauf.webmanifest", "./icon-192.png", "./icon-512.png"];
+   Strategie: HTML + JS Netz-first (sonst kleben Bugs im Cache), Rest Cache-first. */
+const CACHE = "blend-einkauf-v38";   /* v27: Webhook-prompt; Zahnrad-Bug + Sprachumschalter; Gear-Click Mobile-Fix; Fehlerdiagnose; Postkorb-Race + flushQueue; CORS-Fix; FAB ueber Nav + Screenshot-Upload; Claude-Button Postkorb (msg_id, Antworten sichtbar) + firebase-sync claude_answers/*, 02.09.2026 */
+const FILES = [
+  "./einkauf.html", "./einkauf.webmanifest",
+  "./icon-192.png", "./icon-512.png",
+  "./claude-button.js", "./firebase-sync.js"
+];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
@@ -18,6 +22,28 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
+
+  /* version.json NIE anfassen: damit prueft die Seite, ob sie veraltet ist.
+     Käme die Antwort aus dem Cache, wuerde sie sich selbst bestaetigen und
+     die Pruefung waere wertlos. */
+  if (/version\.json/.test(e.request.url)) return;
+
+  const istSeite = e.request.mode === "navigate" || /\.html($|\?)/.test(e.request.url);
+  const istJS    = /\.js($|\?)/.test(e.request.url);
+
+  if (istSeite || istJS) {
+    e.respondWith(
+      fetch(e.request, { cache: "no-store" })
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+          return res;
+        })
+        .catch(() => caches.match(e.request).then(hit => hit || (istSeite ? caches.match("./einkauf.html") : undefined)))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(hit => {
       const net = fetch(e.request).then(res => {
