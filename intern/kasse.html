@@ -484,6 +484,7 @@ const THERMO_PRO_BECHER=0.5;
 
 
 
+
 /* ═══════════════ BOOSTER (Zusatzoptionen je Becher) ═══════════════
    Peter, 30.08.2026: "Wo sind die Optionen fuer die Smoothies?"
 
@@ -663,8 +664,8 @@ const xxlAufpreis = p16 => Math.round(p16 * XXL_ANTEIL * XXL_RABATT / XXL_RUNDUN
 const xxlPreis    = p16 => Math.round(p16) + xxlAufpreis(p16);
 /* Namen und Einheiten der abgezogenen Codes — nur damit die Verbrauchsliste
    im Tag-Reiter lesbar ist ("Ananas 1 310 g" statt "AN 1310"). */
-const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","SK":"Sonnenblumenkerne","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Dome-Deckel Ø 98 mm mit Loch (für 16 oz)","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","MI":"Minze","MS":"Mangostan","BA":"Banane","KE":"Kürbiskerne","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","GU":"Guave","ER":"Erdbeere TK","MB":"Maulbeere TK ⛔ NICHT VERWENDEN (25.08.)","JO":"Joghurt natur 🥛 (Meiji, 5-kg-Gallone)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch (Aroy-D, 1-L-Karton)","ST":"Süßtamarinde (Makham Wan)","KK":"Kakao (Holland, ungesüßt)","KM":"Kuhmilch 🥛 (Meiji, 5-L-Gallone)","MG":"Mango","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","MM":"Mandelmilch fertig 🥜 (V-Soy 1 L)","HS":"Hanfsamen (geschält)","GK":"Gurke","ZT":"Zitrone","KU":"Kurkuma","BK":"Brokkoli TK","HF":"Haferflocken → Hafermilch","JB":"Schwarze Johannisbeere TK","OS":"Orangensaft frisch gepresst","OZ":"Orangenzeste","OG":"Orangensaft GEFROREN","KF":"Kaffee, Espresso ganze Bohne","PG":"Passionsfrucht grün","MA":"Mandeln → Mandelmilch 🥜","KB":"Knoblauch","SC":"Schalotte (statt Zwiebel)","DL":"Dill frisch","MC":"Matcha Pulver","TB":"Thermo-Tasche (Lieferung) 25×30 cm"};
-const EINHEIT={"TE":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","SK":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","MI":"g","MS":"g","BA":"g","KE":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","GU":"g","ER":"g","MB":"g","JO":"g","BM":"g","KL":"g","KO":"ml","ST":"g","KK":"g","KM":"ml","MG":"g","DR":"g","AV":"g","WM":"g","MM":"ml","HS":"g","GK":"g","ZT":"g","KU":"g","BK":"g","HF":"g","JB":"g","OS":"ml","OZ":"g","OG":"g","KF":"g","PG":"g","MA":"g","KB":"g","SC":"g","DL":"g","MC":"g","TB":"Stk"};
+const ZUTATNAME={"TE":"Grüner Tee (lose, ungesüßt)","TO":"Seidentofu 🌱","PF":"Passionsfrucht rot","AN":"Ananas","ZG":"Zitronengras","GA":"Galgant (Kha)","SK":"Sonnenblumenkerne","B12":"Becher 12 oz (355 ml) — klein","D12":"Deckel für 12 oz","HA":"Halme","SR":"Becher-Sticker","B16":"Becher 16 oz (473 ml) — Thai-Standard","D16":"Dome-Deckel Ø 98 mm mit Loch (für 16 oz)","BE":"Becher 22 oz (650 ml) — Standard gross","DE":"Deckel für 22 oz","KN":"Kokosnuss jung","MI":"Minze","MS":"Mangostan","BA":"Banane","KE":"Kürbiskerne","PD":"Pandanblätter","ZI":"Ceylon-Zimt","LS":"Limette","DW":"Drachenfrucht weiß","WS":"Wasserspinat (Phak Bung)","IG":"Ingwer","RO":"Hibiskusblüten getrocknet (Krachiap)","GU":"Guave","ER":"Erdbeere TK","MB":"Maulbeere TK ⛔ NICHT VERWENDEN (25.08.)","JO":"Joghurt natur 🥛 (Meiji, 5-kg-Gallone)","BM":"Beeren-Mix TK fertig","KL":"Marine-Kollagen (Halal)","KO":"Kokosmilch (Aroy-D, 1-L-Karton)","ST":"Süßtamarinde (Makham Wan)","KK":"Kakao (Holland, ungesüßt)","KM":"Kuhmilch 🥛 (Meiji, 5-L-Gallone)","MG":"Mango","DR":"Drachenfrucht rot","AV":"Avocado","WM":"Wassermelone","MM":"Mandelmilch fertig 🥜 (V-Soy 1 L)","HS":"Hanfsamen (geschält)","GK":"Gurke","ZT":"Zitrone","PG":"Passionsfrucht grün","WY":"Whey Protein Isolat (unaromatisiert, 90 % Protein)","KU":"Kurkuma","BK":"Brokkoli TK","HF":"Haferflocken → Hafermilch","JB":"Schwarze Johannisbeere TK","OS":"Orangensaft frisch gepresst","OZ":"Orangenzeste","OG":"Orangensaft GEFROREN","KF":"Kaffee, Espresso ganze Bohne","MA":"Mandeln → Mandelmilch 🥜","KB":"Knoblauch","SC":"Schalotte (statt Zwiebel)","DL":"Dill frisch","MC":"Matcha Pulver","TB":"Thermo-Tasche (Lieferung) 25×30 cm"};
+const EINHEIT={"TE":"g","TO":"g","PF":"g","AN":"g","ZG":"g","GA":"g","SK":"g","B12":"Stk","D12":"Stk","HA":"Stk","SR":"Stk","B16":"Stk","D16":"Stk","BE":"Stk","DE":"Stk","KN":"Stk","MI":"g","MS":"g","BA":"g","KE":"g","PD":"g","ZI":"g","LS":"g","DW":"g","WS":"g","IG":"g","RO":"g","GU":"g","ER":"g","MB":"g","JO":"g","BM":"g","KL":"g","KO":"ml","ST":"g","KK":"g","KM":"ml","MG":"g","DR":"g","AV":"g","WM":"g","MM":"ml","HS":"g","GK":"g","ZT":"g","PG":"g","WY":"g","KU":"g","BK":"g","HF":"g","JB":"g","OS":"ml","OZ":"g","OG":"g","KF":"g","MA":"g","KB":"g","SC":"g","DL":"g","MC":"g","TB":"Stk"};
 const MENU=[
  {
   "nr": "01",
@@ -2135,25 +2136,26 @@ const MENU=[
   "groessen": {
    "12": {
     "ml": 355,
-    "ware": 21.2,
+    "ware": 57.6,
     "verp": 4.2,
-    "ek": 25.4,
-    "ekLief": 26.7,
-    "kalk": 89,
-    "preis": 99,
+    "ek": 61.7,
+    "ekLief": 63,
+    "kalk": 229,
+    "preis": 229,
     "offen": [
      "LS",
      "IG"
     ],
     "abzug": {
+     "JO": 135.2,
      "LS": 11.3,
-     "JO": 75.1,
-     "GK": 30,
-     "IG": 3.8,
-     "MG": 45,
+     "GK": 37.6,
+     "IG": 3,
+     "PG": 22.5,
+     "WY": 22.5,
      "KU": 0.3,
+     "AN": 75.1,
      "BK": 45.1,
-     "BM": 52.6,
      "B12": 1,
      "D12": 1,
      "HA": 1,
@@ -2162,25 +2164,26 @@ const MENU=[
    },
    "16": {
     "ml": 473,
-    "ware": 28.3,
+    "ware": 76.6,
     "verp": 4.7,
-    "ek": 32.9,
-    "ekLief": 34.2,
-    "kalk": 119,
-    "preis": 119,
+    "ek": 81.3,
+    "ekLief": 82.6,
+    "kalk": 289,
+    "preis": 289,
     "offen": [
      "LS",
      "IG"
     ],
     "abzug": {
+     "JO": 180,
      "LS": 15,
-     "JO": 100,
-     "GK": 40,
-     "IG": 5,
-     "MG": 60,
+     "GK": 50,
+     "IG": 4,
+     "PG": 30,
+     "WY": 30,
      "KU": 0.4,
+     "AN": 100,
      "BK": 60,
-     "BM": 70,
      "B16": 1,
      "D16": 1,
      "HA": 1,
@@ -2189,25 +2192,26 @@ const MENU=[
    },
    "22": {
     "ml": 650,
-    "ware": 38.8,
+    "ware": 105.3,
     "verp": 4.2,
-    "ek": 43,
-    "ekLief": 44.3,
-    "kalk": 169,
-    "preis": 169,
+    "ek": 109.5,
+    "ekLief": 110.8,
+    "kalk": 389,
+    "preis": 389,
     "offen": [
      "LS",
      "IG"
     ],
     "abzug": {
+     "JO": 247.3,
      "LS": 20.6,
-     "JO": 137.4,
-     "GK": 55,
-     "IG": 6.9,
-     "MG": 82.4,
+     "GK": 68.7,
+     "IG": 5.5,
+     "PG": 41.2,
+     "WY": 41.2,
      "KU": 0.5,
+     "AN": 137.4,
      "BK": 82.4,
-     "BM": 96.2,
      "BE": 1,
      "DE": 1,
      "HA": 1,
@@ -5979,7 +5983,7 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
 </script>
 
 <div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-08-30 23:41</div>
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-09-05 01:55</div>
 
 <script>
 (function(){
