@@ -219,19 +219,19 @@ const REZEPTE = [
    ["KW", 150,"Kokoswasser (Nam Hom)","น้ำมะพร้าว","Coconut water"],
    ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
    ["TO", 120,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
-   ["MS",  30,"Mangostan (frisch)","มังคุด (สด)","Mangosteen (fresh)"],
+   ["LI",  30,"Litschi (frisch)","ลิ้นจี่ (สด)","Lychee (fresh)"],
    ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
    ["KE",  40,"Kürbiskerne (roh, eingeweicht)","เมล็ดฟักทอง (ดิบ แช่น้ำ)","Pumpkin seeds (raw, soaked)"],
-   ["MS",  30,"Mangostan (gefroren)","มังคุด (แช่แข็ง)","Mangosteen (frozen)"],
+   ["LI",  30,"Litschi (gefroren)","ลิ้นจี่ (แช่แข็ง)","Lychee (frozen)"],
    ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
    ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
    ["① Flüssigkeit zuerst: Kokoswasser","① ใส่ของเหลวก่อน: น้ำมะพร้าว","① Liquids first: Coconut water"],
-   ["② Frisches & Weiches: Minze, gezählt, Seidentofu, Mangostan, Banane","② ของสดและของนิ่ม: ใบสะระแหน่ เด็ดใบ · เต้าหู้นิ่ม · มังคุด · กล้วย","② Fresh & soft: Mint, counted, Silken tofu, Mangosteen, Banana"],
+   ["② Frisches & Weiches: Minze, gezählt, Seidentofu, Litschi, Banane","② ของสดและของนิ่ม: ใบสะระแหน่ เด็ดใบ · เต้าหู้นิ่ม · ลิ้นจี่ · กล้วย","② Fresh & soft: Mint, counted, Silken tofu, Lychee, Banana"],
    ["③ Trockenes darüber: Kürbiskerne","③ ใส่ของแห้งทับ: เมล็ดฟักทอง","③ Dry on top: Pumpkin seeds"],
-   ["④ Gefrorenes ganz oben: Mangostan, Banane","④ ของแช่แข็งไว้บนสุด: มังคุด · กล้วย","④ Frozen last, on top: Mangosteen, Banana"],
+   ["④ Gefrorenes ganz oben: Litschi, Banane","④ ของแช่แข็งไว้บนสุด: ลิ้นจี่ · กล้วย","④ Frozen last, on top: Lychee, Banana"],
    ["60\"-Taste (1 Minute)  (60 s, höchste Stufe)","กดปุ่ม 60 วินาที (1 นาที)  (60 วินาที ความเร็วสูงสุด)","The 60\" button  (60 s, high speed)"],
    ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
  ],
@@ -2074,7 +2074,7 @@ render();
 <div id="buildstempel" style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
   font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888"></div>
 <script>
-  window.__BUILD = "2026-09-05 02:35";
+  window.__BUILD = "2026-09-05 03:20";
   (function(){ var el = document.getElementById("buildstempel");
     if (el) el.textContent = "v" + window.__BUILD; })();
 </script>
@@ -2124,5 +2124,6 @@ window.__CLAUDE_CTX_FN = function(){
 </script>
 <script src="claude-button.js" defer></script>
 <script src="firebase-sync.js" defer></script>
+<script src="geraete-sync.js" defer></script>
 </body>
 </html>

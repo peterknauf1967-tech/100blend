@@ -825,7 +825,7 @@ const MENU=[
      "KN": 0.45,
      "MI": 0.8,
      "TO": 90.1,
-     "MS": 45,
+     "LI": 45,
      "BA": 37.5,
      "KE": 30,
      "B12": 1,
@@ -851,7 +851,7 @@ const MENU=[
      "KN": 0.6,
      "MI": 1,
      "TO": 120,
-     "MS": 60,
+     "LI": 60,
      "BA": 50,
      "KE": 40,
      "B16": 1,
@@ -877,7 +877,7 @@ const MENU=[
      "KN": 0.82,
      "MI": 1.4,
      "TO": 164.9,
-     "MS": 82.4,
+     "LI": 82.4,
      "BA": 68.7,
      "KE": 55,
      "BE": 1,
@@ -6477,7 +6477,7 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
 <div id="buildstempel" style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
   font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888"></div>
 <script>
-  window.__BUILD = "2026-09-05 02:35";
+  window.__BUILD = "2026-09-05 03:20";
   (function(){ var el = document.getElementById("buildstempel");
     if (el) el.textContent = "v" + window.__BUILD; })();
 </script>
@@ -6497,5 +6497,6 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
 <script src="claude-button.js" defer></script>
 <script src="wareneingang-button.js" defer></script>
 <script src="firebase-sync.js" defer></script>
+<script src="geraete-sync.js" defer></script>
 </body>
 </html>

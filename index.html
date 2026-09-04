@@ -173,6 +173,24 @@
     .fr-info{grid-template-columns:1fr}
     .float-fr span.lng{display:none}
   }
+
+/* --- OPTIONEN: START (05.09.2026) --- */
+#optionen{padding:64px 0;background:linear-gradient(180deg,rgba(0,0,0,.02),transparent)}
+#optionen .opt-h{font:600 13px/1.2 'Poppins',system-ui,sans-serif;letter-spacing:.14em;
+  text-transform:uppercase;opacity:.65;margin:34px 0 12px}
+#optionen .opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+#optionen .opt{border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:14px 15px;background:#fff;
+  display:flex;flex-direction:column;gap:5px}
+#optionen .opt h4{margin:0;font:600 16px/1.25 'Poppins',system-ui,sans-serif}
+#optionen .opt .th{font-size:13px;opacity:.6}
+#optionen .opt .d{font-size:12.5px;opacity:.75;line-height:1.4}
+#optionen .opt .p{margin-top:auto;padding-top:6px;font:700 15px 'Poppins',system-ui,sans-serif}
+#optionen .opt .p small{font-weight:500;opacity:.6}
+#optionen .opt .flag{font-size:11.5px;font-weight:700;color:#b45309}
+#optionen .opt.aus{opacity:.45}
+#optionen .opt.aus .p::after{content:" · ausverkauft";font-size:11px;color:#b91c1c}
+@media (prefers-color-scheme:dark){#optionen .opt{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.14)}}
+/* --- OPTIONEN: ENDE --- */
 </style>
 </head>
 <body>
@@ -262,6 +280,33 @@
     <div class="lines" id="lines"></div>
     <div class="menu-grid" id="grid"></div>
     <p class="menu-note"><b id="menuNoteHook"></b> <span id="menuNoteText"></span></p>
+  </div>
+</section>
+
+<!-- OPTIONEN & BOOSTER --------------------------------------------------
+     Peter, 05.09.2026: "Fuege auf der Webseite die Optionen hinzu, welche
+     wir schon zum Teil ausgearbeitet haben, auch wenn diese erst mal nur
+     Fantasiepreise haben."
+     ⚠ Die Aufpreise unten sind PLATZHALTER. Sie stehen bewusst an EINER
+     Stelle (Konstante OPTIONEN weiter unten), damit sie in einer Minute
+     richtiggestellt werden koennen, ohne die Seite zu durchsuchen. -->
+<section id="optionen">
+  <div class="wrap">
+    <div class="eyebrow" data-i18n="opt_eyebrow">Make it yours</div>
+    <h2 class="sec-title gold" data-i18n="opt_title">Bases, Sizes &amp; Boosters</h2>
+    <p class="sec-intro" data-i18n="opt_intro">Every blend is built to order. Choose your base, your size — and add a booster if you want it to work harder.</p>
+
+    <h3 class="opt-h" data-i18n="opt_base_h">1 · Your base</h3>
+    <div class="opt-grid" id="optBasen"></div>
+
+    <h3 class="opt-h" data-i18n="opt_size_h">2 · Your size</h3>
+    <div class="opt-grid" id="optGroessen"></div>
+
+    <h3 class="opt-h" data-i18n="opt_boost_h">3 · Boosters</h3>
+    <div class="opt-grid" id="optBooster"></div>
+
+    <p class="menu-note" id="optHinweis"></p>
+    <p class="menu-note" id="liveStand" style="display:none"></p>
   </div>
 </section>
 
@@ -564,7 +609,7 @@
   function render(){
     grid.innerHTML=M.filter(x=>lineKey==="all"||x.l===lineKey).map(x=>{
       const lineLbl=(LINES.find(L=>L.k===x.l)||{})[lang]||x.l;
-      return `<div class="m"><div class="m-tag">${lineLbl}</div><h3>${x.n}</h3><div class="sub">${x.s||'&nbsp;'}</div><div class="ing">${x.i}</div><div class="price">${x.p} <small>฿</small></div></div>`;
+      return `<div class="m" data-nr="${x.nr||""}"><div class="m-tag">${lineLbl}</div><h3>${x.n}</h3><div class="sub">${x.s||'&nbsp;'}</div><div class="ing">${x.i}</div><div class="price">${x.p} <small>฿</small></div></div>`;
     }).join('');
   }
   function applyLang(){
@@ -575,6 +620,7 @@
     document.documentElement.lang=lang;
     document.querySelectorAll('#langtoggle button,#langtoggle-mob button').forEach(b=>b.classList.toggle('active',b.dataset.setlang===lang));
     renderLines();render();
+    if (typeof renderOptionen === 'function') renderOptionen();
   }
   function setLang(l){lang=l;localStorage.setItem('blendlang',l);applyLang();}
 
@@ -584,7 +630,142 @@
     if(!e.target.dataset.l)return;lineKey=e.target.dataset.l;render();
     document.querySelectorAll('.line-btn').forEach(b=>b.classList.toggle('active',b.dataset.l===lineKey));
   });
+
+  /* --- OPTIONEN & LIVE-STAND: START (05.09.2026) ------------------------
+     PREISE SIND PLATZHALTER. Genau hier stehen sie, alle acht Zeilen
+     untereinander — richtigstellen heisst: Zahl aendern, fertig.
+     Die Zutaten und Mengen dahinter sind echt (aus der Kasse uebernommen),
+     nur der Aufpreis ist geraten.                                        */
+  const OPT_PLATZHALTER = true;
+
+  const BASEN = [
+    {k:"oat",   de:"Hafermilch",  en:"Oat milk",    th:"นมข้าวโอ๊ต", auf:0,
+     d_de:"frisch angesetzt, mild-süß", d_en:"freshly made, mildly sweet", d_th:"ทำสดใหม่ หวานอ่อน"},
+    {k:"alm",   de:"Mandelmilch", en:"Almond milk", th:"นมอัลมอนด์",  auf:10,
+     d_de:"nussig, ohne Zucker",  d_en:"nutty, no sugar",  d_th:"รสถั่ว ไม่ใส่น้ำตาล"},
+    {k:"milk",  de:"Kuhmilch",    en:"Cow milk",    th:"นมวัว",      auf:0,
+     d_de:"vollmundig, klassisch",d_en:"full-bodied, classic", d_th:"เข้มข้น คลาสสิก"},
+    {k:"yog",   de:"Joghurt",     en:"Yogurt",      th:"โยเกิร์ต",   auf:15,
+     d_de:"cremig, leicht säuerlich", d_en:"creamy, gently tart", d_th:"ครีมมี่ เปรี้ยวอ่อน"},
+    {k:"water", de:"Nur Frucht",  en:"Fruit only",  th:"ผลไม้ล้วน",  auf:0,
+     d_de:"ohne Milch, ohne Wasser — 100 % Frucht", d_en:"no milk, no water — 100 % fruit", d_th:"ไม่ใส่นม ไม่ใส่น้ำ — ผลไม้ 100%"}
+  ];
+
+  const GROESSEN = [
+    {k:"12", de:"Klein · 12 oz",  en:"Small · 12 oz",     th:"เล็ก · 12 ออนซ์",  ml:355, auf:-20},
+    {k:"16", de:"Standard · 16 oz", en:"Standard · 16 oz", th:"มาตรฐาน · 16 ออนซ์", ml:473, auf:0},
+    {k:"22", de:"XXL · 22 oz",    en:"XXL · 22 oz",       th:"ใหญ่พิเศษ · 22 ออนซ์", ml:650, auf:40}
+  ];
+
+  /* Reihenfolge und Mengen stammen aus der Kasse (BOOSTER-Liste).
+     Der Aufpreis ist der Platzhalter. */
+  const BOOSTER_OPT = [
+    {c:"WY", de:"Whey Protein Isolat", en:"Whey protein isolate", th:"เวย์โปรตีนไอโซเลท",
+     g:"25 g", auf:49, d_de:"reines Eiweiß, unaromatisiert", d_en:"pure protein, unflavoured", d_th:"โปรตีนบริสุทธิ์ ไม่ปรุงรส",
+     flag_de:"ohne Halal-Anspruch", flag_en:"not under our halal claim", flag_th:"ไม่อยู่ในการรับรองฮาลาล"},
+    {c:"KR", de:"Kreatin", en:"Creatine", th:"ครีเอทีน",
+     g:"3 g", auf:39, d_de:"für Kraft und Training", d_en:"for strength and training", d_th:"เพื่อความแข็งแรง"},
+    {c:"KL", de:"Kollagen", en:"Collagen", th:"คอลลาเจน",
+     g:"5 g", auf:59, d_de:"Haut, Haar, Gelenke", d_en:"skin, hair, joints", d_th:"ผิว ผม ข้อต่อ"},
+    {c:"MC", de:"Matcha", en:"Matcha", th:"มัทฉะ",
+     g:"2 g", auf:39, d_de:"wacher Kopf, ohne Kaffee", d_en:"clear head, no coffee", d_th:"ตื่นตัว ไม่ต้องพึ่งกาแฟ"},
+    {c:"AX", de:"Astaxanthin", en:"Astaxanthin", th:"แอสตาแซนธิน",
+     g:"4 mg", auf:79, d_de:"das kräftigste Antioxidans im Haus", d_en:"our strongest antioxidant", d_th:"สารต้านอนุมูลอิสระที่แรงที่สุด"},
+    {c:"EB", de:"Erdnussbutter", en:"Peanut butter", th:"เนยถั่ว",
+     g:"20 g", auf:29, d_de:"macht satt, macht cremig", d_en:"filling and creamy", d_th:"อิ่มและครีมมี่"},
+    {c:"HG", de:"Honig", en:"Honey", th:"น้ำผึ้ง",
+     g:"10 g", auf:19, d_de:"nur auf Wunsch — sonst süßen wir nicht", d_en:"only on request — we don't sweeten otherwise", d_th:"เฉพาะเมื่อขอ — ปกติเราไม่เติมความหวาน"}
+  ];
+
+  const T_OPT = {
+    de:{eyebrow:"Mach ihn zu deinem", title:"Basis, Größe & Booster",
+        intro:"Jeder Becher wird frisch gemixt. Wähle deine Basis, deine Größe — und einen Booster, wenn er mehr können soll.",
+        b:"1 · Deine Basis", g:"2 · Deine Größe", bo:"3 · Booster",
+        inkl:"inklusive", hinweis:"Aufpreise sind vorläufig und werden vor der Eröffnung festgelegt."},
+    en:{eyebrow:"Make it yours", title:"Bases, Sizes & Boosters",
+        intro:"Every blend is built to order. Choose your base, your size — and add a booster if you want it to work harder.",
+        b:"1 · Your base", g:"2 · Your size", bo:"3 · Boosters",
+        inkl:"included", hinweis:"Add-on prices are provisional and will be fixed before opening."},
+    th:{eyebrow:"ปรับให้เป็นของคุณ", title:"ฐาน ขนาด และบูสเตอร์",
+        intro:"ทุกแก้วปั่นสดตามสั่ง เลือกฐาน เลือกขนาด และเพิ่มบูสเตอร์ได้ตามต้องการ",
+        b:"1 · เลือกฐาน", g:"2 · เลือกขนาด", bo:"3 · บูสเตอร์",
+        inkl:"รวมอยู่แล้ว", hinweis:"ราคาบวกเพิ่มยังเป็นราคาชั่วคราว จะกำหนดจริงก่อนเปิดร้าน"}
+  };
+  const tOpt = () => T_OPT[lang] || T_OPT.en;
+  const nOpt = (o) => o[lang] || o.en || o.de;
+  const dOpt = (o) => o["d_"+lang] || o.d_en || o.d_de || "";
+
+  function preisText(auf){
+    const t = tOpt();
+    if (!auf) return t.inkl;
+    return (auf > 0 ? "+" : "−") + Math.abs(auf) + " ฿";
+  }
+
+  function renderOptionen(){
+    const t = tOpt();
+    const setz = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    document.querySelectorAll('[data-i18n="opt_eyebrow"]').forEach(e=>e.textContent=t.eyebrow);
+    document.querySelectorAll('[data-i18n="opt_title"]').forEach(e=>e.textContent=t.title);
+    document.querySelectorAll('[data-i18n="opt_intro"]').forEach(e=>e.textContent=t.intro);
+    document.querySelectorAll('[data-i18n="opt_base_h"]').forEach(e=>e.textContent=t.b);
+    document.querySelectorAll('[data-i18n="opt_size_h"]').forEach(e=>e.textContent=t.g);
+    document.querySelectorAll('[data-i18n="opt_boost_h"]').forEach(e=>e.textContent=t.bo);
+
+    const gb = document.getElementById("optBasen");
+    if (gb) gb.innerHTML = BASEN.map(b=>`<div class="opt" data-opt="${b.k}">
+        <h4>${nOpt(b)}</h4><div class="th">${b.th}</div>
+        <div class="d">${dOpt(b)}</div><div class="p">${preisText(b.auf)}</div></div>`).join("");
+
+    const gg = document.getElementById("optGroessen");
+    if (gg) gg.innerHTML = GROESSEN.map(g=>`<div class="opt">
+        <h4>${nOpt(g)}</h4><div class="th">${g.ml} ml</div>
+        <div class="d">&nbsp;</div><div class="p">${preisText(g.auf)}</div></div>`).join("");
+
+    const gx = document.getElementById("optBooster");
+    if (gx) gx.innerHTML = BOOSTER_OPT.map(b=>`<div class="opt" data-boost="${b.c}">
+        <h4>${nOpt(b)}</h4><div class="th">${b.th} · ${b.g}</div>
+        <div class="d">${dOpt(b)}</div>
+        ${b["flag_"+lang]||b.flag_en ? `<div class="flag">⚠ ${b["flag_"+lang]||b.flag_en}</div>` : ""}
+        <div class="p">${preisText(b.auf)}</div></div>`).join("");
+
+    setz("optHinweis", (OPT_PLATZHALTER ? "⚠ " : "") + t.hinweis);
+  }
+
+  /* --- LIVE-STAND AUS DER GEMEINSAMEN DATENBANK -------------------------
+     Die Karte zeigt, was heute wirklich gemixt werden kann. Gelesen wird
+     ein EIGENER, oeffentlicher Ast der Datenbank: nur Nummern und ein
+     Ja/Nein. Bestandsmengen und Gramm bleiben drinnen — die sind
+     Betriebsgeheimnis und haben auf einer oeffentlichen Seite nichts zu
+     suchen. Faellt die Abfrage aus, bleibt die Karte wie sie ist.        */
+  const DB_OEFFENTLICH = "https://blend-live-default-rtdb.asia-southeast1.firebasedatabase.app/oeffentlich/verfuegbar.json";
+
+  function liveStand(){
+    fetch(DB_OEFFENTLICH + "?t=" + Date.now())
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d || !d.stand) return;
+        const aus = new Set(d.ausverkauft || []);
+        document.querySelectorAll("#grid .m").forEach(el=>{
+          const nr = el.getAttribute("data-nr");
+          if (nr && aus.has(nr)) el.classList.add("aus");
+        });
+        const z = document.getElementById("liveStand");
+        if (z) {
+          const wann = new Date(d.stand);
+          const txt = {de:"Heute mixbar: ", en:"Available today: ", th:"วันนี้ปั่นได้: "}[lang] || "Available today: ";
+          z.textContent = txt + (d.mixbar != null ? d.mixbar : "?") + " / " + (d.gesamt != null ? d.gesamt : "?")
+            + "  ·  " + wann.toLocaleString();
+          z.style.display = "";
+        }
+      })
+      .catch(()=>{});
+  }
+  /* --- OPTIONEN & LIVE-STAND: ENDE --- */
+
   applyLang();
+  renderOptionen();
+  liveStand();
+  setInterval(liveStand, 300000);
 
   // Hamburger menu
   const hamburger=document.getElementById('hamburger');
