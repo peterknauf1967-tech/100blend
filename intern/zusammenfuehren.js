@@ -49,6 +49,18 @@
     return raus;
   }
 
+  function anpassKarte(hier, dort) {
+    var raus = {}, n;
+    for (n in hier) if (Object.prototype.hasOwnProperty.call(hier, n)) raus[n] = hier[n];
+    for (n in dort) {
+      if (!Object.prototype.hasOwnProperty.call(dort, n)) continue;
+      var a = raus[n], b = dort[n];
+      if (!a) { raus[n] = b; continue; }
+      if ((b && b.ts || 0) > (a && a.ts || 0)) raus[n] = b;
+    }
+    return raus;
+  }
+
   function ampelKarte(hier, dort) {
     var raus = {}, code;
     for (code in hier) if (Object.prototype.hasOwnProperty.call(hier, code)) raus[code] = hier[code];
@@ -101,6 +113,11 @@
     });
 
     raus.ampel = ampelKarte(H.ampel || {}, D.ampel || {});
+    /* REZEPT-ANPASSUNGEN je Rezeptnummer zusammenfuehren (06.09.2026).
+       Passt Lexi am Handy Nr. 19 an waehrend Peter am PC Nr. 13 anfasst,
+       muessen hinterher BEIDE Anpassungen dastehen. Jede traegt ihren
+       eigenen Zeitstempel, also entscheidet er je Rezept. */
+    raus.anpass = anpassKarte(H.anpass || {}, D.anpass || {});
     ["chargen", "verarb", "eigen"].forEach(function (feld) {
       raus[feld] = listeVereinen(H[feld], D[feld]);
     });
