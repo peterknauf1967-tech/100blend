@@ -91,11 +91,6 @@ html[lang="th"] .zn i,
 html[lang="th"] ol.steps i{font-size:14px; color:var(--muted); font-weight:600}
 html[lang="th"] .rname{font-size:25px}
 .zg{font-weight:800; white-space:nowrap}
-/* Frisch/Gefroren-Chip in Zutaten-Zeile — deutlich sichtbar */
-.fg{display:inline-flex;align-items:center;flex:0 0 auto;padding:3px 8px;border-radius:999px;
-    font:800 10px/1 inherit;letter-spacing:.4px;margin-left:4px;white-space:nowrap;text-transform:uppercase}
-.fg-tk{background:#dbeafe;color:#1e3a8a;border:1px solid #93c5fd}
-.fg-fr{background:#dcfce7;color:#166534;border:1px solid #86efac}
 
 /* ---- Schritte mit Nummernkreis ---- */
 ol.steps{list-style:none; margin:0; padding:0; counter-reset:s}
@@ -161,9 +156,7 @@ footer{color:var(--muted); font-size:12px; text-align:center; padding:32px 16px 
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MIXO Rezepte">
-<link rel="manifest" href="./standos.webmanifest">
-<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" href="./icon-192.png">
 </head>
 <body>
@@ -191,15 +184,15 @@ const REZEPTE = [
 {n:"01", stufe:"X", de:"Bangkok Wake-Up", th:"บางกอก เวค-อัพ", en:"Bangkok Wake-Up",
  alg:"🌱",
  zut:[
-   ["TE", 150,"Grüner Tee, kalt (ungesüßt)","ชาเขียวเย็น (ไม่หวาน)","Green tea, cold (unsweetened)"],
-   ["TO", 120,"Seidentofu (2×2 cm Würfel)","เต้าหู้นิ่ม (หั่น 2×2 ซม.)","Silken tofu (2×2 cm cubes)"],
-   ["PF",  40,"Passionsfrucht (frisch)","เสาวรส (สด)","Passion fruit (fresh)"],
-   ["AN",  25,"Ananas (frisch)","สับปะรด (สด)","Pineapple (fresh)"],
-   ["ZG",  15,"Zitronengras, weiches Inneres (≈1 Stängel)","ตะไคร้ ส่วนในที่นิ่ม (ราว 1 ต้น)","Lemongrass (soft core)"],
-   ["GA",   3,"Galgant (Kha), ≈1 dünne Scheibe","ข่า หั่นบาง (ราว 1 แผ่น)","Galangal (thin slice)"],
-   ["SK",  40,"Sonnenblumenkerne (roh)","เมล็ดทานตะวัน (ดิบ)","Sunflower seeds (raw)"],
-   ["PF",  20,"Passionsfrucht (gefroren)","เสาวรส (แช่แข็ง)","Passion fruit (frozen)"],
-   ["AN",  25,"Ananas (gefroren)","สับปะรด (แช่แข็ง)","Pineapple (frozen)"]
+   ["TE", 161.8,"Grüner Tee, kalt (ungesüßt)","ชาเขียวเย็น (ไม่หวาน)","Green tea, cold (unsweetened)"],
+   ["TO", 130,"Seidentofu (2×2 cm Würfel)","เต้าหู้นิ่ม (หั่น 2×2 ซม.)","Silken tofu (2×2 cm cubes)"],
+   ["PF",  43,"Passionsfrucht (frisch)","เสาวรส (สด)","Passion fruit (fresh)"],
+   ["AN",  27,"Ananas (frisch)","สับปะรด (สด)","Pineapple (fresh)"],
+   ["ZG",  16,"Zitronengras, weiches Inneres (≈1 Stängel)","ตะไคร้ ส่วนในที่นิ่ม (ราว 1 ต้น)","Lemongrass (soft core)"],
+   ["GA", 3.2,"Galgant (Kha), ≈1 dünne Scheibe","ข่า หั่นบาง (ราว 1 แผ่น)","Galangal (thin slice)"],
+   ["SK",  43,"Sonnenblumenkerne (roh)","เมล็ดทานตะวัน (ดิบ)","Sunflower seeds (raw)"],
+   ["PF",  22,"Passionsfrucht (gefroren)","เสาวรส (แช่แข็ง)","Passion fruit (frozen)"],
+   ["AN",  27,"Ananas (gefroren)","สับปะรด (แช่แข็ง)","Pineapple (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
@@ -218,14 +211,14 @@ const REZEPTE = [
 {n:"02", stufe:"X", de:"Muay Thai Power", th:"มวยไทย พาวเวอร์", en:"Muay Thai Power",
  alg:"🌱",
  zut:[
-   ["KW", 150,"Kokoswasser (Nam Hom)","น้ำมะพร้าว","Coconut water"],
+   ["KW", 168,"Kokoswasser (Nam Hom)","น้ำมะพร้าว","Coconut water"],
    ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
-   ["TO", 120,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
-   ["TM",  30,"Thai-Melone (frisch) — ersetzt die Mangostan","แตงไทย (สด) — ใช้แทนมังคุด","Thai melon (fresh) — replaces the mangosteen"],
-   ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
-   ["KE",  40,"Kürbiskerne (roh, eingeweicht)","เมล็ดฟักทอง (ดิบ แช่น้ำ)","Pumpkin seeds (raw, soaked)"],
-   ["TM",  30,"Thai-Melone SELBST gefroren (Würfel, Tablett)","แตงไทยแช่แข็งเอง (หั่นเต๋า ถาด)","Thai melon frozen IN-HOUSE (cubes, on a tray)"],
-   ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
+   ["TO", 135,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
+   ["TM",  34,"Thai-Melone (frisch) — ersetzt die Mangostan","แตงไทย (สด) — ใช้แทนมังคุด","Thai melon (fresh) — replaces the mangosteen"],
+   ["BA",  34,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["KE",  45,"Kürbiskerne (roh, eingeweicht)","เมล็ดฟักทอง (ดิบ แช่น้ำ)","Pumpkin seeds (raw, soaked)"],
+   ["TM",  34,"Thai-Melone SELBST gefroren (Würfel, Tablett)","แตงไทยแช่แข็งเอง (หั่นเต๋า ถาด)","Thai melon frozen IN-HOUSE (cubes, on a tray)"],
+   ["BA",  22,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
@@ -244,32 +237,31 @@ const REZEPTE = [
 {n:"03", stufe:"X", de:"Siam Serenity", th:"สยาม เซเรนิตี้", en:"Siam Serenity",
  alg:"🌱",
  zut:[
-   ["WA", 150,"Flaschen-Trinkwasser (für Pandan-Wasser) — KEIN Leitungswasser","น้ำดื่มบรรจุขวด (สำหรับน้ำใบเตย) — ห้ามใช้น้ำประปา","Bottled drinking water (for pandan water) — NO tap water"],
-   ["TO", 120,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
-   ["BA",  30,"Banane, reif (frisch)","กล้วยสุก (สด)","Ripe banana (fresh)"],
-   ["PD",   6,"Pandanblätter (≈3 Blätter)","ใบเตย ทำน้ำใบเตย (ราว 3 ใบ)","Pandan leaves (for pandan water)"],
-   ["SK",  40,"Sonnenblumenkerne (roh)","เมล็ดทานตะวัน (ดิบ)","Sunflower seeds (raw)"],
+   ["PW", 197.5,"Pandan-Aufguss, kalt (morgens angesetzt: 40 g Pandanblätter je Liter Trinkwasser)","น้ำใบเตยเย็น (ต้มไว้ตอนเช้า: ใบเตย 40 กรัม ต่อน้ำดื่ม 1 ลิตร)","Pandan infusion, cold (made in the morning: 40 g pandan leaves per litre of drinking water)"],
+   ["TO", 158,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
+   ["BA",  39,"Banane, reif (frisch)","กล้วยสุก (สด)","Ripe banana (fresh)"],
+   ["SK",  52,"Sonnenblumenkerne (roh)","เมล็ดทานตะวัน (ดิบ)","Sunflower seeds (raw)"],
    ["ZI", 0.5,"Ceylon-Zimt — abwiegen, nicht schätzen","อบเชยซีลอน — ต้องชั่ง ไม่กะ","Ceylon cinnamon — weighed, not guessed"],
-   ["BA",  20,"Banane, reif (gefroren)","กล้วยสุก (แช่แข็ง)","Ripe banana (frozen)"]
+   ["BA",  26,"Banane, reif (gefroren)","กล้วยสุก (แช่แข็ง)","Ripe banana (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
    ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
-   ["① Flüssigkeit zuerst: Wasser","① ใส่ของเหลวก่อน: น้ำ","① Liquids first: Water"],
-   ["② Frisches & Weiches: Seidentofu, Banane, reif, Pandanblätter","② ของสดและของนิ่ม: เต้าหู้นิ่ม · กล้วยสุก · ใบเตย ทำน้ำใบเตย","② Fresh & soft: Silken tofu, Ripe banana, Pandan leaves"],
+   ["① Flüssigkeit zuerst: Pandan-Aufguss","① ใส่ของเหลวก่อน: น้ำใบเตย","① Liquids first: Pandan infusion"],
+   ["② Frisches & Weiches: Seidentofu, Banane, reif","② ของสดและของนิ่ม: เต้าหู้นิ่ม · กล้วยสุก","② Fresh & soft: Silken tofu, Ripe banana"],
    ["③ Trockenes darüber: Sonnenblumenkerne, Ceylon-Zimt","③ ใส่ของแห้งทับ: เมล็ดทานตะวัน · อบเชยซีลอน","③ Dry on top: Sunflower seeds, Ceylon cinnamon"],
    ["④ Gefrorenes ganz oben: Banane, reif","④ ของแช่แข็งไว้บนสุด: กล้วยสุก","④ Frozen last, on top: Ripe banana"],
    ["60\"-Taste (1 Minute)  (60 s, höchste Stufe)","กดปุ่ม 60 วินาที (1 นาที)  (60 วินาที ความเร็วสูงสุด)","The 60\" button  (60 s, high speed)"],
    ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
  ],
- tip:["Pandan-Wasser morgens auf Vorrat machen (hält im Kühlschrank 1 Tag) — spart 2 Minuten pro Becher.",
+ tip:["Pandan-Aufguss morgens ansetzen: 40 g Blätter je Liter Trinkwasser, 10 Minuten ziehen lassen, abkühlen, kalt stellen. Hält 1 Tag — spart 2 Minuten pro Becher.",
       "ทำน้ำใบเตยไว้ตอนเช้า (เก็บตู้เย็นได้ 1 วัน) ประหยัดเวลา 2 นาทีต่อแก้ว",
       "Prepare pandan water in the morning (keeps 1 day chilled) — saves 2 min per cup."]},
 
 {n:"04", stufe:"X", de:"Pure Thai Cleanse", th:"เพียว ไทย คลีนส์", en:"Pure Thai Cleanse",
  alg:"🌱",
  zut:[
-   ["WA", 150,"Flaschen-Trinkwasser, kalt — KEIN Leitungswasser","น้ำดื่มบรรจุขวด เย็น — ห้ามใช้น้ำประปา","Bottled drinking water, cold — NO tap water"],
+   ["PW", 150,"Pandan-Aufguss, kalt (morgens angesetzt: 40 g Pandanblätter je Liter Trinkwasser)","น้ำใบเตยเย็น (ต้มไว้ตอนเช้า: ใบเตย 40 กรัม ต่อน้ำดื่ม 1 ลิตร)","Pandan infusion, cold (made in the morning: 40 g pandan leaves per litre of drinking water)"],
    ["LS",  10,"Limettensaft (1 Limette)","น้ำมะนาว (1 ลูก)","Lime juice (1 lime)"],
    ["TO", 120,"Seidentofu","เต้าหู้นิ่ม","Silken tofu"],
    ["DW",  50,"Drachenfrucht weiß (frisch) — 10 g mehr als frueher, sie faengt den Brokkoli auf","แก้วมังกรขาว (สด) — เพิ่มขึ้น 10 กรัม เพื่อกลบรสบรอกโคลี","White dragon fruit (fresh) — 10 g more than before, it carries the broccoli"],
@@ -281,7 +273,7 @@ const REZEPTE = [
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
    ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
-   ["① Flüssigkeit zuerst: Wasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำเย็น · น้ำมะนาว","① Liquids first: Water, Lime juice"],
+   ["① Flüssigkeit zuerst: Pandan-Aufguss, Limettensaft","① ใส่ของเหลวก่อน: น้ำใบเตย · น้ำมะนาว","① Liquids first: Pandan infusion, Lime juice"],
    ["② Frisches & Weiches: Seidentofu, Drachenfrucht weiß, Ingwer","② ของสดและของนิ่ม: เต้าหู้นิ่ม · แก้วมังกรขาว · ขิง","② Fresh & soft: Silken tofu, White dragon fruit, Ginger"],
    ["③ Trockenes darüber: Sonnenblumenkerne","③ ใส่ของแห้งทับ: เมล็ดทานตะวัน","③ Dry on top: Sunflower seeds"],
    ["④ Gefrorenes ganz oben: Brokkoli, Drachenfrucht weiß","④ ของแช่แข็งไว้บนสุด: บรอกโคลี · แก้วมังกรขาว","④ Frozen last, on top: Broccoli, White dragon fruit"],
@@ -295,12 +287,12 @@ const REZEPTE = [
 {n:"05", stufe:"C", de:"Anti-Age Roselle-Beere", th:"แอนตี้เอจ กระเจี๊ยบ-เบอร์รี", en:"Anti-Age Roselle-Berry",
  alg:"",
  zut:[
-   ["KW", 120,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
-   ["HT",  60,"Hibiskustee, kalt (aus getrockneten Blüten)","ชากระเจี๊ยบเย็น (ชงจากดอกแห้ง)","Hibiscus tea, chilled (from dried flowers)"],
-   ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
-   ["GU",  60,"Guave — Vitamin C (statt Acerola-Pulver)","ฝรั่ง — วิตามินซี","Guava — vitamin C (instead of acerola powder)"],
-   ["ER", 100,"Erdbeere GEFROREN (Royal Project Nr. 80) — 40 g davon ersetzen die gestrichene Maulbeere","สตรอว์เบอร์รีแช่แข็ง (โครงการหลวง เบอร์ 80) — 40 กรัม ใช้แทนหม่อนที่ตัดออก","Strawberry FROZEN (Royal Project No. 80) — 40 g of it replace the dropped mulberry"],
-   ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
+   ["KW", 146,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
+   ["HT",  73,"Hibiskustee, kalt (aus getrockneten Blüten)","ชากระเจี๊ยบเย็น (ชงจากดอกแห้ง)","Hibiscus tea, chilled (from dried flowers)"],
+   ["BA",  36,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["GU",  73,"Guave — Vitamin C (statt Acerola-Pulver)","ฝรั่ง — วิตามินซี","Guava — vitamin C (instead of acerola powder)"],
+   ["ER", 121,"Erdbeere GEFROREN (Royal Project Nr. 80) — 40 g davon ersetzen die gestrichene Maulbeere","สตรอว์เบอร์รีแช่แข็ง (โครงการหลวง เบอร์ 80) — 40 กรัม ใช้แทนหม่อนที่ตัดออก","Strawberry FROZEN (Royal Project No. 80) — 40 g of it replace the dropped mulberry"],
+   ["BA",  24,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
    ["AX","6 mg · BOOSTER","Astaxanthin — NUR auf Bestellung, Aufpreis","แอสตาแซนทิน — เฉพาะเมื่อลูกค้าสั่ง (คิดเงินเพิ่ม)","Astaxanthin — on request only, surcharge"]
  ],
  schritte:[
@@ -320,11 +312,11 @@ const REZEPTE = [
 {n:"06", stufe:"C", de:"Anti-Age Beeren-Kollagen", th:"แอนตี้เอจ เบอร์รี-คอลลาเจน", en:"Anti-Age Berry-Collagen",
  alg:"🥛",
  zut:[
-   ["KW",  80,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
-   ["JO",  80,"Joghurt (natur)","โยเกิร์ตรสธรรมชาติ","Plain yogurt"],
-   ["BA",  30,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
-   ["BM", 150,"Beeren-Mix (gefroren)","เบอร์รีรวม (แช่แข็ง)","Mixed berries (frozen)"],
-   ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
+   ["KW", 103,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
+   ["JO", 103,"Joghurt (natur)","โยเกิร์ตรสธรรมชาติ","Plain yogurt"],
+   ["BA",  39,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["BM", 192,"Beeren-Mix (gefroren)","เบอร์รีรวม (แช่แข็ง)","Mixed berries (frozen)"],
+   ["BA",  26,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
    ["KL",  10,"Marine-Kollagen (Halal)","คอลลาเจนทะเล (ฮาลาล)","Marine collagen (halal)"]
  ],
  schritte:[
@@ -344,11 +336,11 @@ const REZEPTE = [
 {n:"07", stufe:"C", de:"Anti-Age Kakao-Magnesium", th:"แอนตี้เอจ โกโก้-แมกนีเซียม", en:"Anti-Age Cacao-Magnesium",
  alg:"",
  zut:[
-   ["KO", 175,"Kokosmilch (oder Thai-Sojamilch SM 🌱) — 25 g weniger, dafuer mehr Banane","กะทิ (หรือ นมถั่วเหลือง SM 🌱)","Coconut milk (or Thai soy milk SM 🌱)"],
-   ["BA",  85,"Banane FRISCH, gut reif — sie ersetzt die Süßtamarinde","กล้วยสด สุกจัด — ใช้แทนมะขามหวาน","Banana FRESH, well ripened — it replaces the sweet tamarind"],
-   ["KK",  10,"Kakao (roh, Thai/Chumphon)","ผงโกโก้ดิบ (ชุมพร)","Raw cacao (Thai/Chumphon)"],
-   ["KE",  12,"Kürbiskerne (Magnesium, eingeweicht)","เมล็ดฟักทอง (แมกนีเซียม แช่น้ำ)","Pumpkin seeds (magnesium, soaked)"],
-   ["BA",  35,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
+   ["KO", 261,"Kokosmilch (oder Thai-Sojamilch SM 🌱) — 25 g weniger, dafuer mehr Banane","กะทิ (หรือ นมถั่วเหลือง SM 🌱)","Coconut milk (or Thai soy milk SM 🌱)"],
+   ["BA", 127,"Banane FRISCH, gut reif — sie ersetzt die Süßtamarinde","กล้วยสด สุกจัด — ใช้แทนมะขามหวาน","Banana FRESH, well ripened — it replaces the sweet tamarind"],
+   ["KK",  15,"Kakao (roh, Thai/Chumphon)","ผงโกโก้ดิบ (ชุมพร)","Raw cacao (Thai/Chumphon)"],
+   ["KE",  18,"Kürbiskerne (Magnesium, eingeweicht)","เมล็ดฟักทอง (แมกนีเซียม แช่น้ำ)","Pumpkin seeds (magnesium, soaked)"],
+   ["BA",  52,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
@@ -367,11 +359,11 @@ const REZEPTE = [
 {n:"08", stufe:"C", de:"Blutwert-Bespoke", th:"สูตรเฉพาะตามผลเลือด", en:"Blood-Value Bespoke",
  alg:"🥛",
  zut:[
-   ["KW",  95,"Kokoswasser ODER Joghurt 🥛 — 25 g weniger, dafuer Mango","น้ำมะพร้าว หรือ โยเกิร์ต 🥛","Coconut water OR yogurt 🥛"],
-   ["BA",  45,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
-   ["MG",  40,"Mango (gefroren) — ersetzt die Süßtamarinde, 18 % Fruchtzucker","มะม่วง (แช่แข็ง) — ใช้แทนมะขามหวาน น้ำตาลผลไม้ 18%","Mango (frozen) — replaces the sweet tamarind, 18 % fruit sugar"],
-   ["BA",  35,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
-   ["BM",  80,"Beeren-Mix ODER Mango MG (gefroren)","เบอร์รีรวม หรือ มะม่วง MG (แช่แข็ง)","Mixed berries OR mango MG (frozen)"]
+   ["KW", 153,"Kokoswasser ODER Joghurt 🥛 — 25 g weniger, dafuer Mango","น้ำมะพร้าว หรือ โยเกิร์ต 🥛","Coconut water OR yogurt 🥛"],
+   ["BA",  72,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["MG",  64,"Mango (gefroren) — ersetzt die Süßtamarinde, 18 % Fruchtzucker","มะม่วง (แช่แข็ง) — ใช้แทนมะขามหวาน น้ำตาลผลไม้ 18%","Mango (frozen) — replaces the sweet tamarind, 18 % fruit sugar"],
+   ["BA",  56,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
+   ["BM", 128,"Beeren-Mix ODER Mango MG (gefroren)","เบอร์รีรวม หรือ มะม่วง MG (แช่แข็ง)","Mixed berries OR mango MG (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
@@ -389,11 +381,11 @@ const REZEPTE = [
 {n:"09", stufe:"A", de:"Mango Tango", th:"มะม่วง แทงโก้", en:"Mango Tango",
  alg:"🥛",
  zut:[
-   ["KM", 150,"Kuhmilch","นมวัว","Cow milk"],
-   ["MG",  75,"Mango (frisch)","มะม่วง (สด)","Mango (fresh)"],
-   ["BA",  35,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
-   ["MG",  80,"Mango (gefroren)","มะม่วง (แช่แข็ง)","Mango (frozen)"],
-   ["BA",  25,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
+   ["KM", 195,"Kuhmilch","นมวัว","Cow milk"],
+   ["MG",  97,"Mango (frisch)","มะม่วง (สด)","Mango (fresh)"],
+   ["BA",  45,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["MG", 104,"Mango (gefroren)","มะม่วง (แช่แข็ง)","Mango (frozen)"],
+   ["BA",  32,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
@@ -411,12 +403,12 @@ const REZEPTE = [
 {n:"10", stufe:"B", de:"Dragon Fruit Pink Pitaya", th:"แก้วมังกร พิงค์ พิทายา", en:"Dragon Fruit Pink Pitaya",
  alg:"",
  zut:[
-   ["KO", 150,"Kokosmilch","กะทิ","Coconut milk"],
-   ["BA",  35,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
-   ["DR",  75,"Drachenfrucht rot (frisch)","แก้วมังกรแดง (สด)","Red dragon fruit (fresh)"],
-   ["ER",  10,"Erdbeere für Aroma (optional)","สตรอว์เบอร์รี 1 ลูก (ถ้าต้องการกลิ่น)","1 strawberry for aroma (optional)"],
-   ["BA",  25,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
-   ["DR",  75,"Drachenfrucht rot (gefroren)","แก้วมังกรแดง (แช่แข็ง)","Red dragon fruit (frozen)"]
+   ["KO", 191,"Kokosmilch","กะทิ","Coconut milk"],
+   ["BA",  45,"Banane (frisch)","กล้วย (สด)","Banana (fresh)"],
+   ["DR",  96,"Drachenfrucht rot (frisch)","แก้วมังกรแดง (สด)","Red dragon fruit (fresh)"],
+   ["ER",  13,"Erdbeere für Aroma (optional)","สตรอว์เบอร์รี 1 ลูก (ถ้าต้องการกลิ่น)","1 strawberry for aroma (optional)"],
+   ["BA",  32,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"],
+   ["DR",  96,"Drachenfrucht rot (gefroren)","แก้วมังกรแดง (แช่แข็ง)","Red dragon fruit (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
@@ -434,10 +426,10 @@ const REZEPTE = [
 {n:"11", stufe:"B", de:"Avocado Sinh Tố Bơ", th:"อะโวคาโด ซิงโต๋ บ๋อ", en:"Avocado Sinh Tố Bơ",
  alg:"🥛",
  zut:[
-   ["KM", 125,"Kuhmilch (oder Kokosmilch KO / Reismilch) — 25 g weniger, dafuer mehr Banane","นมวัว (หรือ กะทิ KO / นมข้าว)","Cow milk (or coconut KO / rice milk)"],
-   ["BA",  70,"Banane FRISCH, gut reif — sie ersetzt die Süßtamarinde","กล้วยสด สุกจัด — ใช้แทนมะขามหวาน","Banana FRESH, well ripened — it replaces the sweet tamarind"],
-   ["AV", 120,"Avocado (frisch)","อะโวคาโด (สด)","Avocado (fresh)"],
-   ["BA",  20,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
+   ["KM", 177,"Kuhmilch (oder Kokosmilch KO / Reismilch) — 25 g weniger, dafuer mehr Banane","นมวัว (หรือ กะทิ KO / นมข้าว)","Cow milk (or coconut KO / rice milk)"],
+   ["BA",  99,"Banane FRISCH, gut reif — sie ersetzt die Süßtamarinde","กล้วยสด สุกจัด — ใช้แทนมะขามหวาน","Banana FRESH, well ripened — it replaces the sweet tamarind"],
+   ["AV", 169,"Avocado (frisch)","อะโวคาโด (สด)","Avocado (fresh)"],
+   ["BA",  28,"Banane (gefroren)","กล้วย (แช่แข็ง)","Banana (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
@@ -451,29 +443,6 @@ const REZEPTE = [
  tip:["GEÄNDERT 05.09.2026 (Peter): Süßtamarinde raus — Nostalgie-Ware, 180 ฿/kg, Kerne, fad. Ersetzt durch 40 g mehr gut reife Banane, dafür 25 g weniger Milch. Banane und nicht Mango: der vietnamesische Avocado-Becher lebt von Avocado und Banane, Mango macht ihn wässrig-sauer. · KEIN Zucker, KEINE Kondensmilch — das ist der 100blend-Twist. Die Süße kommt aus Banane + Süßtamarinde. Wenn ein Gast reklamiert „zu wenig süß\": 5 g Süßtamarinde mehr, nie Zucker.",
       "ไม่ใส่น้ำตาล ไม่ใส่นมข้นหวาน — นี่คือจุดต่างของ 100blend · ความหวานมาจากกล้วย + มะขามหวาน · ถ้าลูกค้าบอกไม่หวานพอ ใส่มะขามหวานเพิ่ม 5 กรัม ห้ามใส่น้ำตาล",
       "NO sugar, NO condensed milk — that's the 100blend twist. Sweetness comes from banana + tamarind. If a guest wants sweeter: 5 g more tamarind, never sugar."]},
-
-{n:"12", stufe:"A", de:"Watermelon-Mint Cooler", th:"แตงโม-มินต์ คูลเลอร์", en:"Watermelon-Mint Cooler",
- alg:"",
- zut:[
-   ["KW", 200,"Kokoswasser","น้ำมะพร้าว","Coconut water"],
-   ["LS",  10,"Limettensaft (½ Limette)","น้ำมะนาว (½ ลูก)","Lime juice (½ lime)"],
-   ["WM",  70,"Wassermelone (frisch)","แตงโม (สด)","Watermelon (fresh)"],
-   ["MI",   2,"Minze, gezählt (12-15 Blätter)","ใบสะระแหน่ เด็ดใบ (12-15 ใบ)","Mint, counted (12-15 leaves)"],
-   ["WM",  70,"Wassermelone (gefroren)","แตงโม (แช่แข็ง)","Watermelon (frozen)"],
-   ["ER",  20,"Erdbeere (gefroren)","สตรอว์เบอร์รี (แช่แข็ง)","Strawberry (frozen)"]
- ],
- schritte:[
-   ["MIXBEHÄLTER: der breite 1,5 L (breiter Boden, 24 cm) — dünnflüssig","โถปั่น: โถกว้าง 1.5 ล. (ก้นกว้าง สูง 24 ซม.) — เนื้อเหลว","BLENDER JAR: the wide 1.5 L (wide base, 24 cm) — thin drink"],
-   ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
-   ["① Flüssigkeit zuerst: Kokoswasser, Limettensaft","① ใส่ของเหลวก่อน: น้ำมะพร้าว · น้ำมะนาว","① Liquids first: Coconut water, Lime juice"],
-   ["② Frisches & Weiches: Wassermelone, Minze, gezählt","② ของสดและของนิ่ม: แตงโม · ใบสะระแหน่ เด็ดใบ","② Fresh & soft: Watermelon, Mint, counted"],
-   ["④ Gefrorenes ganz oben: Wassermelone, Erdbeere","④ ของแช่แข็งไว้บนสุด: แตงโม · สตรอว์เบอร์รี","④ Frozen last, on top: Watermelon, Strawberry"],
-   ["60\"-Taste (1 Minute)  (60 s, höchste Stufe)","กดปุ่ม 60 วินาที (1 นาที)  (60 วินาที ความเร็วสูงสุด)","The 60\" button  (60 s, high speed)"],
-   ["In den Trinkbecher gießen · Deckel · Halm · Sticker","เทใส่แก้ว · ปิดฝา · หลอด · สติกเกอร์","Pour into the cup · lid · straw · sticker"]
- ],
- tip:["Nicht zu lange mixen — Wassermelone wird sonst schaumig und wässrig.",
-      "อย่าปั่นนานเกินไป แตงโมจะเป็นฟองและเหลว",
-      "Don't over-blend — watermelon turns foamy and watery."]},
 
 {n:"13", stufe:"X", de:"Leber-Morgen Vital 🔒", th:"ตับ-เช้า ไวทัล 🔒", en:"Liver-Morning Vital 🔒",
  alg:"🥛",
@@ -492,19 +461,19 @@ const REZEPTE = [
  schritte:[
    ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
    ["Mixbehälter auf die Waage, Tara drücken","วางโถปั่นบนตาชั่ง แล้วกดทาร่า","Blender jar on the scale, press tare"],
-   ["① Flüssigkeit zuerst: Naturjoghurt, Limettensaft (kein Wasser — der Joghurt ist die Flüssigkeit)","① ใส่ของเหลวก่อน: โยเกิร์ต · น้ำมะนาว (ไม่ใส่น้ำ)","① Liquids first: Plain yogurt, Lime juice (no water — the yogurt is the liquid)"],
+   ["① Flüssigkeit zuerst: Naturjoghurt, Limettensaft","① ใส่ของเหลวก่อน: โยเกิร์ต · น้ำมะนาว","① Liquids first: Plain yogurt, Lime juice"],
    ["② Frisches & Weiches: Gurke mit Schale, Ingwer, Passionsfrucht grün","② ของสดและของนิ่ม: แตงกวา · ขิงสด · เสาวรสเขียว","② Fresh & soft: Cucumber with skin, Ginger, Green passion fruit"],
    ["③ Trockenes darüber: Whey Protein, Kurkuma, Pfeffer — Kurkuma und Pfeffer zusammen und sparsam","③ ใส่ของแห้งทับ: เวย์โปรตีน · ขมิ้น · พริกไทยดำ","③ Dry on top: Whey protein, Turmeric, Black pepper"],
-   ["④ Gefrorenes ganz oben: Ananas — der Brokkoli kommt NOCH NICHT","④ ของแช่แข็งไว้บนสุด: สับปะรด (ยังไม่ใส่บรอกโคลี)","④ Frozen last, on top: Pineapple — broccoli NOT yet"],
+   ["④ Gefrorenes ganz oben: Ananas (der Brokkoli kommt NOCH NICHT)","④ ของแช่แข็งไว้บนสุด: สับปะรด (ยังไม่ใส่บรอกโคลี)","④ Frozen last, on top: Pineapple (broccoli NOT yet)"],
    ["⑤ 35 Sekunden mixen (höchste Stufe)","⑤ ปั่น 35 วินาที (ความเร็วสูงสุด)","⑤ Blend 35 seconds (high speed)"],
    ["⑥ Brokkoli dazu — nochmal 35 Sekunden mixen, dann ist er fein","⑥ ใส่บรอกโคลี — ปั่นต่ออีก 35 วินาที จะเนียน","⑥ Add the broccoli — blend another 35 seconds until fine"],
    ["In den Trinkbecher gießen · sofort trinken, in kleinen Schlucken","เทใส่แก้ว · ดื่มทันที จิบทีละน้อย","Pour into the cup · drink immediately, in small sips"]
  ],
- tip:["🔒 NICHT im Verkaufsmenü — Peters persönlicher Smoothie. NEUE FASSUNG 05.09.2026 (Peter): Joghurt trägt den Becher statt Wasser, Whey Protein neu drin, Ananas ersetzt Mango und Beeren, Passionsfrucht grün fürs Aroma. ZWEI MIXGÄNGE SIND ABSICHT: erst alles ohne Brokkoli 35 Sekunden, dann Brokkoli dazu und nochmal 35 Sekunden — so wird er fein, ohne den ganzen Becher warm zu schlagen. ⚠ SOFORT TRINKEN: Ananas enthält Bromelain, ein Enzym, das Eiweiß zerlegt — Einfrieren zerstört es nicht, nur Hitze. Frisch getrunken passiert nichts; stehen gelassen wird der Becher bitter und das Whey verliert seinen Zweck. Kurkuma 0,4 g und Pfeffer 0,1 g bleiben wie am 24.08. festgelegt — der Pfeffer ist nur wegen des Kurkumas drin, Piperin macht Curcumin verfügbar. KEINE Banane, KEIN Zucker (Diabetes), KEIN Grapefruit/Pomelo (Eliquis), KEIN Salz (Bauchwasser). Wenn noch zu grasig: Gurke schälen · Ananas auf 120 g · Brokkoli auf 40 g — in dieser Reihenfolge, Brokkoli zuletzt.",
-      "🔒 ไม่อยู่ในเมนูขาย — สูตรส่วนตัวของปีเตอร์ · สูตรใหม่ 05.09.2026: ใช้โยเกิร์ตแทนน้ำ · เพิ่มเวย์โปรตีน · ใช้สับปะรดแทนมะม่วงและเบอร์รี · เสาวรสเขียวเพิ่มกลิ่น · ปั่นสองรอบโดยตั้งใจ: รอบแรก 35 วินาทีโดยยังไม่ใส่บรอกโคลี แล้วค่อยใส่บรอกโคลีปั่นต่ออีก 35 วินาที · ⚠ ดื่มทันที เพราะสับปะรดมีโบรมีเลนที่ย่อยโปรตีน ถ้าตั้งทิ้งไว้จะขม · ขมิ้น 0,4 กรัม พริกไทย 0,1 กรัม · ไม่ใส่กล้วย ไม่ใส่น้ำตาล (เบาหวาน) ไม่ใส่ส้มโอ/เกรปฟรุต (ยาอีลิควิส) ไม่ใส่เกลือ (ท้องมาน)",
-      "🔒 NOT on the sales menu — Peter's personal smoothie. NEW VERSION 05.09.2026 (Peter): yogurt carries the cup instead of water, whey protein added, pineapple replaces mango and berries, green passion fruit for the aroma. TWO BLENDS ARE DELIBERATE: everything except the broccoli for 35 seconds, then the broccoli and another 35 seconds. ⚠ DRINK IT IMMEDIATELY: pineapple contains bromelain, an enzyme that splits protein — freezing does not destroy it, only heat does. Left standing the cup turns bitter and the whey loses its point. NO banana, NO sugar (diabetes), NO grapefruit or pomelo (Eliquis), NO salt (ascites)."]},
+ tip:["🔒 NICHT im Verkaufsmenü — Peters persönlicher Smoothie. NEUE FASSUNG 05.09.2026 (Peter): Joghurt trägt den Becher statt Wasser, Whey Protein neu drin, Ananas ersetzt Mango und Beeren, Passionsfrucht grün fürs Aroma. ZWEI MIXGÄNGE SIND ABSICHT: erst alles ohne Brokkoli 35 Sekunden, dann Brokkoli dazu und nochmal 35 Sekunden — so wird er fein, ohne den ganzen Becher warm zu schlagen. ⚠ SOFORT TRINKEN: Ananas enthält Bromelain, ein Enzym, das Eiweiß zerlegt — Einfrieren zerstört es nicht, nur Hitze. Frisch getrunken passiert nichts; stehen gelassen wird der Becher bitter und das Whey verliert seinen Zweck. GESCHMACK GEHT VOR (Peter 24.08.): Kurkuma 0,4 g, Pfeffer 0,1 g. Der Pfeffer geht mit, weil er nur wegen des Kurkumas drin ist — Piperin macht Curcumin verfügbar. KEINE Banane, KEIN Zucker (Diabetes), KEIN Grapefruit/Pomelo (Eliquis), KEIN Salz (Bauchwasser). Wenn noch zu grasig: Gurke schälen · Ananas auf 120 g · Brokkoli auf 40 g — in dieser Reihenfolge, Brokkoli zuletzt.",
+      "🔒 ไม่อยู่ในเมนูขาย — สูตรส่วนตัวของปีเตอร์ · สูตรใหม่ 05.09.2026: ใช้โยเกิร์ตแทนน้ำ · เพิ่มเวย์โปรตีน · ใช้สับปะรดแทนมะม่วงและเบอร์รี · เสาวรสเขียวเพิ่มกลิ่น · ปั่นสองรอบโดยตั้งใจ: รอบแรก 35 วินาทีโดยยังไม่ใส่บรอกโคลี แล้วค่อยใส่บรอกโคลีปั่นต่ออีก 35 วินาที · ⚠ ดื่มทันที เพราะสับปะรดมีโบรมีเลนที่ย่อยโปรตีน ถ้าตั้งทิ้งไว้จะขม · ขมิ้น 0,4 กรัม พริกไทย 0,1 กรัม · ไม่ใส่กล้วย ไม่ใส่น้ำตาล (เบาหวาน) ไม่ใส่ส้มโอ/เกรปฟรุต (ยาอีลิควิส) ไม่ใส่เกลือ (ท้องมาน) · ถ้ายังรสเขียวเกินไป: ปอกเปลือกแตงกวา · เพิ่มสับปะรดเป็น 120 กรัม · ลดบรอกโคลีเหลือ 40 กรัม",
+      "🔒 NOT on the sales menu — Peter's personal smoothie. NEW VERSION 05.09.2026 (Peter): yogurt carries the cup instead of water, whey protein added, pineapple replaces mango and berries, green passion fruit for the aroma. TWO BLENDS ARE DELIBERATE: everything except the broccoli for 35 seconds, then the broccoli and another 35 seconds — it gets fine without beating the whole cup warm. ⚠ DRINK IT IMMEDIATELY: pineapple contains bromelain, an enzyme that splits protein — freezing does not destroy it, only heat does. Drunk fresh nothing happens; left standing it turns bitter and the whey loses its point. TASTE COMES FIRST (Peter 24.08.): turmeric 0.4 g, pepper 0.1 g — the pepper is only in for the turmeric, piperine makes curcumin available. NO banana, NO sugar (diabetes), NO grapefruit or pomelo (Eliquis), NO salt (ascites). If still too grassy: peel the cucumber · pineapple to 120 g · broccoli to 40 g — in that order, broccoli last."]},
 
-{n:"15", stufe:"C", de:"Wassermelone-Limette-Minze", th:"แตงโม-มะนาว-สะระแหน่", en:"Watermelon-Lime-Mint",
+{n:"15", stufe:"C", de:"Wassermelone-Limette-Minze (deprecated — siehe Nr. 43)", th:"แตงโม-มะนาว-สะระแหน่ (เลิกใช้ — ดูสูตร 43)", en:"Watermelon-Lime-Mint (deprecated — see No. 43)",
  alg:"",
  zut:[
    ["LS",  21,"Limettensaft (¾ Limette)","น้ำมะนาว (¾ ลูก)","Lime juice (¾ lime)"],
@@ -1281,11 +1250,11 @@ const REZEPTE = [
 {n:"48", stufe:"A", de:"Mango pur (100 % Frucht)", th:"มะม่วง เพียว", en:"Mango pure (100 % fruit)",
  alg:"",
  zut:[
-   ["LS",   5,"Limettensaft — hebt die Mango-Note (Thai-Trick)","มะนาว","Lime"],
-   ["MG", 210,"Mango Chok Anan FRISCH, reif — Saft und Aroma OHNE Wasserzusatz","มะม่วง (สด)","Mango (fresh)"],
+   ["LS", 5.1,"Limettensaft — hebt die Mango-Note (Thai-Trick)","มะนาว","Lime"],
+   ["MG", 213,"Mango Chok Anan FRISCH, reif — Saft und Aroma OHNE Wasserzusatz","มะม่วง (สด)","Mango (fresh)"],
    ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
    ["SA", 0.3,"Salz — verstärkt die Süße ohne Zucker","เกลือ","Salt"],
-   ["MG", 250,"Mango Chok Anan GEFROREN — die Kälte kommt aus der Frucht","มะม่วง (แช่แข็ง)","Mango (frozen)"]
+   ["MG", 253.6,"Mango Chok Anan GEFROREN — die Kälte kommt aus der Frucht","มะม่วง (แช่แข็ง)","Mango (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
@@ -1304,12 +1273,12 @@ const REZEPTE = [
 {n:"49", stufe:"A", de:"Ananas pur (100 % Frucht)", th:"สับปะรด เพียว", en:"Pineapple pure (100 % fruit)",
  alg:"",
  zut:[
-   ["LS",   5,"Limettensaft — rundet die Ananas-Säure ab","มะนาว","Lime"],
-   ["AN", 200,"Ananas FRISCH, reif — Saft und Aroma OHNE Wasserzusatz","สับปะรด (สด)","Pineapple (fresh)"],
+   ["LS", 5.2,"Limettensaft — rundet die Ananas-Säure ab","มะนาว","Lime"],
+   ["AN", 207,"Ananas FRISCH, reif — Saft und Aroma OHNE Wasserzusatz","สับปะรด (สด)","Pineapple (fresh)"],
    ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
    ["ZI", 0.5,"Ceylon-Zimt — schmeckt süß, ohne Zucker","อบเชยซีลอน","Ceylon cinnamon"],
    ["SA", 0.3,"Salz — Säure-Puffer und Aroma-Verstärker","เกลือ","Salt"],
-   ["AN", 250,"Ananas GEFROREN — die Kälte aus der Frucht","สับปะรด (แช่แข็ง)","Pineapple (frozen)"]
+   ["AN", 259,"Ananas GEFROREN — die Kälte aus der Frucht","สับปะรด (แช่แข็ง)","Pineapple (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
@@ -1470,11 +1439,11 @@ const REZEPTE = [
 {n:"56", stufe:"A", de:"Drachenfrucht weiß pur (100 % Frucht)", th:"แก้วมังกรขาว เพียว 100%", en:"White Dragon Fruit 100% Pure",
  alg:"",
  zut:[
-   ["LS",   5,"Limettensaft","น้ำมะนาว","Lime juice"],
-   ["DW", 200,"Drachenfrucht weiß, reif (frisch)","แก้วมังกรขาวสุก (สด)","White dragon fruit, ripe (fresh)"],
+   ["LS", 5.2,"Limettensaft","น้ำมะนาว","Lime juice"],
+   ["DW", 207,"Drachenfrucht weiß, reif (frisch)","แก้วมังกรขาวสุก (สด)","White dragon fruit, ripe (fresh)"],
    ["MI",   1,"Minze, gezählt (6-8 Blätter)","ใบสะระแหน่ เด็ดใบ (6-8 ใบ)","Mint, counted (6-8 leaves)"],
    ["SA", 0.3,"Salz","เกลือ","Salt"],
-   ["DW", 250,"Drachenfrucht weiß (gefroren)","แก้วมังกรขาว (แช่แข็ง)","White dragon fruit (frozen)"]
+   ["DW", 259.5,"Drachenfrucht weiß (gefroren)","แก้วมังกรขาว (แช่แข็ง)","White dragon fruit (frozen)"]
  ],
  schritte:[
    ["MIXBEHÄLTER: der schlanke 2,0 L (schmaler Boden, 33 cm) — Standard","โถปั่น: โถทรงสูง 2.0 ล. (ก้นแคบ สูง 33 ซม.) — ใช้ประจำ","BLENDER JAR: the slim 2.0 L (narrow base, 33 cm) — standard"],
@@ -1647,20 +1616,8 @@ const GEGEN={th:"de", de:"th", en:"th"};
 const haupt=(a,off)=>a[off+IDX[L]];
 const zweit=(a,off)=>a[off+IDX[GEGEN[L]]];
 
-/* Kacheln nach Nummer sortiert zeichnen.
-   Peter, 02.09.2026: "ich brauche erst mal das rezept nr. 13 wieder in der
-   Rezepte-liste." Es war nie weg -- es stand an Position 19, zwischen 20 und
-   21, weil spaeter angehaengte Rezepte hinten in der Reihe landen und die
-   Kacheln bisher in Array-Reihenfolge gezeichnet wurden. Wer zwischen 12 und
-   15 nachsieht, findet dort eine Luecke und haelt das Rezept fuer geloescht.
-   Dasselbe galt fuer die 24 (stand hinter der 29).
-   Sortiert wird eine Kopie -- die Array-Reihenfolge bleibt unangetastet,
-   damit REZEPTE.find() und alles Uebrige weiter greift. */
-const nachNummer = () =>
-  REZEPTE.slice().sort((a,b) => (parseInt(a.n,10)||0) - (parseInt(b.n,10)||0));
-
 function list(){
-  app.innerHTML='<div class="grid">'+nachNummer().map(r=>`
+  app.innerHTML='<div class="grid">'+REZEPTE.map(r=>`
     <button class="tile" data-n="${r.n}">
       <div class="no">${r.n}</div>
       <div class="nm">${esc(r[L]||r.de)}</div>
@@ -2006,21 +1963,11 @@ function detail(r){
       <h2>${t.zut}</h2>
       <div class="zut">${(()=>{const GRP=gruppeJeZutat(r);return r.zut.map((z,zi)=>{
         const v=VORSTUFEN[z[0]];
-        /* Frisch/Gefroren-Chip: Peter 02.09.: 'Mango 99 g und Mango 100 g,
-           welche ist frisch, welche gefroren?' Der Hinweis stand nur in
-           Klammern im Namen (z[2]) und war zu leise. Jetzt gross und farbig. */
-        const nmDe=String(z[2]||"");
-        const chip = /gefroren|แช่แข็ง|frozen/i.test(nmDe)
-          ? '<span class="fg fg-tk" title="gefroren · แช่แข็ง · frozen">❄ TK</span>'
-          : /frisch|\(สด\)|fresh/i.test(nmDe)
-            ? '<span class="fg fg-fr" title="frisch · สด · fresh">🍃 FRISCH</span>'
-            : '';
         return `
         <div class="${v?"mach":""}" ${v?`data-v="${z[0]}"`:""}>
           <span class="code">${z[0]}</span>
           <span class="zn"><b>${esc(haupt(z,2))}</b>
             <i>${esc(zweit(z,2))}</i></span>
-          ${chip}
           ${v?`<span class="pfeil">${L==="th"?"วิธีทำ ›":L==="en"?"how to ›":"Herstellung ›"}</span>`:""}
           <span class="zg">${typeof z[1]==="number"?z[1]+" g":esc(z[1])}</span>
           <span style="flex:0 0 auto;font:800 15px inherit;opacity:.5;width:1.1em;text-align:right"
@@ -2065,18 +2012,8 @@ function render(){
 render();
 </script>
 
-<!-- Build-Stempel. Frueher stand hier ein handgeschriebenes Datum, das bei
-     keinem Deploy mitwanderte. Es zeigte monatelang 30.08. an, waehrend die
-     App laengst neuer war -- und hat eine halbtaegige Cache-Suche ausgeloest.
-     Jetzt traegt ihn das Skript unten aus BUILD ein, das bei jedem Deploy
-     mitgesetzt wird. -->
-<div id="buildstempel" style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888"></div>
-<script>
-  window.__BUILD = "2026-09-05 06:28";
-  (function(){ var el = document.getElementById("buildstempel");
-    if (el) el.textContent = "v" + window.__BUILD; })();
-</script>
+<div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-09-06 04:18</div>
 
 <script>
 (function(){
@@ -2090,40 +2027,5 @@ render();
     navigator.serviceWorker.register("./sw-os.js").then(function(r){r.update()}).catch(function(){});
 })();
 </script>
-<script>
-/* Was Claude von DIESER Seite wissen muss.
-   Peter, 03.09.2026: "Warum hat Claude auf dem Handy Rezept 13 nicht
-   gefunden?" -- weil ihm nie jemand gesagt hat, welche Rezepte es gibt.
-   Er bekam nur den Dateinamen "rezepte.html" und den Satz und hat aus dem
-   Nichts geantwortet. Jetzt geht die Rezeptliste mit, und wenn ein Rezept
-   geoeffnet ist, dessen Zutaten dazu. Wird bei jedem Senden frisch
-   aufgerufen, nicht beim Laden eingefroren. */
-window.__CLAUDE_CTX_FN = function(){
-  var d = {};
-  try {
-    var alle = (typeof REZEPTE !== "undefined" ? REZEPTE : []).slice()
-      .sort(function(a,b){ return (parseInt(a.n,10)||0)-(parseInt(b.n,10)||0); });
-    d["Rezepte gesamt"] = alle.length;
-    d["Rezeptliste (Nr = Name)"] = alle.map(function(r){
-      return r.n + " = " + (r.de || r.en || "");
-    }).join(" · ");
-
-    // Geoeffnetes Rezept: Zutaten mit Gramm, damit Claude konkret rechnen kann
-    var offen = (location.hash || "").replace(/^#/, "");
-    var r = alle.filter(function(x){ return x.n === offen; })[0];
-    if (r) {
-      d["Offenes Rezept"] = r.n + " — " + (r.de || "") + " (Stufe " + (r.stufe || "?") + ")";
-      d["Zutaten"] = (r.zut || []).map(function(z){
-        return (z[2] || z[0]) + " " + z[1] + " g";
-      }).join(" · ");
-    }
-  } catch (e) { d["Kontext-Fehler"] = String(e && e.message || e); }
-  return d;
-};
-</script>
-<script src="claude-button.js" defer></script>
-<script src="firebase-sync.js" defer></script>
-<script src="zusammenfuehren.js" defer></script>
-<script src="geraete-sync.js" defer></script>
 </body>
 </html>
