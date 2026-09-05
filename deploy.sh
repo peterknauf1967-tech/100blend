@@ -25,7 +25,7 @@ cd "$(dirname "$0")"
 # sich dann fuer aktueller als der Server.
 # Massgeblich ist jetzt der Stempel, den _deploy.js aus der gebauten App
 # uebernommen hat. Nur wenn der fehlt, wird die lokale Uhr genommen.
-NOW="$(grep -oE 'window\.__BUILD = "[^"]*"' intern/standos.html | head -1 | sed -E 's/.*"([^"]*)".*//')"
+NOW="$(grep -oE 'window\.__BUILD = "[^"]*"' intern/standos.html | head -1 | sed -E 's/.*"([^"]*)".*/\1/')"
 if [ -z "$NOW" ]; then
   NOW="$(date +'%Y-%m-%d %H:%M')"
   echo "WARNUNG: kein __BUILD in intern/standos.html - node stand-os/_deploy.js zuerst laufen lassen!"
