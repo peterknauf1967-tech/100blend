@@ -16,8 +16,21 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-NOW="$(TZ=Asia/Bangkok date +'%Y-%m-%d %H:%M')"
-echo "Build-Zeit (Bangkok): $NOW"
+# ZEITSTEMPEL — 06.09.2026 korrigiert.
+# Hier stand TZ=Asia/Bangkok date. Dieses Git-Bash hat keine Zeitzonen-
+# datenbank und faellt still auf UTC zurueck; die Uhr des Rechners laeuft
+# aber SCHON auf Bangkok-Zeit. Der Stempel ging damit sieben Stunden nach
+# und konnte hinter den Stempel des vorherigen Deploys zurueckfallen.
+# Ein zurueckdatierter Stempel ist schlimmer als keiner: das Geraet haelt
+# sich dann fuer aktueller als der Server.
+# Massgeblich ist jetzt der Stempel, den _deploy.js aus der gebauten App
+# uebernommen hat. Nur wenn der fehlt, wird die lokale Uhr genommen.
+NOW="$(grep -oE 'window\.__BUILD = "[^"]*"' intern/standos.html | head -1 | sed -E 's/.*"([^"]*)".*//')"
+if [ -z "$NOW" ]; then
+  NOW="$(date +'%Y-%m-%d %H:%M')"
+  echo "WARNUNG: kein __BUILD in intern/standos.html - node stand-os/_deploy.js zuerst laufen lassen!"
+fi
+echo "Build-Stempel: $NOW"
 
 # 1) Build-Stempel unten auf jeder Seite
 for f in intern/standos.html intern/kasse.html intern/rezepte.html; do
