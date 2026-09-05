@@ -1,16 +1,25 @@
 {
-  "name": "100blend · Stand-OS",
-  "short_name": "Stand-OS",
-  "description": "Bestand, Einkauf und Rezepte in einer App — offline nutzbar.",
+  "name": "MIXO · 100blend Stand-OS",
+  "short_name": "MIXO",
+  "description": "Bestand, Einkauf, Rezepte und Zubereitung in einer App — offline nutzbar.",
   "start_url": "./standos.html",
   "scope": "./",
+  "id": "./standos.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#faf8f5",
   "theme_color": "#1a1a1a",
-  "lang": "de",
+  "lang": "th",
   "icons": [
     { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Rezepte · สูตร", "short_name": "สูตร", "url": "./rezepte.html",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }] },
+    { "name": "Kasse · แคชเชียร์", "short_name": "แคชเชียร์", "url": "./kasse.html",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }] }
   ]
 }

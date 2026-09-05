@@ -7,6 +7,21 @@
 <meta name="description" content="Premium wellness, health & protein drinks — 100% real fruit harvested at peak ripeness, flash-frozen. No syrup, no ice, no added sugar. Real-fruit smoothies in a class of their own. Pattaya & Jomtien via Grab. Franchise partners wanted across Thailand.">
 <meta name="keywords" content="wellness drinks pattaya, health drinks pattaya, protein drinks pattaya, protein shake pattaya, premium smoothie pattaya, fruit smoothie jomtien, detox drinks thailand">
 <meta name="theme-color" content="#0E0E0B">
+<!-- ZUM STARTBILDSCHIRM (Peter, 06.09.2026: "100blend sollte als Icon auf die
+     Startseite Android und iPhone"). Drei Dinge braucht es dafuer, und keines
+     war da: ein Manifest (sonst bietet Chrome die Installation gar nicht an),
+     ein apple-touch-icon in 180x180 (iOS ignoriert Manifest-Icons vollstaendig)
+     und eine maskable-Fassung (Android schneidet rund zu und haette "100blend"
+     an den Ecken abgeschnitten). -->
+<link rel="manifest" href="/100blend.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="100blend">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="100blend">
 <!-- Open Graph / Social sharing -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://100blend.com">
@@ -191,6 +206,22 @@
 #optionen .opt.aus .p::after{content:" · ausverkauft";font-size:11px;color:#b91c1c}
 @media (prefers-color-scheme:dark){#optionen .opt{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.14)}}
 /* --- OPTIONEN: ENDE --- */
+
+/* --- STARTBILDSCHIRM-EINLADUNG: START (06.09.2026) --- */
+#toHome{position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;display:none;
+  background:#141410;color:#f5f2ea;border:1px solid rgba(212,175,110,.45);border-radius:14px;
+  padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.4);
+  font:14px/1.4 'Poppins',system-ui,sans-serif;align-items:center;gap:12px}
+#toHome.an{display:flex}
+#toHome img{width:42px;height:42px;border-radius:10px;flex:none}
+#toHome .txt{flex:1}
+#toHome .txt b{display:block;font-size:14.5px;margin-bottom:1px}
+#toHome .txt span{font-size:12.5px;opacity:.75}
+#toHome button{border:0;border-radius:9px;padding:9px 13px;font:700 13px 'Poppins',system-ui;cursor:pointer}
+#toHome .ja{background:#d4af6e;color:#141410}
+#toHome .nein{background:transparent;color:#f5f2ea;opacity:.6;padding:9px 6px}
+@media(min-width:900px){#toHome{display:none!important}}
+/* --- STARTBILDSCHIRM-EINLADUNG: ENDE --- */
 </style>
 </head>
 <body>
@@ -762,6 +793,73 @@
   }
   /* --- OPTIONEN & LIVE-STAND: ENDE --- */
 
+
+  /* --- STARTBILDSCHIRM: START (06.09.2026) -----------------------------
+     Peter: "100blend sollte als Icon auf die Startseite Android und iPhone."
+     Android fragt von selbst, sobald Manifest UND Service Worker da sind -
+     wir fangen die Frage ab und stellen sie an einer Stelle, die zur Seite
+     passt. iPhone fragt nie; dort steht der Weg als Text.               */
+  const blendInstall = (() => {
+    let warten = null;
+    const box = document.getElementById('toHome');
+    if (!box) return {};
+    const schonDa = window.matchMedia('(display-mode: standalone)').matches ||
+                    window.navigator.standalone === true;
+    let weg = false;
+    try { weg = localStorage.getItem('toHomeWeg') === '1'; } catch (e) {}
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    const T = {
+      de:{t:'100blend auf den Startbildschirm', a:'Ein Tipp — wie eine App, auch offline.',
+          i:'Teilen ▸ „Zum Home-Bildschirm"', j:'Hinzufügen', n:'Später'},
+      en:{t:'Add 100blend to your home screen', a:'One tap — like an app, works offline.',
+          i:'Share ▸ "Add to Home Screen"', j:'Add', n:'Later'},
+      th:{t:'เพิ่ม 100blend ลงหน้าจอหลัก', a:'แตะครั้งเดียว ใช้ได้เหมือนแอป แม้ไม่มีเน็ต',
+          i:'แชร์ ▸ "เพิ่มไปยังหน้าจอโฮม"', j:'เพิ่ม', n:'ไว้ก่อน'}
+    };
+    const t = () => T[lang] || T.en;
+
+    function zeigen(mitKnopf){
+      if (schonDa || weg) return;
+      const x = t();
+      box.querySelector('.txt').innerHTML =
+        '<b>' + x.t + '</b><span>' + (mitKnopf ? x.a : x.i) + '</span>';
+      box.querySelector('.ja').textContent = x.j;
+      box.querySelector('.ja').style.display = mitKnopf ? '' : 'none';
+      box.querySelector('.nein').textContent = x.n;
+      box.classList.add('an');
+    }
+
+    window.addEventListener('beforeinstallprompt', ev => {
+      ev.preventDefault(); warten = ev; zeigen(true);
+    });
+    /* iPhone: keine Abfrage moeglich, also der Weg als Text - und erst nach
+       ein paar Sekunden, damit er nicht ueber der Begruessung liegt. */
+    if (iOS) setTimeout(() => zeigen(false), 4000);
+
+    box.querySelector('.ja').onclick = async () => {
+      if (!warten) return;
+      warten.prompt();
+      await warten.userChoice;
+      warten = null; box.classList.remove('an');
+    };
+    box.querySelector('.nein').onclick = () => {
+      box.classList.remove('an');
+      try { localStorage.setItem('toHomeWeg','1'); } catch (e) {}
+    };
+    window.addEventListener('appinstalled', () => box.classList.remove('an'));
+    return { zeigen };
+  })();
+
+  /* Service Worker - ohne ihn bietet Android die Installation nicht an. */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw-site.js').catch(() => {});
+    });
+  }
+  /* --- STARTBILDSCHIRM: ENDE --- */
+
   applyLang();
   renderOptionen();
   liveStand();
@@ -778,5 +876,14 @@
     mobileMenu.classList.remove('open');hamburger.textContent='☰';
   }));
 </script>
+
+<!-- Einladung auf den Startbildschirm. Liegt bewusst am unteren Rand und
+     verschwindet fuer immer, wenn jemand "Später" tippt. -->
+<div id="toHome">
+  <img src="/icon-192.png" alt="100blend">
+  <div class="txt"></div>
+  <button class="ja"></button>
+  <button class="nein"></button>
+</div>
 </body>
 </html>

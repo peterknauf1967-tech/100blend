@@ -161,7 +161,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MIXO Kasse">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="manifest" href="./standos.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="icon" href="./icon-192.png">
 </head>
 <body>
@@ -6471,7 +6473,7 @@ setInterval(()=>{ if(WARTE.length&&navigator.onLine)sendeWarteschlange(); },1200
 <div id="buildstempel" style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
   font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888"></div>
 <script>
-  window.__BUILD = "2026-09-05 05:50";
+  window.__BUILD = "2026-09-05 06:28";
   (function(){ var el = document.getElementById("buildstempel");
     if (el) el.textContent = "v" + window.__BUILD; })();
 </script>

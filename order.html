@@ -6,6 +6,21 @@
 <title>100blend</title>
 <meta name="description" content="100blend — 100% fruit. No ice. No sugar. Pattaya.">
 <meta name="theme-color" content="#0E0E0B">
+<!-- ZUM STARTBILDSCHIRM (Peter, 06.09.2026: "100blend sollte als Icon auf die
+     Startseite Android und iPhone"). Drei Dinge braucht es dafuer, und keines
+     war da: ein Manifest (sonst bietet Chrome die Installation gar nicht an),
+     ein apple-touch-icon in 180x180 (iOS ignoriert Manifest-Icons vollstaendig)
+     und eine maskable-Fassung (Android schneidet rund zu und haette "100blend"
+     an den Ecken abgeschnitten). -->
+<link rel="manifest" href="/100blend.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="100blend">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="100blend">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://100blend.com/order.html">
 <meta property="og:title" content="100blend">
