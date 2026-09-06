@@ -336,6 +336,124 @@
    * Funktion, die bei JEDEM Senden frisch aufgerufen wird. Nur so ist der
    * Kontext aktuell (offenes Rezept, aktuelle Ampel), statt einmal beim Laden
    * eingefroren. */
+
+  /* --- CLAUDE SIEHT DIE REZEPTE: START (06.09.2026) ---------------------
+     Peter: "Fehler im System AI: Die AI-Loesung auf dem Handy kann nicht in
+     die Rezepte schauen. Das muss geaendert werden. Wie will ich sonst ein
+     Brainstorming mit AI machen, was an einem Rezept angepasst werden muss,
+     wenn AI das nicht lesen kann?"
+
+     Nachgeprueft und bestaetigt: ctxText() zieht seinen Inhalt aus
+     window.__CLAUDE_CTX bzw. __CLAUDE_CTX_FN — und KEINE der drei Seiten
+     (standos, kasse, rezepte) hat je eine dieser Variablen gesetzt. Claude
+     bekam woertlich nur "Seite: rezepte" und den getippten Satz. Jede Frage
+     nach einer Zutatenmenge musste ins Leere laufen.
+
+     Die Loesung steht hier und nicht in den Seiten, weil claude-button.js
+     ohnehin auf allen dreien liegt und NICHT vom Build ueberschrieben wird.
+     Eine Aenderung an einer Stelle wirkt damit ueberall und ueberlebt den
+     naechsten Rebuild.
+
+     Die Rezepte liegen in den Seiten als "const REZEPTE = [...]" auf oberster
+     Ebene. Ein const dort landet NICHT auf window, ist aber fuer jedes andere
+     klassische Script im selben Dokument als blosser Bezeichner sichtbar.
+     Deshalb der typeof-Umweg statt window.REZEPTE — der waere immer leer. */
+
+  function globalRef(name){
+    try {
+      return (new Function('try{return typeof ' + name +
+             '==="undefined"?undefined:' + name + '}catch(e){return undefined}'))();
+    } catch (_) { return undefined; }
+  }
+
+  function alleRezepte(){
+    var R = globalRef('REZEPTE');
+    return (R && R.length) ? R : null;
+  }
+
+  /* Welches Rezept schaut Peter gerade an? Die drei Seiten merken sich das
+     unterschiedlich, deshalb der Reihe nach: der Anpassen-Dialog gewinnt vor
+     der aufgeklappten Anleitung, die vor der Detailansicht, die vor der
+     Adresszeile. */
+  function offenesRezept(){
+    var kandidaten = ['anpOffen', 'schritteAuf', 'cur', 'curV'];
+    for (var i = 0; i < kandidaten.length; i++) {
+      var v = globalRef(kandidaten[i]);
+      if (v != null && v !== '' && v !== false) return String(v);
+    }
+    var h = (location.hash || '').replace('#', '');
+    if (/^\d{1,3}$/.test(h)) return h;
+    return null;
+  }
+
+  function osStand(){
+    try { var o = JSON.parse(q('blend_os_v1') || '{}'); return (o && typeof o === 'object') ? o : {}; }
+    catch (_) { return {}; }
+  }
+
+  /* Wo liegt die Zutat WIRKLICH? Nicht was im Rezept steht, sondern was der
+     Bestand sagt — genau der Unterschied, ueber den Peter am 06.09. beim
+     Mixen gestolpert ist ("die Zutaten liegen kreuz und quer"). */
+  function lagerort(code, zeilentext){
+    var S = osStand();
+    var frisch = (S.bestand && S.bestand[code]) || 0;
+    var tk     = (S.tk && S.tk[code]) || 0;
+    var sagtTk = /gefroren|\bTK\b|แช่แข็ง|frozen/i.test(String(zeilentext || ''));
+    var orte = [];
+    if (tk > 0)     orte.push('Truhe -30: ' + tk + ' g');
+    if (frisch > 0) orte.push('Kuehlschrank/Trocken: ' + frisch + ' g');
+    if (!orte.length) orte.push('kein Bestand gebucht');
+    var warnung = '';
+    if (sagtTk && !tk) warnung = '  [!] Rezept sagt gefroren, TK-Bestand ist 0';
+    else if (!sagtTk && !frisch && tk) warnung = '  [!] Rezept sagt frisch, liegt aber nur in der Truhe';
+    return orte.join(' + ') + warnung;
+  }
+
+  function rezeptAlsText(r){
+    var S = osStand();
+    var anp = null;
+    try { anp = (S.anpass || {})[r.n] || null; } catch (_) {}
+    var zeilen = [];
+    zeilen.push('REZEPT ' + r.n + ' - ' + (r.de || '') + (r.en ? ' / ' + r.en : ''));
+    var summe = 0;
+    for (var i = 0; i < (r.zut || []).length; i++)
+      if (typeof r.zut[i][1] === 'number') summe += r.zut[i][1];
+    zeilen.push('Bezugsgroesse 16 oz = 473 ml, Einwaage gesamt ' + (Math.round(summe * 10) / 10) + ' g');
+    zeilen.push('Zutaten (Code, Gramm, Bezeichnung, wo es liegt):');
+    for (var j = 0; j < (r.zut || []).length; j++) {
+      var z = r.zut[j];
+      zeilen.push('  ' + z[0] + ' | ' + z[1] + ' g | ' + (z[2] || '') + ' | ' + lagerort(z[0], z[2]));
+    }
+    if (r.schritte && r.schritte.length) {
+      zeilen.push('Arbeitsschritte in der hinterlegten Reihenfolge:');
+      for (var k = 0; k < r.schritte.length; k++)
+        zeilen.push('  ' + (k + 1) + '. ' + (r.schritte[k][0] || ''));
+    }
+    if (r.tip && r.tip[0]) zeilen.push('Hinweis im Rezept: ' + r.tip[0]);
+    if (anp) zeilen.push('Gespeicherte Anpassung: ' + JSON.stringify(anp));
+    return zeilen.join('\n');
+  }
+
+  /* Wenn kein Rezept offen ist, geht wenigstens das Verzeichnis mit — dann
+     kann Claude nach der Nummer fragen, statt zu raten. */
+  function rezeptVerzeichnis(R){
+    var namen = [];
+    for (var i = 0; i < R.length; i++) namen.push(R[i].n + ' ' + (R[i].de || ''));
+    return 'Kein Rezept geoeffnet. Vorhandene Rezepte (Nummer + Name):\n' + namen.join(' - ');
+  }
+
+  function rezeptKontext(){
+    var R = alleRezepte();
+    if (!R) return '';
+    var n = offenesRezept();
+    if (n) {
+      for (var i = 0; i < R.length; i++)
+        if (String(R[i].n) === String(n)) return rezeptAlsText(R[i]);
+    }
+    return rezeptVerzeichnis(R);
+  }
+  /* --- CLAUDE SIEHT DIE REZEPTE: ENDE --- */
+
   function ctxText(){
     var out = [];
     var quellen = [];
@@ -350,6 +468,11 @@
       for (var k in o) if (o[k] != null && o[k] !== '') out.push(k + ': ' + o[k]);
     }
     if (location.hash) out.push('hash: ' + decodeURIComponent(location.hash.slice(1)));
+    /* Das Rezept ans Ende, damit der kurze Seitenkontext oben lesbar bleibt.
+       try/catch: eine kaputte Rezeptliste darf das Senden nie blockieren. */
+    var rez = '';
+    try { rez = rezeptKontext(); } catch (_) {}
+    if (rez) out.push(rez);
     return out.join('\n');
   }
   function readFileAsDataURL(f){
@@ -630,7 +753,8 @@
       inboxFilter = chip.dataset.flt;
       var chips = inboxView.querySelectorAll('.cbtn-chip');
       for (var i = 0; i < chips.length; i++) chips[i].classList.toggle('active', chips[i].dataset.flt === inboxFilter);
-      renderInbox();
+      merkeEntwurf();          /* angefangene Antwort nicht verlieren */
+      renderInbox(true);       /* Filterklick ist eine Handlung, kein Hintergrundtakt */
       return;
     }
     var itm = e.target.closest('[data-inbox-id]');
@@ -1224,7 +1348,7 @@
     if (formView) formView.style.display = 'none';
     if (setPanel) setPanel.classList.remove('open');
     inboxView.classList.add('open');
-    renderInbox();
+    renderInbox(true);
     scheduleInboxPoll(true);
     // Beim Oeffnen sofort nachsehen, statt bis zum naechsten Takt zu warten.
     refreshAnswers();
@@ -1236,7 +1360,45 @@
     scheduleInboxPoll(false);
   }
   function closeInbox(){ navBack(); }
-  function renderInbox(){
+  /* --- ANTWORT GEHT VERLOREN: START (06.09.2026) -------------------------
+     Peter: "Nach gefuehlt 10 Sekunden werde ich bei der Antwort rausgeworfen
+     und mein Text geloescht, wenn ich bis dahin noch nicht gesendet habe
+     (was fast unmoeglich ist)."
+
+     Gefunden: refreshAnswers() laeuft alle 30 Sekunden, solange der Postkorb
+     offen ist, und ruft dann renderInbox(). Das setzt
+         inboxListEl.innerHTML = html
+     — und in genau diesem Element steht auch die Detailansicht MIT dem
+     Antwortfeld. Der Neuaufbau wirft also die geoeffnete Unterhaltung weg
+     und ersetzt sie durch die Liste; der halb getippte Text ist mit dem
+     alten DOM verschwunden. Dass es sich nach 10 Sekunden anfuehlt und
+     nicht nach 30, liegt daran, dass der Takt schon lief, bevor die
+     Unterhaltung geoeffnet wurde — der naechste Schlag kommt irgendwann
+     innerhalb der 30 Sekunden.
+
+     Zwei Riegel, weil einer allein zu wenig waere:
+       1. Solange eine Unterhaltung offen ist, baut renderInbox() gar nichts
+          neu. Der Postkorb-Zaehler wird trotzdem aktualisiert.
+       2. Der getippte Text wird bei jedem Tastendruck gemerkt und beim
+          Wiederaufbau zurueckgeschrieben — falls doch einmal etwas anderes
+          die Ansicht neu zeichnet (Sprachwechsel, Filter, Zurueck-Taste). */
+  var replyEntwurf = {};          /* thread_id -> angefangener Text */
+
+  function detailOffen(){
+    return !!(inboxListEl && inboxListEl.querySelector('.cbtn-inbox-detail'));
+  }
+  function merkeEntwurf(){
+    var wrap = inboxListEl && inboxListEl.querySelector('.cbtn-inbox-detail');
+    var rta  = inboxListEl && inboxListEl.querySelector('.cbtn-reply-ta');
+    if (wrap && rta) replyEntwurf[wrap.dataset.thread] = rta.value || '';
+  }
+  /* --- ANTWORT GEHT VERLOREN: ENDE --- */
+
+  function renderInbox(erzwingen){
+    /* Eine offene Unterhaltung wird NICHT im Hintergrund weggeraeumt.
+       Nur ein echter Klick (Zurueck, Filter) darf das, und der ruft mit
+       erzwingen=true. */
+    if (!erzwingen && detailOffen()) { merkeEntwurf(); return; }
     var t = tr();
     // Ein Eintrag pro THEMA, nicht pro Meldung: gezeigt wird die juengste
     // Runde des Fadens. Sonst stuende nach drei Rueckfragen dasselbe Thema
@@ -1355,14 +1517,21 @@
     var rta = inboxListEl.querySelector('.cbtn-reply-ta');
     var rbtn = inboxListEl.querySelector('[data-act="reply-send"]');
     if (rta && rbtn) {
+      /* Angefangenen Text zurueckholen, falls die Ansicht schon einmal
+         neu gezeichnet wurde. */
+      if (replyEntwurf[fadenId]) {
+        rta.value = replyEntwurf[fadenId];
+        rbtn.disabled = !rta.value.trim();
+      }
       rta.addEventListener('input', function(){
         rbtn.disabled = !rta.value.trim();
+        replyEntwurf[fadenId] = rta.value;
       });
     }
 
     // Detail ist eine eigene Ebene: die Zurueck-Taste fuehrt zurueck in die
     // Liste, nicht aus dem Postkorb heraus.
-    navPush('detail', renderInbox);
+    navPush('detail', function(){ merkeEntwurf(); renderInbox(true); });
   }
 
   // Antwort im Faden abschicken. Laeuft ueber denselben Weg wie eine neue
@@ -1374,6 +1543,7 @@
     var txt = (rta.value || '').trim();
     if (!txt) return;
     var fadenId = wrap.dataset.thread;
+    delete replyEntwurf[fadenId];    /* abgeschickt = nicht mehr Entwurf */
 
     // doSend() liest Text und Foto aus dem Sendeformular. Wir schieben die
     // Antwort dort hinein, schicken sie und raeumen wieder auf -- so gibt es
