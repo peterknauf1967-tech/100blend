@@ -118,6 +118,24 @@
        muessen hinterher BEIDE Anpassungen dastehen. Jede traegt ihren
        eigenen Zeitstempel, also entscheidet er je Rezept. */
     raus.anpass = anpassKarte(H.anpass || {}, D.anpass || {});
+    /* VORSTUFEN je Code zusammenfuehren (07.09.2026). Eine angesetzte Charge
+       ist ein Ereignis mit Uhrzeit: wer zuletzt angesetzt oder geprueft hat,
+       gewinnt. Der Zeitstempel steht unter ts["VS:CODE"], damit er sich nicht
+       mit dem Bestand desselben Codes beisst — TE sind sowohl Teeblaetter im
+       Regal als auch der gekochte Tee. */
+    raus.vorstufen = (function (hier, dort) {
+      var r = {}, c;
+      for (c in hier) if (Object.prototype.hasOwnProperty.call(hier, c)) r[c] = hier[c];
+      for (c in dort) {
+        if (!Object.prototype.hasOwnProperty.call(dort, c)) continue;
+        var a = r[c], b = dort[c];
+        if (!a) { r[c] = b; continue; }
+        var tsA = (H.ts || {})["VS:" + c] || (a && a.angesetzt) || 0;
+        var tsB = (D.ts || {})["VS:" + c] || (b && b.angesetzt) || 0;
+        if (tsB > tsA) r[c] = b;
+      }
+      return r;
+    })(H.vorstufen || {}, D.vorstufen || {});
     ["chargen", "verarb", "eigen"].forEach(function (feld) {
       raus[feld] = listeVereinen(H[feld], D[feld]);
     });
