@@ -158,7 +158,7 @@ footer{color:var(--muted); font-size:12px; text-align:center; padding:32px 16px 
 <meta name="apple-mobile-web-app-title" content="MIXO Rezepte">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" href="./icon-192.png">
-<script>window.__BUILD = "2026-09-08 00:47";</script>
+<script>window.__BUILD = "2026-09-08 16:05";</script>
 </head>
 <body>
 
@@ -1597,6 +1597,14 @@ function kalt(h){
 /* Thai ist die Arbeitssprache — Lexi fuehrt aus, Peter kontrolliert nur.
    Peter, 30.08.2026. */
 let L=localStorage.getItem("bl_lang_th")||"th", cur=null, curV=null;
+/* MERKEN, WO LEXI WAR — 08.09.2026 (Peter): das Handy sperrt nach ~1 Min,
+   die Seite lud neu und stand dann wieder auf der Kachel-Liste; Lexi musste
+   jedes Mal das Rezept neu suchen. Jetzt wird das offene Rezept (oder die
+   Vorstufen-Karte) gespeichert und beim Laden sofort wiederhergestellt. */
+const POSKEY="bl_pos_rezept";
+try{ const p=JSON.parse(localStorage.getItem(POSKEY)||"{}");
+     if(p.cur) cur=p.cur; if(p.curV) curV=p.curV; }catch(e){}
+function persist(){ try{ localStorage.setItem(POSKEY,JSON.stringify({cur,curV})); }catch(e){} }
 const app=document.getElementById("app"), foot=document.getElementById("foot");
 
 document.querySelectorAll(".langs button").forEach(b=>b.onclick=()=>{
@@ -2005,16 +2013,35 @@ function detail(r){
 }
 
 function render(){
+  persist();
   foot.textContent=T[L].foot;
   document.documentElement.lang=L;
-  if(curV) vorstufe(VORSTUFEN[curV]);
-  else cur?detail(REZEPTE.find(r=>r.n===cur)):list();
+  if(curV && VORSTUFEN[curV]) vorstufe(VORSTUFEN[curV]);
+  else if(cur && REZEPTE.find(r=>r.n===cur)) detail(REZEPTE.find(r=>r.n===cur));
+  else { cur=null; curV=null; list(); }
 }
+
+/* BILDSCHIRM WACH HALTEN, solange MIXO offen und sichtbar ist — 08.09.2026.
+   Das war die eigentliche Ursache: das Telefon sperrte nach ~1 Min, die
+   Seite wurde neu geladen. Der Wake Lock haelt den Bildschirm an, solange
+   Lexi misst. Der Browser gibt ihn beim Wegblenden frei, darum beim
+   Wiedersichtbarwerden neu anfordern; die erste Beruehrung deckt Browser
+   ab, die dafuer eine Nutzeraktion verlangen. */
+let _wl=null;
+async function wachHalten(){
+  try{ if("wakeLock" in navigator && document.visibilityState==="visible"){
+        _wl=await navigator.wakeLock.request("screen");
+        _wl.addEventListener("release",()=>{_wl=null;}); } }catch(e){}
+}
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") wachHalten(); });
+document.addEventListener("pointerdown",()=>{ if(!_wl) wachHalten(); },{passive:true});
+wachHalten();
+
 render();
 </script>
 
 <div style="position:fixed;left:5px;bottom:3px;z-index:9999;pointer-events:none;
-  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-09-08 00:47</div>
+  font:600 9px/1 system-ui,sans-serif;opacity:.4;color:#888">v2026-09-08 16:05</div>
 
 <script>
 (function(){
