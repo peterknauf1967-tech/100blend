@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>100blend — Zutaten-Labor</title>
+<style>
+  :root{
+    --bg:#f3f5f7; --card:#ffffff; --ink:#16202c; --mut:#5f7183; --line:#e3e8ee;
+    --accent:#0b6b57; --accent2:#0b3d64; --warn:#b8860b; --bad:#c0392b; --good:#2e8b57;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,Arial,sans-serif}
+  .wrap{max-width:1050px;margin:0 auto;padding:20px 16px 80px}
+  h1{font-size:26px;margin:0 0 2px}
+  .sub{color:var(--mut);margin:0 0 18px}
+  .bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line);margin-bottom:14px}
+  .bar input[type=search]{flex:1 1 240px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:15px;background:#fff}
+  button.act{background:var(--accent2);color:#fff;border:0;border-radius:8px;padding:9px 14px;font-size:14px;font-weight:600;cursor:pointer}
+  button.ghost{background:#fff;color:var(--accent2);border:1px solid var(--accent2)}
+  .chipfilter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .chipfilter b{font-size:12px;padding:5px 10px;border-radius:14px;background:#fff;border:1px solid var(--line);cursor:pointer;font-weight:600;color:var(--mut)}
+  .chipfilter b.on{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+  .primer{background:#fff;border-radius:12px;padding:18px 20px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-left:5px solid var(--accent)}
+  .primer h2{margin:0 0 8px;font-size:19px;color:var(--accent)}
+  .primer p{margin:6px 0}
+  .primer .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-top:10px}
+  .primer .g{background:#f4f9f7;border-radius:8px;padding:10px 12px;font-size:14px}
+  .primer .g b{display:block;color:var(--accent);margin-bottom:2px}
+  .rule{background:#fff6e5;border-left:5px solid var(--warn);border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:22px;font-size:14px}
+  .rule b{color:#8a5c00}
+  .grp{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent2);margin:26px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--line)}
+  .card{background:var(--card);border-radius:11px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .card.hide{display:none}
+  .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .code{font-weight:700;background:#eef2f6;color:var(--accent2);border-radius:6px;padding:2px 8px;font-size:13px}
+  .nm{font-size:17px;font-weight:700}
+  .th{color:var(--mut);font-size:14px}
+  .tag{font-size:11px;color:#fff;background:var(--mut);border-radius:10px;padding:1px 8px}
+  .tag.warn{background:var(--warn)}
+  .phaserow{display:grid;grid-template-columns:70px 1fr;gap:8px;align-items:center;margin:4px 0}
+  .plabel{font-weight:700;font-size:13px;color:var(--accent);text-align:right;padding-right:4px}
+  .crits{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  @media(max-width:760px){.crits{grid-template-columns:repeat(2,1fr)}}
+  .crit{font-size:11px}
+  .crit .cl{display:flex;justify-content:space-between;color:var(--mut);margin-bottom:2px}
+  .scale{display:flex;gap:3px}
+  .scale button{flex:1;border:1px solid var(--line);background:#fafbfc;border-radius:5px;padding:6px 0;font-size:13px;cursor:pointer;color:var(--ink)}
+  .scale button.sel{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+  .foot{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+  .yn{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:600}
+  .yn button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:13px}
+  .yn button.yes.sel{background:var(--good);color:#fff;border-color:var(--good)}
+  .yn button.no.sel{background:var(--bad);color:#fff;border-color:var(--bad)}
+  .foot input[type=text]{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:7px;font-size:14px}
+  .foot label{font-size:12px;color:var(--mut);display:block;margin-bottom:2px}
+  .save{position:fixed;right:16px;bottom:16px;background:var(--good);color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .save.show{opacity:1}
+  @media print{
+    .bar,.chipfilter,.save,button{display:none!important}
+    body{background:#fff}
+    .card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+    .primer,.rule{box-shadow:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>100blend — Zutaten-Labor</h1>
+  <p class="sub">Jede Zutat einzeln verkosten und einstufen. Basis für spätere Kombinationen. Stand 08.09.2026.</p>
+
+  <div class="primer">
+    <h2>Der Maßstab: Warum ein Wassermelonen-Smoothie „vollkommen" schmeckt</h2>
+    <p>Nimm die Wassermelone als Messlatte. Sie schmeckt rund, weil <b>alle Achsen gleichzeitig im angenehmen Bereich liegen und nichts gegeneinander kämpft</b>. Genau das ist das Ziel jeder Kombination und der Grund, warum Rezept 3 mit Sonnenblumenkernen scheiterte: es war in fast jeder Achse das Gegenteil.</p>
+    <div class="grid">
+      <div class="g"><b>Eigene Flüssigkeit (~92 % Wasser)</b>Sie ist von Natur aus flüssig. Kein Wasser, keine Milch nötig, nichts wird verdünnt. Der Geschmack sitzt im eigenen Saft.</div>
+      <div class="g"><b>Süße mit einem Hauch Säure</b>Milde Fruchtsüße, sehr wenig Säure. Ein Spritzer Limette weckt die Süße erst richtig. Süße ohne jede Säure schmeckt flach.</div>
+      <div class="g"><b>Ein einziger, sauberer Ton</b>Ein klares Aroma, keine Bitterkeit, keine Gerbstoffe. Der Mund bekommt EINE klare Botschaft, nicht fünf, die sich streiten.</div>
+      <div class="g"><b>Seidige Textur, kein Mehl, keine Fasern</b>Zerfällt vollständig zu Saft. Keine Stärke, kein Griff, nichts Mehliges. Das exakte Gegenteil der Sonnenblumenkerne.</div>
+      <div class="g"><b>Eiskalt serviert</b>Kälte dämpft aufdringliche Süße und liest sich selbst als „frisch". Warm schmeckt derselbe Saft pappig.</div>
+      <div class="g"><b>Sauberer Abgang</b>Nichts legt sich auf die Zunge, kein Fettfilm, keine Bitterkeit bleibt. Perfekt = klarer Abgang.</div>
+    </div>
+    <p style="margin-top:12px"><b>Die zwei Zerstörer, auf die du beim Verkosten achtest:</b> <span style="color:var(--bad)">① Textur-Killer</span> — Stärke/Mehligkeit (rohe Kerne, rohe Haferflocken), Fasern, Fettfilm. <span style="color:var(--bad)">② Aroma-Killer</span> — Bitterkeit, Gerbstoffe (adstringierend), und ein Matsch aus zu vielen Aromen. Der Salz-Trick: eine Mikroprise Salz drückt Bitterkeit weg und hebt Süße.</p>
+  </div>
+
+  <div class="rule">
+    <b>So verkostest du:</b> Jede Zutat <b>kühlschrankkalt (2–10 °C)</b>. Fruchtige und flüssige Zutaten einmal nach <b>35 Sek.</b> und einmal nach <b>70 Sek.</b> mixen und beide getrennt bewerten. Reine Gewürze, Kerne, Zeste, Tee-Trockenware kannst du in kleiner Menge pur auf der Zunge prüfen (dann reicht die 35-Sek-Zeile). Alles wird gespeichert, sobald du tippst.
+  </div>
+
+  <div class="bar">
+    <input type="search" id="q" placeholder="Zutat suchen (Name oder Code) …">
+    <button class="act" onclick="window.print()">🖨 Drucken</button>
+    <button class="act ghost" onclick="exportCSV()">⬇ CSV speichern</button>
+    <button class="act ghost" onclick="if(confirm('Alle Bewertungen löschen?')){localStorage.removeItem(KEY);location.reload()}">Zurücksetzen</button>
+  </div>
+  <div class="chipfilter" id="filters"></div>
+
+  <div id="list"></div>
+</div>
+<div class="save" id="savemsg">✓ gespeichert</div>
+
+<script>
+const KEY="blend_labor_v1";
+const CRITS=[
+  {k:"suesse",  a:"süß",      b:"unsüß"},
+  {k:"lecker",  a:"lecker",   b:"pfui"},
+  {k:"konsist", a:"flüssig",  b:"fest"},
+  {k:"nach",    a:"angenehm", b:"unangenehm"}
+];
+// Verkostbare Zutaten aus dem echten Katalog (_katalog.json), ohne Verpackung/Gesperrtes.
+const GROUPS=[
+ {t:"Tee, Aufgüsse & Kaffee", items:[
+   ["MC","Matcha Pulver","ผงมัทฉะ"],["TE","Grüner Tee (lose, ungesüßt)","ชาเขียว"],
+   ["JT","Jasmintee (lose, ungesüßt)","ชามะลิ"],["RO","Hibiskusblüten getrocknet","ดอกกระเจี๊ยบแห้ง","pur"],
+   ["HT","Hibiskustee fertig","ชากระเจี๊ยบ"],["PD","Pandanblätter","ใบเตย"],
+   ["PW","Pandan-Aufguss","น้ำใบเตย"],["KF","Kaffee / Espresso","กาแฟ"]
+ ]},
+ {t:"Milch & Flüssigkeiten", items:[
+   ["HM","Hafermilch (selbst)","นมข้าวโอ๊ต"],["KM","Kuhmilch (Meiji)","นมวัว"],
+   ["SM","Sojamilch fertig","นมถั่วเหลือง"],["MM","Mandelmilch fertig","นมอัลมอนด์"],
+   ["JO","Joghurt natur","โยเกิร์ต"],["KO","Kokosmilch (Aroy-D)","กะทิ"],
+   ["KW","Kokoswasser","น้ำมะพร้าว"]
+ ]},
+ {t:"Früchte frisch", items:[
+   ["WM","Wassermelone","แตงโม"],["AN","Ananas","สับปะรด"],["MG","Mango","มะม่วง"],
+   ["BA","Banane","กล้วย"],["DR","Drachenfrucht rot","แก้วมังกรแดง"],["DW","Drachenfrucht weiß","แก้วมังกรขาว"],
+   ["PF","Passionsfrucht rot","เสาวรสสีม่วง"],["PG","Passionsfrucht grün","เสาวรสสีเขียว"],
+   ["AV","Avocado","อะโวคาโด"],["GU","Guave","ฝรั่ง"],["OR","Orange","ส้ม"],["OS","Orangensaft frisch","น้ำส้มคั้นสด"],
+   ["TM","Thai-Melone","แตงไทย"],["ME","Melone (Cantaloupe)","เมล่อน"],["PY","Papaya","มะละกอ"],
+   ["LS","Limette","มะนาว","pur"],["ZT","Zitrone","เลมอน","pur"],["OZ","Orangenzeste","ผิวส้มขูด","pur"],
+   ["KA","Karotte","แครอท"],["BI","Birne (Nashi)","สาลี่"],["AP","Apfel (Thai)","แอปเปิลไทย"],
+   ["LG","Longan (Lamyai)","ลำไย"],["LK","Longkong","ลองกอง"],["RM","Rambutan","เงาะ"],
+   ["MS","Mangostan","มังคุด"],["PL","Pflaume XXL","พลัม"],["WT","Weintrauben","องุ่น"],
+   ["DU","Durian","ทุเรียน"],["SN","Santol","กระท้อน"],["CH","Rose Apple (Chomphu)","ชมพู่"],
+   ["JF","Jackfruit","ขนุน"],["SD","Sapodilla (Lamut)","ละมุด"],["NN","Zuckerapfel (Noi Na)","น้อยหน่า"],
+   ["SF","Sternfrucht","มะเฟือง"],["PO","Pomelo","ส้มโอ"]
+ ]},
+ {t:"Früchte TK & Püree", items:[
+   ["ER","Erdbeere TK","สตรอว์เบอร์รี"],["EG","Erdbeere gefriergetrocknet","สตรอว์เบอร์รีฟรีซดราย","pur"],
+   ["BM","Beeren-Mix TK","เบอร์รีรวม"],["MT","Mango TK Nam Dok Mai","มะม่วงแช่แข็ง"],
+   ["MP","Mango-Püree TK","มะม่วงบด"],["PP2","Passionsfrucht-Püree TK","เสาวรสบด"],
+   ["JB","Schwarze Johannisbeere TK","ลูกเกดดำ"]
+ ]},
+ {t:"Cerealien, Kerne & Aroma", items:[
+   ["HF","Haferflocken (roh)","ข้าวโอ๊ต","pur"],["MA","Mandeln (roh)","อัลมอนด์","pur"],
+   ["SJ","Sojabohnen","ถั่วเหลือง","pur"],["SK","Sonnenblumenkerne","เมล็ดทานตะวัน","pur"],
+   ["HS","Hanfsamen (geschält)","เมล็ดกัญชง","pur"],["KE","Kürbiskerne","เมล็ดฟักทอง","pur"],
+   ["SB","Basilikumsamen (Sabja)","เม็ดแมงลัก","pur"],["TO","Seidentofu","เต้าหู้นิ่ม"],
+   ["KK","Kakao ungesüßt","ผงโกโก้","pur"],["ST","Süßtamarinde","มะขามหวาน"],
+   ["IG","Ingwer","ขิง","pur"],["MI","Minze","ใบสะระแหน่","pur"],["ZG","Zitronengras","ตะไคร้","pur"],
+   ["GA","Galgant","ข่า","pur"],["ZI","Ceylon-Zimt","อบเชยซีลอน","pur"],["KU","Kurkuma","ขมิ้น","pur"],
+   ["PP","Schwarzer Pfeffer","พริกไทยดำ","pur"],["VA","Vanille","วานิลลา","pur"],
+   ["SA","Salz","เกลือ","pur"],["PZ","Palmzucker (Privat, nicht 100blend)","น้ำตาลมะพร้าว","pur"]
+ ]},
+ {t:"Grün & Gemüse", items:[
+   ["GK","Gurke","แตงกวา"],["SP","Spinat TK","ผักโขม"],["BK","Brokkoli TK","บรอกโคลี"],
+   ["WS","Wasserspinat","ผักบุ้ง"],["RB","Rote Beete","บีทรูท"]
+ ]},
+ {t:"Herzhaft (Labor)", items:[
+   ["KB","Knoblauch","กระเทียม","pur"],["SC","Schalotte","หอมแดง","pur"],["DL","Dill frisch","ผักชีลาว","pur"]
+ ]},
+ {t:"Supplements & Booster", items:[
+   ["WY","Whey Protein Isolat","เวย์โปรตีนไอโซเลท","pur"],["PR","Proteinpulver","เวย์โปรตีน","pur"],
+   ["KL","Marine-Kollagen","คอลลาเจนทะเล","pur"],["EB","Erdnussbutter","เนยถั่ว","pur"],
+   ["KR","Kreatin Monohydrat","ครีเอทีน","pur"],["AX","Astaxanthin 2 %","แอสตาแซนทิน","pur"],
+   ["HG","Honig","น้ำผึ้ง","pur"]
+ ]}
+];
+
+let DATA={};
+try{DATA=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){DATA={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DATA));flash()}catch(e){}}
+let ft;function flash(){const m=document.getElementById('savemsg');m.classList.add('show');clearTimeout(ft);ft=setTimeout(()=>m.classList.remove('show'),900)}
+function g(code){return DATA[code]||(DATA[code]={})}
+
+function phaseRow(code,ph){
+  let h=`<div class="phaserow"><div class="plabel">${ph}s</div><div class="crits">`;
+  CRITS.forEach(c=>{
+    const cur=(g(code)[ph]||{})[c.k];
+    h+=`<div class="crit"><div class="cl"><span>${c.a}</span><span>${c.b}</span></div><div class="scale">`;
+    for(let i=1;i<=5;i++)h+=`<button class="${cur==i?'sel':''}" onclick="setC('${code}',${ph},'${c.k}',${i},this)">${i}</button>`;
+    h+=`</div></div>`;
+  });
+  return h+`</div></div>`;
+}
+function setC(code,ph,k,v,btn){
+  const o=g(code); o[ph]=o[ph]||{};
+  o[ph][k]=(o[ph][k]==v)?null:v;
+  btn.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));
+  if(o[ph][k]==v)btn.classList.add('sel');
+  save();
+}
+function setYN(code,val,wrap){
+  const o=g(code); o.yn=(o.yn==val)?null:val;
+  wrap.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));
+  if(o.yn==val)wrap.querySelector('.'+(val=='ja'?'yes':'no')).classList.add('sel');
+  save();
+}
+function setTxt(code,field,v){g(code)[field]=v;save()}
+
+function render(){
+  const list=document.getElementById('list');let h='';
+  GROUPS.forEach((grp,gi)=>{
+    h+=`<div class="grp" data-grp="${gi}">${grp.t}</div>`;
+    grp.items.forEach(it=>{
+      const [code,de,th,pur]=it;const o=g(code);
+      h+=`<div class="card" data-grp="${gi}" data-s="${(code+' '+de+' '+th).toLowerCase()}">
+        <div class="head"><span class="code">${code}</span><span class="nm">${de}</span><span class="th">${th}</span>
+        ${pur?'<span class="tag warn">pur probieren</span>':''}</div>`;
+      h+=phaseRow(code,35);
+      if(!pur)h+=phaseRow(code,70);
+      h+=`<div class="foot">
+        <div class="yn">Selber essen/trinken?
+          <button class="yes ${o.yn=='ja'?'sel':''}" onclick="setYN('${code}','ja',this.parentNode)">Ja</button>
+          <button class="no ${o.yn=='nein'?'sel':''}" onclick="setYN('${code}','nein',this.parentNode)">Nein</button>
+        </div>
+        <div></div>
+        <div style="grid-column:1/-1"><label>Gut in Kombination mit …</label>
+          <input type="text" value="${(o.kombi||'').replace(/"/g,'&quot;')}" oninput="setTxt('${code}','kombi',this.value)" placeholder="z. B. Limette, Ananas, Kokoswasser"></div>
+        <div style="grid-column:1/-1"><label>Bemerkung</label>
+          <input type="text" value="${(o.bem||'').replace(/"/g,'&quot;')}" oninput="setTxt('${code}','bem',this.value)" placeholder="Geschmack, Textur, Auffälligkeiten"></div>
+      </div></div>`;
+    });
+  });
+  list.innerHTML=h;
+  // filter chips
+  const f=document.getElementById('filters');
+  f.innerHTML=`<b class="on" data-f="all">Alle</b>`+GROUPS.map((g,i)=>`<b data-f="${i}">${g.t}</b>`).join('');
+  f.querySelectorAll('b').forEach(b=>b.onclick=()=>{
+    f.querySelectorAll('b').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    const v=b.dataset.f;
+    document.querySelectorAll('.card,.grp').forEach(el=>{
+      el.style.display=(v=='all'||el.dataset.grp==v)?'':'none';
+    });
+  });
+}
+document.getElementById('q').addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase().trim();
+  document.querySelectorAll('.card').forEach(c=>{
+    c.classList.toggle('hide',q&&!c.dataset.s.includes(q));
+  });
+  document.querySelectorAll('.grp').forEach(g=>g.style.display=q?'none':'');
+});
+function exportCSV(){
+  let rows=[["Code","Zutat","Phase","suesse(1suess-5unsuess)","lecker(1lecker-5pfui)","konsistenz(1fluessig-5fest)","nachgeschmack(1angenehm-5unangenehm)","selber_ja_nein","kombination","bemerkung"]];
+  GROUPS.forEach(grp=>grp.items.forEach(it=>{
+    const [code,de,,pur]=it;const o=DATA[code]||{};
+    [35,70].forEach(ph=>{
+      if(ph==70&&pur)return;
+      const p=o[ph]||{};
+      rows.push([code,de,ph+"s",p.suesse||"",p.lecker||"",p.konsist||"",p.nach||"",o.yn||"",(o.kombi||"").replace(/;/g,","),(o.bem||"").replace(/;/g,",")]);
+    });
+  }));
+  const csv="﻿"+rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(";")).join("\n");
+  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(b);a.download="100blend_Labor_"+new Date().toISOString().slice(0,10)+".csv";a.click();
+}
+render();
+</script>
+</body>
+</html>
