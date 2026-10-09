@@ -238,5 +238,9 @@ geht:
 ## Kontakt / Verantwortlichkeiten
 
 - **Peter Knauf** — Owner, Produkt, Rezepte, Strategie.
-- **Lexi** — lokaler Betrieb Pattaya, Kasse, Kundenkontakt.
+- **Lexi** — lokaler Betrieb (seit 23.09.2026 Udon Thani), Kasse, Kundenkontakt.
+  Offizieller Name: **PHATCHAREEPORN SEANSANYA** (Vorname mit **Ph**, Nachname
+  **Seansanya**). In Formularen, Briefen, Grab-/Bank-Nachrichten immer genau so
+  schreiben — Peter vertippt den Nachnamen leicht. GrabMerchant-Owner-Konto:
+  `lexy100blend@gmail.com`.
 - **VivaPure GmbH** — rechtlicher/steuerlicher Rahmen.
