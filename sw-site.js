@@ -13,7 +13,7 @@
  * das wochenalte Seiten zeigt, ohne dass es jemand merkt, ist schlimmer als
  * eine Seite, die kurz laedt.
  */
-const CACHE = "blend-site-v1";
+const CACHE = "blend-site-v2";
 const FILES = [
   "/", "/index.html", "/order.html",
   "/100blend.webmanifest",
