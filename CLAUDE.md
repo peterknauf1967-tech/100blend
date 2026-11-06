@@ -244,3 +244,23 @@ geht:
   schreiben — Peter vertippt den Nachnamen leicht. GrabMerchant-Owner-Konto:
   `lexy100blend@gmail.com`.
 - **VivaPure GmbH** — rechtlicher/steuerlicher Rahmen.
+
+---
+
+## 🧠 GEHIRN = Memos (seit 05./06.11.2026) — ersetzt Notion
+
+Peters zentraler Wissens- und Steuerspeicher ist **https://memos.luxfox.net** (selbst
+gehostetes Memos, Google Cloud VM `memos`, IP 34.68.145.207). Notion („The Brain“,
+„📌 Aktueller Stand“) wurde komplett dorthin übernommen und ist nur noch Archiv.
+
+- **Zuerst lesen:** Notiz `memos/g02leitfaden` (LEITFADEN 2.0, verbindlich) und
+  `memos/g01start` (Einstiege). Aktueller Stand: `memos/n392e0f028e3e8166adbeed7f6a3a503e`
+  (Übersicht) — jeder Stand ist eine eigene Notiz mit `#stand` + Ampel + Bereich.
+- **API:** REST `https://memos.luxfox.net/api/...` (NICHT `/api/v1`, entfernt),
+  KI-Schnittstelle MCP `https://memos.luxfox.net/mcp`. In Claude-Cloud-Sitzungen setzt der
+  Netzwerk-Proxy den Token automatisch ein (Header `Authorization: Bearer proxy-injected`).
+- **Schreibbremse:** max. 120 Schreibvorgänge/Minute, 600 Anfragen/Minute.
+- **Zurückschreiben:** Neuer Stand = neue Notiz (`🟡 **STAND TT.MM.JJJJ HH:MM — THEMA**`,
+  Tags `#stand #stand/gelb #business/100blend` usw.), nicht in alte Notizen hineinschreiben.
+- **Tags:** siehe `memos/g03tags`. Wöchentlicher KI-Radar (Mo 06:45 Bangkok) schreibt
+  `#gehirn/ki-radar` und `#gehirn/verbesserung`.
