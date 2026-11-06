@@ -32,6 +32,22 @@ oder über `.claude/settings.json` in diesem Repo.
 
 ---
 
+## 🔴 OFFENE ÜBERGABE 06.11.2026 21:55 (Handy → PC) — ZUERST ERLEDIGEN
+
+Commit `f3e2619` (Homepage: neue Karte **„Mr. Muscle" 99 ฿**, `index.html`,
+Array `M`) liegt auf `main`, ist auf GitHub da — aber **100blend.com zeigt
+ihn nach >15 Min. nicht** (Last-Modified blieb beim Vorgänger `c52d115`,
+06.11. 04:42 UTC). Pages-Build lief offenbar nicht. Gleiches Symptom am 04.11.
+
+1. GitHub → Actions („pages build and deployment") / Settings → Pages:
+   Lauf für den neuesten Commit da? Fehlgeschlagen? → Re-run bzw. leeren
+   Commit pushen.
+2. 100blend.com prüfen: Karte „Mr. Muscle · 99 ฿" muss sichtbar sein.
+3. Ursache hier unten dokumentieren, dann **diesen Abschnitt löschen** und
+   Memos-Stand („ÜBERGABE: Mr. Muscle") auf erledigt setzen.
+
+---
+
 > Diese Datei ist das **Gedächtnis für jede neue Claude-Session** in diesem Repo.
 > Lies sie zuerst, bevor du irgendwas anfasst. Wenn du (Claude) hier etwas
 > Wichtiges neu lernst — trag es hier ein. Sonst weiß die nächste Session es nicht.
