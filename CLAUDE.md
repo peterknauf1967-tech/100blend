@@ -32,19 +32,11 @@ oder über `.claude/settings.json` in diesem Repo.
 
 ---
 
-## 🔴 OFFENE ÜBERGABE 06.11.2026 21:55 (Handy → PC) — ZUERST ERLEDIGEN
+## 🔴 OFFENE ÜBERGABE 07.11.2026 (Handy → PC) — VOR DEM NÄCHSTEN DEPLOY
 
-Commit `f3e2619` (Homepage: neue Karte **„Mr. Muscle" 99 ฿**, `index.html`,
-Array `M`) liegt auf `main`, ist auf GitHub da — aber **100blend.com zeigt
-ihn nach >15 Min. nicht** (Last-Modified blieb beim Vorgänger `c52d115`,
-06.11. 04:42 UTC). Pages-Build lief offenbar nicht. Gleiches Symptom am 04.11.
-
-1. GitHub → Actions („pages build and deployment") / Settings → Pages:
-   Lauf für den neuesten Commit da? Fehlgeschlagen? → Re-run bzw. leeren
-   Commit pushen.
-2. 100blend.com prüfen: Karte „Mr. Muscle · 99 ฿" muss sichtbar sein.
-3. Ursache hier unten dokumentieren, dann **diesen Abschnitt löschen** und
-   Memos-Stand („ÜBERGABE: Mr. Muscle") auf erledigt setzen.
+Erledigt: „Mr. Muscle" 99 ฿ ist live. GitHub Pages baut bei diesem Repo
+**teils erst 10–20 Min. nach dem Push** — nicht kaputt, nur langsam. Erst
+nach ~20 Min. ohne Änderung von einem Fehler ausgehen.
 
 **Nachtrag 07.11.2026 11:30 (Handy):** In `intern/rezepte.html` stehen zwei
 neue Rezepte **W1 Herzwaffel CRISPY** und **W2 Herzwaffel SOFT** (Feld
