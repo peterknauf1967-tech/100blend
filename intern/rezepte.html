@@ -158,7 +158,7 @@ footer{color:var(--muted); font-size:12px; text-align:center; padding:32px 16px 
 <meta name="apple-mobile-web-app-title" content="MIXO Rezepte">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="icon" href="./icon-192.png">
-<script>window.__BUILD = "2026-11-03 13:45";</script>
+<script>window.__BUILD = "2026-11-07 11:22";</script>
 </head>
 <body>
 
@@ -1527,7 +1527,68 @@ const REZEPTE = [
  ],
  tip:["Gleiche Fett-Logik wie Nr. 58: Citral aus dem Zitronengras ist fettlöslich, die Kokosmilch trägt es. Rezept 01 nutzte Seidentofu — der ist Protein, kein Fettträger, und deshalb verstieß es gegen Regel A. Dieses Rezept ersetzt es. Mango statt Ananas als zweite Aromabrücke, weil Zitronengras-Mango-Kokos zur Tom-Kha-Aromenfamilie gehört, die hier jeder kennt. NUR das weiche Innere des Stängels verwenden — die äußeren Blätter sind holzig und geben Fasern, die man zwischen den Zähnen hat. ⚠ Verkostung steht aus.",
       "ตรรกะไขมันเดียวกับสูตร 58: ซิทรัลในตะไคร้ละลายในไขมัน กะทิเป็นตัวพา · สูตร 01 ใช้เต้าหู้นิ่ม ซึ่งเป็นโปรตีน ไม่ใช่ไขมัน จึงผิดกฎข้อ A · สูตรนี้มาแทน · ใช้มะม่วงแทนสับปะรด เพราะตะไคร้-มะม่วง-กะทิ อยู่ในตระกูลกลิ่นต้มข่าที่คนไทยคุ้นเคย · ใช้เฉพาะส่วนในที่นิ่มของต้น ส่วนนอกแข็งเป็นเสี้ยน · ⚠ ยังไม่ได้ชิมทดสอบ",
-      "Same fat logic as No. 58: citral is fat-soluble, coconut milk carries it. Recipe 01 used silken tofu — that is protein, not a fat carrier, so it broke rule A. This replaces it. Use only the tender inner core; the outer leaves are woody and leave fibres between the teeth. ⚠ Not yet tasted."]}
+      "Same fat logic as No. 58: citral is fat-soluble, coconut milk carries it. Recipe 01 used silken tofu — that is protein, not a fat carrier, so it broke rule A. This replaces it. Use only the tender inner core; the outer leaves are woody and leave fibres between the teeth. ⚠ Not yet tasted."]},
+
+/* ═══════════ WAFFELN — Peter, 07.11.2026: "unbedingt" in die App, einmal
+   CRISPY, einmal SOFT. Quelle: Memos „Herzwaffeln knusprig + Mousse-
+   Varianten“ (Version 2 = crispy, Einfach-Version = soft).
+   typ:"waffel" schaltet Mixer-Störungshilfe und Booster-Zeile ab — beides
+   gilt nur für Smoothies. Codes EI/ZU/BU/RI/WZ/RL/MZ/BP/SO sind neu und
+   stehen (noch) nicht im STAND-OS-Katalog. ═══════════ */
+{n:"W1", stufe:"B", typ:"waffel", de:"Herzwaffel CRISPY", th:"วาฟเฟิลหัวใจ แบบกรอบ", en:"Heart waffle CRISPY",
+ alg:"🥛",
+ zut:[
+   ["EI", "2 St.","Eier Nr. 1","ไข่ไก่ เบอร์ 1 · 2 ฟอง","Eggs size 1 · 2 pcs"],
+   ["ZU", 150,"Zucker","น้ำตาลทราย","Sugar"],
+   ["BU",  60,"Butter, geschmolzen — echte Butter, KEINE Butter Blend / Margarine","เนยแท้ ละลาย — ห้ามใช้เนยผสมหรือมาการีน","Butter, melted — real butter, NO butter blend / margarine"],
+   ["RI",  60,"Reisöl","น้ำมันรำข้าว","Rice bran oil"],
+   ["VA",   8,"Vanillearoma","กลิ่นวานิลลา","Vanilla flavour"],
+   ["KM", 100,"Milch","นมสด","Milk"],
+   ["WZ", 150,"Weizenmehl","แป้งสาลีอเนกประสงค์","Wheat flour"],
+   ["RL",  60,"Reismehl (Erawan, rote Packung)","แป้งข้าวเจ้า (ตราช้างสามเศียร ถุงแดง)","Rice flour (Erawan, red pack)"],
+   ["MZ",  40,"Maisstärke","แป้งข้าวโพด","Corn starch"],
+   ["BP",   4,"Backpulver","ผงฟู","Baking powder"],
+   ["SO", "100 ml","Soda — EISKALT, erst kurz vor dem Backen","โซดา — เย็นจัด ใส่ก่อนอบเท่านั้น","Soda water — ICE-COLD, only just before baking"]
+ ],
+ schritte:[
+   ["Waffeleisen einschalten, 5 Minuten vorheizen — fast höchste Stufe","เปิดเครื่องอบวาฟเฟิล อุ่น 5 นาที — ไฟเกือบสูงสุด","Switch on the waffle iron, preheat 5 minutes — almost highest setting"],
+   ["Schüssel auf die Waage, Tara drücken. Eier + Zucker mit dem Schneebesen 1 Minute verrühren","วางชามบนตาชั่ง กดทาร่า · ตีไข่กับน้ำตาลด้วยตะกร้อมือ 1 นาที","Bowl on the scale, press tare. Whisk eggs + sugar by hand for 1 minute"],
+   ["Butter (geschmolzen), Reisöl, Vanille, Milch einrühren","ใส่เนยละลาย น้ำมันรำข้าว กลิ่นวานิลลา นมสด แล้วคนให้เข้ากัน","Stir in melted butter, rice bran oil, vanilla, milk"],
+   ["Weizenmehl, Reismehl, Maisstärke, Backpulver dazu — VON HAND nur rühren, bis kein trockenes Mehl mehr zu sehen ist. KEIN Mixer: der macht die Waffel zäh","ใส่แป้งสาลี แป้งข้าวเจ้า แป้งข้าวโพด ผงฟู — คนด้วยมือแค่พอไม่เห็นแป้งแห้ง · ห้ามใช้เครื่องปั่น เพราะวาฟเฟิลจะเหนียว","Add wheat flour, rice flour, corn starch, baking powder — stir BY HAND only until no dry flour shows. NO blender: it makes the waffle chewy"],
+   ["Kurz vor dem Backen: Soda EISKALT unterrühren","ก่อนอบ: ใส่โซดาเย็นจัด คนเบา ๆ","Just before baking: stir in the ICE-COLD soda"],
+   ["60 g Teig in die Mitte des Eisens (Becher auf die Waage)","เทแป้ง 60 กรัม ตรงกลางเครื่อง (ชั่งด้วยถ้วยบนตาชั่ง)","Pour 60 g batter into the centre of the iron (cup on the scale)"],
+   ["Erst öffnen, wenn kaum noch Dampf kommt (≈ 3–4 Minuten) — kräftig goldbraun, nicht dunkelbraun","เปิดเมื่อไอน้ำเกือบหยุด (ประมาณ 3–4 นาที) — สีน้ำตาลทองเข้ม ห้ามไหม้","Open only when hardly any steam comes out (≈ 3–4 minutes) — deep golden, not dark brown"],
+   ["Einzeln aufs Gitter, NIE stapeln. Innerhalb 10 Minuten servieren — sonst 30 Sekunden zurück ins Eisen","วางบนตะแกรงทีละชิ้น ห้ามวางซ้อน · เสิร์ฟภายใน 10 นาที ถ้าเกินให้อบซ้ำ 30 วินาที","One by one on the rack, NEVER stacked. Serve within 10 minutes — otherwise 30 seconds back in the iron"]
+ ],
+ tip:["Ergibt ca. 14 Waffeln à 60 g, Kosten ~6 ฿ je Waffel. Für das Waffel-Set 99 ฿: + Mangopüree + 1 Kugel Vanilleeis + Kaffee, nur vor Ort. WARUM KNUSPRIG: Reismehl statt eines Teils Weizenmehl (kein Kleber), nur 2 Eier (weniger zäh), mehr Zucker (karamellisiert), wenig Backpulver (bleibt dünn). KEIN Salz — Thai-Butter ist meist gesalzen. Ist der Teig zu dick zum Verlaufen: 10 ml Soda nachgeben. Allergene: Ei, Milch, Gluten (Weizen). ⚠ Testversion seit 03.11.2026 — Ergebnis noch nicht eingetragen. ⚠ Thai-Text von Lexi gegenlesen.",
+      "ได้ประมาณ 14 ชิ้น ชิ้นละ 60 กรัม · ต้นทุนประมาณ 6 บาทต่อชิ้น · ชุดวาฟเฟิล 99 บาท: + มะม่วงบด + ไอศกรีมวานิลลา 1 สกู๊ป + กาแฟ ทานที่ร้านเท่านั้น · ที่กรอบเพราะ: ใช้แป้งข้าวเจ้าแทนแป้งสาลีบางส่วน ไข่แค่ 2 ฟอง น้ำตาลมากขึ้น ผงฟูน้อย · ห้ามใส่เกลือ เนยไทยส่วนใหญ่มีเกลืออยู่แล้ว · ถ้าแป้งข้นเกินไป ให้เติมโซดาอีก 10 มล. · สารก่อภูมิแพ้: ไข่ นม กลูเตน (ข้าวสาลี)",
+      "Makes about 14 waffles of 60 g, cost ~6 ฿ each. For the 99 ฿ waffle set: + mango purée + 1 scoop vanilla ice cream + coffee, dine-in only. WHY CRISPY: rice flour instead of part of the wheat flour (no gluten), only 2 eggs (less chewy), more sugar (caramelises), little baking powder (stays thin). NO salt — Thai butter is usually salted. If the batter is too thick to spread: add 10 ml soda. Allergens: egg, milk, gluten (wheat). ⚠ Test version since 03.11.2026 — result not yet recorded."]},
+
+{n:"W2", stufe:"B", typ:"waffel", de:"Herzwaffel SOFT", th:"วาฟเฟิลหัวใจ แบบนุ่ม", en:"Heart waffle SOFT",
+ alg:"🥛",
+ zut:[
+   ["EI", "3 St.","Eier Nr. 1","ไข่ไก่ เบอร์ 1 · 3 ฟอง","Eggs size 1 · 3 pcs"],
+   ["KM", 300,"Milch (oder 150 g Milch + 150 g Wasser)","นมสด (หรือ นม 150 กรัม + น้ำเปล่า 150 กรัม)","Milk (or 150 g milk + 150 g water)"],
+   ["BU",  50,"Butter, weich — echte Butter, KEINE Butter Blend / Margarine","เนยแท้ นิ่ม — ห้ามใช้เนยผสมหรือมาการีน","Butter, soft — real butter, NO butter blend / margarine"],
+   ["RI",  40,"Reisöl","น้ำมันรำข้าว","Rice bran oil"],
+   ["VA",   5,"Vanillearoma","กลิ่นวานิลลา","Vanilla flavour"],
+   ["ZU", 100,"Zucker","น้ำตาลทราย","Sugar"],
+   ["WZ", 200,"Weizenmehl","แป้งสาลีอเนกประสงค์","Wheat flour"],
+   ["MZ",  60,"Maisstärke","แป้งข้าวโพด","Corn starch"],
+   ["BP",   8,"Backpulver","ผงฟู","Baking powder"]
+ ],
+ schritte:[
+   ["Waffeleisen einschalten, auf ca. 90 % vorheizen","เปิดเครื่องอบวาฟเฟิล อุ่นไว้ที่ประมาณ 90 %","Switch on the waffle iron, preheat to about 90 %"],
+   ["Mixkrug auf die Waage, Tara drücken. Zuerst alles Flüssige und Weiche: Eier, Milch, Butter, Reisöl, Vanille, Zucker","วางโถปั่นบนตาชั่ง กดทาร่า · ใส่ของเหลวและของนิ่มก่อน: ไข่ นมสด เนย น้ำมันรำข้าว กลิ่นวานิลลา น้ำตาล","Blender jar on the scale, press tare. Liquids and soft things first: eggs, milk, butter, rice bran oil, vanilla, sugar"],
+   ["Dann Weizenmehl, Maisstärke, Backpulver obendrauf","แล้วใส่แป้งสาลี แป้งข้าวโพด ผงฟู ไว้ด้านบน","Then wheat flour, corn starch, baking powder on top"],
+   ["20 Sekunden mixen — nicht länger","ปั่น 20 วินาที — ห้ามนานกว่านี้","Blend 20 seconds — no longer"],
+   ["Teig 10 Minuten ruhen lassen","พักแป้ง 10 นาที","Let the batter rest 10 minutes"],
+   ["85 g Teig ins Eisen (Becher auf die Waage), 3½–4 Minuten backen, bis goldbraun","เทแป้ง 85 กรัม (ชั่งด้วยถ้วยบนตาชั่ง) อบ 3½–4 นาที จนเป็นสีน้ำตาลทอง","Pour 85 g batter into the iron (cup on the scale), bake 3½–4 minutes until golden"],
+   ["Aufs Gitter legen, nicht stapeln. Lauwarm servieren","วางบนตะแกรง ห้ามวางซ้อน · เสิร์ฟตอนอุ่น ๆ","Onto the rack, not stacked. Serve warm"]
+ ],
+ tip:["Ergibt ca. 10 Waffeln à 85 g, Kosten ~8 ฿ je Waffel. Weich und fluffig durch Backpulver + Ruhezeit — sie wird nach dem Abkühlen weich, das ist bei dieser Variante gewollt. Für den Mixer gilt: nur 20 Sekunden, längeres Mixen macht den Teig zäh. KEIN Salz — Thai-Butter ist meist gesalzen. Nicht dunkelbraun backen (Acrylamid). Allergene: Ei, Milch, Gluten (Weizen). ⚠ Thai-Text von Lexi gegenlesen.",
+      "ได้ประมาณ 10 ชิ้น ชิ้นละ 85 กรัม · ต้นทุนประมาณ 8 บาทต่อชิ้น · นุ่มฟูเพราะผงฟูและการพักแป้ง — พอเย็นลงจะนุ่ม ซึ่งเป็นแบบที่ต้องการสำหรับสูตรนี้ · ปั่นแค่ 20 วินาที ถ้านานกว่านี้แป้งจะเหนียว · ห้ามใส่เกลือ เนยไทยส่วนใหญ่มีเกลืออยู่แล้ว · อย่าอบจนสีเข้มเกินไป · สารก่อภูมิแพ้: ไข่ นม กลูเตน (ข้าวสาลี)",
+      "Makes about 10 waffles of 85 g, cost ~8 ฿ each. Soft and fluffy from baking powder + resting time — it turns soft once cooled, which is intended for this variant. Blend only 20 seconds; longer makes the batter chewy. NO salt — Thai butter is usually salted. Do not bake dark brown (acrylamide). Allergens: egg, milk, gluten (wheat)."]}
 ];
 
 const T={
@@ -1997,8 +2058,8 @@ function detail(r){
         <i>${esc(zweit(s,0))}</i></li>`
         + dazu.map(v=>variantenZeile(v,si+1)).join("");
       }).join("")})()}</ol>
-      ${boosterZeile(r)}
-      <div class="tip">🔧 ${esc(HILFE[L]||HILFE.de)}</div>
+      ${r.typ==="waffel"?"":boosterZeile(r)}
+      ${r.typ==="waffel"?"":`<div class="tip">🔧 ${esc(HILFE[L]||HILFE.de)}</div>`}
       ${r.tip?`<div class="tip">💡 ${esc(L==="th"?r.tip[1]:L==="en"?r.tip[2]:r.tip[0])}</div>`:""}
     `}`;
   app.querySelector(".back").onclick=()=>{cur=null;scrollTo(0,0);render()};

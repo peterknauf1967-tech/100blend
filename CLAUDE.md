@@ -46,6 +46,15 @@ ihn nach >15 Min. nicht** (Last-Modified blieb beim Vorgänger `c52d115`,
 3. Ursache hier unten dokumentieren, dann **diesen Abschnitt löschen** und
    Memos-Stand („ÜBERGABE: Mr. Muscle") auf erledigt setzen.
 
+**Nachtrag 07.11.2026 11:30 (Handy):** In `intern/rezepte.html` stehen zwei
+neue Rezepte **W1 Herzwaffel CRISPY** und **W2 Herzwaffel SOFT** (Feld
+`typ:"waffel"` blendet Mixer-Hilfe + Booster aus). Direkt hier eingetragen,
+weil die Quelle `stand-os/` nur lokal am PC liegt. **Vor dem nächsten
+`node stand-os/_deploy.js`:** W1/W2 + die `typ:"waffel"`-Abfrage in
+`detail()` in die lokale `stand-os/rezepte-lexi.html` übernehmen — sonst
+überschreibt der Generator sie. Neue Codes (EI, ZU, BU, RI, WZ, RL, MZ, BP,
+SO) fehlen noch im STAND-OS-Katalog.
+
 ---
 
 > Diese Datei ist das **Gedächtnis für jede neue Claude-Session** in diesem Repo.
